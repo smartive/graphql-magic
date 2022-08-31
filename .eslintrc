@@ -1,3 +1,6 @@
 {
-  "extends": ["@smartive/eslint-config"]
+  "extends": ["@smartive/eslint-config"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off"
+  }
 }
