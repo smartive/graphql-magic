@@ -1,6 +1,5 @@
 import { ApolloError, ForbiddenError } from 'apollo-server-errors';
 import { GraphQLResolveInfo } from 'graphql';
-import { Upload } from 'graphql-upload';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
@@ -266,7 +265,7 @@ const isEndOfDay = (field?: ModelField) =>
   field?.endOfDay === true && field?.dateTimeType === 'date' && field?.type === 'DateTime';
 
 const convertUploadFields = async (data: Entity) => {
-  const files = Object.entries<Upload>(data).filter(([, value]) => value instanceof Upload);
+  const files = Object.entries(data).filter(([, value]) => value?.prototype?.name === 'Upload');
   if (files.length) {
     for (const [key, value] of files) {
       const stream = (await value.promise).createReadStream();
