@@ -2,6 +2,7 @@
 
 export * from './arguments';
 export * from './filters';
+export * from './get-resolvers';
 export * from './mutations';
 export * from './node';
 export * from './resolver';

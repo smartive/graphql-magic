@@ -22,6 +22,7 @@
     "generate:index-files": "cti create ./src --excludes types --withoutbackup",
     "lint": "prettier --check src && eslint src",
     "lint:fix": "prettier --write src && eslint src --fix",
+    "test": "npm run lint && npm run build",
     "prebuild": "npm run clean",
     "build": "npm run build:types && npm run build:esm && npm run build:umd",
     "build:types": "tsc -p ./tsconfig.json --declaration --emitDeclarationOnly",
