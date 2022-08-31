@@ -27,10 +27,6 @@
     "build:umd": "babel src --extensions .ts,.tsx --out-dir dist/umd --config-file ./babel.config.umd.js",
     "publish": "semantic-release"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@gitlab.com:smartive/graphql-magic/graphql-magic.git"
-  },
   "overrides": {
     "graphql": "$graphql"
   },
