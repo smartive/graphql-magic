@@ -1,0 +1,75 @@
+{
+  "name": "@smartive-private/graphql-magic",
+  "version": "1.0.0",
+  "description": "",
+  "source": "src/index.ts",
+  "main": "dist/umd/index.js",
+  "module": "dist/esm/index.js",
+  "unpkg": "dist/umd/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/umd/index.js",
+      "import": "./dist/esm/index.js"
+    }
+  },
+  "engines": {
+    "node": "^16"
+  },
+  "scripts": {
+    "clean": "del-cli dist",
+    "lint": "prettier --check src && eslint src",
+    "lint:fix": "prettier --write src && eslint src --fix",
+    "prebuild": "npm run clean",
+    "build": "npm run build:types && npm run build:esm && npm run build:umd",
+    "build:types": "tsc -p ./tsconfig.json --declaration --emitDeclarationOnly",
+    "build:esm": "babel src --extensions .ts,.tsx --out-dir dist/esm --config-file ./babel.config.esm.js",
+    "build:umd": "babel src --extensions .ts,.tsx --out-dir dist/umd --config-file ./babel.config.umd.js",
+    "publish": "semantic-release"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.com:smartive/graphql-magic/graphql-magic.git"
+  },
+  "overrides": {
+    "graphql": "$graphql"
+  },
+  "browserslist": "> 0.25%, not dead",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dependencies": {
+    "apollo-server-errors": "^3.3.1",
+    "code-block-writer": "^11.0.3",
+    "graphql": "^15.8.0",
+    "graphql-upload": "^15.0.2",
+    "knex": "^2.2.0",
+    "knex-schema-inspector": "^2.0.4",
+    "lodash": "^4.17.21",
+    "luxon": "^3.0.3",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.18.10",
+    "@babel/core": "^7.18.13",
+    "@babel/preset-env": "^7.18.10",
+    "@babel/preset-typescript": "^7.18.6",
+    "@semantic-release/changelog": "^6.0.1",
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/gitlab": "^9.4.1",
+    "@semantic-release/npm": "^9.0.1",
+    "@semantic-release/release-notes-generator": "^10.0.3",
+    "@smartive/eslint-config": "^3.1.0",
+    "@smartive/prettier-config": "^3.0.0",
+    "@types/graphql-upload": "^8.0.11",
+    "@types/lodash": "^4.14.184",
+    "@types/luxon": "^3.0.0",
+    "@types/node": "^18.7.14",
+    "@types/uuid": "^8.3.4",
+    "del-cli": "^5.0.0",
+    "eslint": "^8.23.0",
+    "prettier": "^2.7.1",
+    "semantic-release": "^19.0.5",
+    "typescript": "^4.8.2"
+  }
+}
