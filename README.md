@@ -7,9 +7,13 @@ npm ci
 ```
 
 ```
-npm lint
+npm run generate
 ```
 
 ```
-npm build
+npm run lint
+```
+
+```
+npm run build
 ```

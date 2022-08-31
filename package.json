@@ -18,6 +18,8 @@
   },
   "scripts": {
     "clean": "del-cli dist",
+    "generate": "npm run generate:index-files",
+    "generate:index-files": "cti create ./src --excludes types --withoutbackup",
     "lint": "prettier --check src && eslint src",
     "lint:fix": "prettier --write src && eslint src --fix",
     "prebuild": "npm run clean",
