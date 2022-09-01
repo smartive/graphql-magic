@@ -2,6 +2,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDirs": ["./src"],
+    "declaration": true,
     "sourceMap": true,
     "noImplicitReturns": true,
     "noImplicitAny": true,
