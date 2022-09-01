@@ -42,11 +42,13 @@
     "code-block-writer": "^11.0.3",
     "graphql": "^15.8.0",
     "graphql-upload": "^15.0.2",
-    "knex": "^2.2.0",
-    "knex-schema-inspector": "^2.0.4",
     "lodash": "^4.17.21",
     "luxon": "^3.0.3",
     "uuid": "^8.3.2"
+  },
+  "peerDependencies": {
+    "knex": "^2.3.0",
+    "knex-schema-inspector": "^2.0.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.18.10",
