@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/types/",
+    "outDir": "./dist",
     "rootDirs": ["./src"],
     "sourceMap": true,
     "noImplicitReturns": true,
@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "module": "esnext",
+    "module": "commonjs",
     "target": "esnext",
     "jsx": "react"
   },

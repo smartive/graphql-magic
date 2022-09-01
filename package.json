@@ -3,16 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "source": "src/index.ts",
-  "main": "dist/umd/index.js",
-  "module": "dist/esm/index.js",
-  "unpkg": "dist/umd/index.js",
-  "types": "dist/types/index.d.ts",
-  "exports": {
-    ".": {
-      "require": "./dist/umd/index.js",
-      "import": "./dist/esm/index.js"
-    }
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engines": {
     "node": "^16"
   },
@@ -24,10 +16,7 @@
     "lint:fix": "prettier --write src && eslint src --fix",
     "test": "npm run lint && npm run build",
     "prebuild": "npm run clean",
-    "build": "npm run build:types && npm run build:esm && npm run build:umd",
-    "build:types": "tsc -p ./tsconfig.json --declaration --emitDeclarationOnly",
-    "build:esm": "babel src --extensions .ts,.tsx --out-dir dist/esm --config-file ./babel.config.esm.js",
-    "build:umd": "babel src --extensions .ts,.tsx --out-dir dist/umd --config-file ./babel.config.umd.js",
+    "build": "tsc -p ./tsconfig.json",
     "publish": "semantic-release"
   },
   "overrides": {
