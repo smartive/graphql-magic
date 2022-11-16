@@ -1,6 +1,6 @@
 # graphql-magic
 
-Welcome to graphql-magic!
+Welcome to graphql-magic! This is an app.
 
 ```
 npm ci
