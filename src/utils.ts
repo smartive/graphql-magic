@@ -1,10 +1,7 @@
 import assert from 'assert';
 import { pluralize } from 'inflection';
-import { get as lodashGet } from 'lodash';
-import camelCase from 'lodash/camelCase';
-import kebabCase from 'lodash/kebabCase';
-import startCase from 'lodash/startCase';
-import { isObjectModel, Model, Models, ObjectModel, RawModels, Relation, ReverseRelation } from './models';
+import { camelCase, kebabCase, get as lodashGet, startCase } from 'lodash';
+import { Model, Models, ObjectModel, RawModels, Relation, ReverseRelation, isObjectModel } from './models';
 
 const isNotFalsy = <T>(v: T | null | undefined | false): v is T => typeof v !== 'undefined' && v !== null && v !== false;
 

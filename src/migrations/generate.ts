@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 import schemaInspector from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
 import { SchemaInspector } from 'knex-schema-inspector/dist/types/schema-inspector';
-import lowerFirst from 'lodash/lowerFirst';
+import { lowerFirst } from 'lodash';
 import { EnumModel, isEnumModel, Model, ModelField, Models, RawModels } from '../models';
 import { get, getModels, summonByName, typeToField } from '../utils';
 import { Value } from '../values';

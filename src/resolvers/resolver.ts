@@ -1,7 +1,6 @@
 import { GraphQLResolveInfo } from 'graphql';
 import { Knex } from 'knex';
-import cloneDeep from 'lodash/cloneDeep';
-import flatMap from 'lodash/flatMap';
+import { cloneDeep, flatMap } from 'lodash';
 import { Context, FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { applyPermissions } from '../permissions/check';
