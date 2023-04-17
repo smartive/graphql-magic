@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": "^16"
+    "node": "^18"
   },
   "scripts": {
     "bootstrap": "npm ci && npm run generate",
@@ -28,6 +28,7 @@
     "access": "restricted"
   },
   "dependencies": {
+    "@types/node": "^18.15.11",
     "apollo-server-errors": "^3.3.1",
     "code-block-writer": "^12.0.0",
     "graphql": "^15.8.0",
@@ -52,7 +53,6 @@
     "@smartive/prettier-config": "^3.0.0",
     "@types/lodash": "^4.14.194",
     "@types/luxon": "^3.3.0",
-    "@types/node": "^18.15.11",
     "@types/uuid": "^9.0.1",
     "create-ts-index": "^1.14.0",
     "del-cli": "^5.0.0",
