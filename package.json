@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": "^19"
+    "node": "^18"
   },
   "scripts": {
     "bootstrap": "npm ci && npm run generate",
