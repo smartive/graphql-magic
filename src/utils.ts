@@ -1,8 +1,10 @@
 import assert from 'assert';
+import { pluralize } from 'inflection';
+import { get as lodashGet } from 'lodash';
 import camelCase from 'lodash/camelCase';
 import kebabCase from 'lodash/kebabCase';
 import startCase from 'lodash/startCase';
-import { isObjectModel, Model, Models, ObjectModel, RawModels } from './models';
+import { isObjectModel, Model, Models, ObjectModel, RawModels, Relation, ReverseRelation } from './models';
 
 const isNotFalsy = <T>(v: T | null | undefined | false): v is T => typeof v !== 'undefined' && v !== null && v !== false;
 
@@ -12,7 +14,7 @@ export const merge = <T>(objects: ({ [name: string]: T } | undefined | false)[] 
 // Target -> target
 export const typeToField = (type: string) => type.substr(0, 1).toLowerCase() + type.substr(1);
 
-export const getModelPlural = (model: ObjectModel | Model) => model.plural || `${model.name}s`;
+export const getModelPlural = (model: ObjectModel | Model) => model.plural || pluralize(model.name);
 
 export const getModelPluralField = (model: Model) => typeToField(getModelPlural(model));
 
@@ -29,6 +31,8 @@ export const getModels = (rawModels: RawModels): Models => {
     const objectModel: Model = {
       ...model,
       fieldsByName: {},
+      relations: [],
+      relationsByName: {},
       reverseRelations: [],
       reverseRelationsByName: {},
       fields: [
@@ -100,7 +104,7 @@ export const getModels = (rawModels: RawModels): Models => {
     for (const field of model.fields.filter(({ relation }) => relation)) {
       const fieldModel = summonByName(models, field.type);
 
-      const reverseRelation = {
+      const reverseRelation: ReverseRelation = {
         name: field.reverse || (field.toOne ? typeToField(model.name) : getModelPluralField(model)),
         foreignKey: get(field, 'foreignKey'),
         type: model.name,
@@ -109,6 +113,14 @@ export const getModels = (rawModels: RawModels): Models => {
         field,
         model,
       };
+
+      const relation: Relation = {
+        field,
+        model: fieldModel,
+        reverseRelation,
+      };
+      model.relations.push(relation);
+      model.relationsByName[relation.field.name] = relation;
 
       fieldModel.reverseRelations.push(reverseRelation);
 
@@ -121,8 +133,8 @@ export const getModels = (rawModels: RawModels): Models => {
 
 export const summonByName = <T extends { name: string }>(array: T[], value: string) => summonByKey(array, 'name', value);
 
-export const summonByKey = <T, U extends keyof T>(array: readonly T[] | undefined, key: U, value: T[U]) =>
-  summon(array, (element: T) => element[key] === value, `No element with ${String(key)} ${value} found`);
+export const summonByKey = <T, U extends keyof T>(array: readonly T[] | undefined, key: string, value: unknown) =>
+  summon(array, (element: T) => lodashGet(element, key) === value, `No element found with ${key} ${value}`);
 
 export const summon = <T>(array: readonly T[] | undefined, cb: Parameters<T[]['find']>[1], errorMessage?: string) => {
   if (array === undefined) {
@@ -159,4 +171,16 @@ export const get = <T, U extends keyof T>(object: T | null | undefined, key: U):
 export const getString = (v: unknown) => {
   assert(typeof v === 'string');
   return v;
+};
+
+export const retry = async <T>(cb: () => Promise<T>, condition: (e: any) => boolean) => {
+  try {
+    return await cb();
+  } catch (e) {
+    if (condition(e)) {
+      return await cb();
+    } else {
+      throw e;
+    }
+  }
 };

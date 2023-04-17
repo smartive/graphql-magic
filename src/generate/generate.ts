@@ -1,13 +1,21 @@
-import { buildASTSchema, GraphQLSchema, print } from 'graphql';
+import { buildASTSchema, DefinitionNode, DocumentNode, GraphQLSchema, print } from 'graphql';
 import flatMap from 'lodash/flatMap';
-import { Field, isEnumModel, isQueriableField, isRawObjectModel, isScalarModel, RawModels } from '../models';
+import {
+  Field,
+  isEnumModel,
+  isJsonObjectModel,
+  isQueriableField,
+  isRawObjectModel,
+  isScalarModel,
+  RawModels,
+} from '../models';
 import { getModelPluralField, getModels, typeToField } from '../utils';
 import { document, enm, input, object, scalar } from './utils';
 
-export const generate = (rawModels: RawModels) => {
+export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
   const models = getModels(rawModels);
 
-  const doc = document([
+  return [
     // Predefined types
     enm('Order', ['ASC', 'DESC']),
     scalar('DateTime'),
@@ -16,6 +24,7 @@ export const generate = (rawModels: RawModels) => {
     ...rawModels.filter(isEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
     ...rawModels.filter(isRawObjectModel).map((model) => object(model.name, model.fields)),
+    ...rawModels.filter(isJsonObjectModel).map((model) => object(model.name, model.fields)),
     ...rawModels
       .filter(isRawObjectModel)
       .filter(({ rawFilters }) => rawFilters)
@@ -23,7 +32,7 @@ export const generate = (rawModels: RawModels) => {
         input(
           `${model.name}Where`,
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- array gets filtered above to only include models with rawFilters
-          model.rawFilters!.map(({ name, type, list = false }) => ({ name, type, list }))
+          model.rawFilters!.map(({ name, type, list = false, nonNull = false }) => ({ name, type, list, nonNull }))
         )
       ),
 
@@ -48,6 +57,7 @@ export const generate = (rawModels: RawModels) => {
                 nonNull: !field.toOne,
                 args: [
                   { name: 'where', type: `${model.name}Where` },
+                  ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
                   ...(model.fields.some(({ orderable }) => orderable)
                     ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
                     : []),
@@ -60,7 +70,7 @@ export const generate = (rawModels: RawModels) => {
           ),
           input(`${model.name}Where`, [
             ...model.fields
-              .filter(({ unique, filterable }) => unique || filterable)
+              .filter(({ unique, filterable, relation }) => (unique || filterable) && !relation)
               .map(({ name, type, defaultFilter }) => ({ name, type, list: true, default: defaultFilter })),
             ...flatMap(
               model.fields.filter(({ comparable }) => comparable),
@@ -71,6 +81,12 @@ export const generate = (rawModels: RawModels) => {
                 { name: `${name}_LTE`, type },
               ]
             ),
+            ...model.fields
+              .filter(({ filterable, relation }) => filterable && relation)
+              .map(({ name, type }) => ({
+                name,
+                type: `${type}Where`,
+              })),
           ]),
           input(
             `${model.name}WhereUnique`,
@@ -127,6 +143,7 @@ export const generate = (rawModels: RawModels) => {
         .map(({ name }) => ({
           name: typeToField(name),
           type: name,
+          nonNull: true,
           args: [
             {
               name: 'where',
@@ -144,6 +161,7 @@ export const generate = (rawModels: RawModels) => {
           nonNull: true,
           args: [
             { name: 'where', type: `${model.name}Where` },
+            ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             ...(model.fields.some(({ orderable }) => orderable)
               ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
               : []),
@@ -228,10 +246,10 @@ export const generate = (rawModels: RawModels) => {
         })
       ),
     ]),
-  ]);
-
-  return doc;
+  ];
 };
+
+export const generate = (rawModels: RawModels) => document(generateDefinitions(rawModels));
 
 export const printSchema = (schema: GraphQLSchema): string =>
   [
@@ -247,5 +265,7 @@ export const printSchema = (schema: GraphQLSchema): string =>
 
 const hasRawFilters = (models: RawModels, type: string) =>
   models.filter(isRawObjectModel).some(({ name, rawFilters }) => name === type && !!rawFilters);
+
+export const printSchemaFromDocument = (document: DocumentNode) => printSchema(buildASTSchema(document));
 
 export const printSchemaFromModels = (models: RawModels) => printSchema(buildASTSchema(generate(models)));

@@ -1,14 +1,7 @@
-import type {
-  GraphQLObjectType,
-  GraphQLSchema,
-  InputValueDefinitionNode,
-  TypeDefinitionNode,
-  TypeNode,
-  ValueNode,
-} from 'graphql';
+import type { GraphQLObjectType, GraphQLSchema, TypeDefinitionNode, TypeNode, ValueNode } from 'graphql';
 import { Kind } from 'graphql';
 import { Dictionary } from 'lodash';
-import { summon } from '../utils';
+import { summonByKey } from '../utils';
 import { Value } from '../values';
 import { FieldResolverNode } from './node';
 import { Maybe, VariableValues } from './utils';
@@ -32,6 +25,7 @@ export type NormalizedArguments = {
   offset?: number;
   orderBy?: OrderBy;
   where?: Where;
+  search?: string;
   mine?: boolean;
   language?: string;
 };
@@ -40,7 +34,7 @@ function getRawValue(value: ValueNode, values?: VariableValues): Value {
   switch (value.kind) {
     case Kind.LIST:
       if (!values) {
-        return undefined;
+        return;
       }
       return value.values.map((value) => getRawValue(value, values));
     case Kind.VARIABLE:
@@ -57,7 +51,7 @@ function getRawValue(value: ValueNode, values?: VariableValues): Value {
       return value.value;
     case Kind.OBJECT: {
       if (!value.fields.length) {
-        return undefined;
+        return;
       }
       const res: Dictionary<Value> = {};
       for (const field of value.fields) {
@@ -75,16 +69,13 @@ export const normalizeArguments = (node: FieldResolverNode) => {
       const rawValue = getRawValue(argument.value, node.ctx.info.variableValues);
       const normalizedValue = normalizeValue(
         rawValue,
-        summon(
-          node.fieldDefinition.arguments || [],
-          (arg: InputValueDefinitionNode) => arg.name.value === argument.name.value
-        ).type,
+        summonByKey(node.fieldDefinition.arguments || [], 'name.value', argument.name.value).type,
         node.ctx.info.schema
       );
       if (normalizedValue === undefined) {
         continue;
       }
-      (normalizedArguments as any)[argument.name.value] = normalizedValue;
+      normalizedArguments[argument.name.value as keyof NormalizedArguments] = normalizedValue as any;
     }
   }
   return normalizedArguments;
@@ -103,7 +94,7 @@ export function normalizeValue(value: Value, type: TypeNode, schema: GraphQLSche
 
       const normalizedValue = normalizeValue(value, type.type, schema);
       if (normalizedValue === undefined) {
-        return undefined;
+        return;
       }
 
       return [normalizedValue];
@@ -124,11 +115,11 @@ export const normalizeValueByTypeDefinition = (value: Value, type: Maybe<TypeDef
     return value;
   }
   if (!value) {
-    return undefined;
+    return;
   }
   const res: Record<string, Value> = {};
   for (const key of Object.keys(value)) {
-    const field = summon(type.fields, (field: InputValueDefinitionNode) => field.name.value === key);
+    const field = summonByKey(type.fields, 'name.value', key);
     const normalizedValue = normalizeValue((value as Dictionary<Value>)[key], field.type, schema);
     if (normalizedValue === undefined) {
       continue;

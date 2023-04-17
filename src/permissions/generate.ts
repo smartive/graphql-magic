@@ -1,9 +1,9 @@
 import { Models } from '../models';
 import { summonByName } from '../utils';
 
-export type Action = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
+export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
 
-const ACTIONS: Action[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'];
+const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'];
 
 /**
  * Initial representation (tree structure, as defined by user).
@@ -17,7 +17,7 @@ export type PermissionsConfig = {
 };
 
 export type PermissionsBlock = {
-  [action in Action]?: true;
+  [action in PermissionAction]?: true;
 } & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   WHERE?: Record<string, any>;
@@ -35,7 +35,7 @@ export type Permissions = {
 
 type RolePermissions = {
   [type: string]: {
-    [action in Action]?: true | PermissionStack;
+    [action in PermissionAction]?: true | PermissionStack;
   };
 };
 
@@ -44,7 +44,9 @@ type RolePermissions = {
  * this represents the list of potential (join) paths
  * that would grant permission to perform that action.
  */
-export type PermissionStack = PermissionLink[][];
+export type PermissionStack = PermissionChain[];
+
+export type PermissionChain = PermissionLink[];
 
 export type PermissionLink = {
   type: string;
@@ -69,7 +71,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
         rolePermissions[type] = {};
         for (const action of ACTIONS) {
           if (action === 'READ' || action in block) {
-            rolePermissions[type][action] = true;
+            rolePermissions[type]![action] = true;
           }
         }
       }
@@ -93,7 +95,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
 };
 
 const addPermissions = (models: Models, permissions: RolePermissions, links: PermissionLink[], block: PermissionsBlock) => {
-  const { type } = links[links.length - 1];
+  const { type } = links[links.length - 1]!;
   const model = summonByName(models, type);
 
   for (const action of ACTIONS) {
@@ -101,11 +103,11 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
       if (!permissions[type]) {
         permissions[type] = {};
       }
-      if (!permissions[type][action]) {
-        permissions[type][action] = [];
+      if (!permissions[type]![action]) {
+        permissions[type]![action] = [];
       }
-      if (permissions[type][action] !== true) {
-        (permissions[type][action] as PermissionStack).push(links);
+      if (permissions[type]![action] !== true) {
+        (permissions[type]![action] as PermissionStack).push(links);
       }
     }
   }
@@ -121,7 +123,12 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
           reverse: true,
         };
       } else {
-        const field = model.reverseRelationsByName[relation];
+        const field = model.reverseRelationsByName[relation]!;
+
+        if (!field) {
+          throw new Error(`Relation ${relation} in model ${model.name} does not exist.`);
+        }
+
         link = {
           type: field.model.name,
           foreignKey: field.foreignKey,

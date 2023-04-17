@@ -6,9 +6,10 @@ import type {
   ObjectTypeDefinitionNode,
   SelectionNode,
 } from 'graphql';
+
 import { FullContext } from '../context';
-import { Model } from '../models';
-import { get, summon, summonByName } from '../utils';
+import { isJsonObjectModel, Model } from '../models';
+import { get, summonByKey, summonByName } from '../utils';
 import {
   getFragmentTypeName,
   getNameOrAlias,
@@ -25,6 +26,7 @@ export type ResolverNode = {
 
   tableName: string;
   tableAlias: string;
+  shortTableAlias: string;
 
   baseTypeDefinition: ObjectTypeDefinitionNode;
   baseModel?: Model;
@@ -40,6 +42,16 @@ export type FieldResolverNode = ResolverNode & {
   fieldDefinition: FieldDefinitionNode;
   foreignKey?: string;
   isList: boolean;
+};
+
+export type WhereNode = {
+  ctx: FullContext;
+  tableName: string;
+  tableAlias: string;
+  shortTableAlias: string;
+  model: Model;
+
+  foreignKey?: string;
 };
 
 export const getResolverNode = ({
@@ -58,6 +70,7 @@ export const getResolverNode = ({
   ctx,
   tableName: typeName,
   tableAlias,
+  shortTableAlias: ctx.aliases.getShort(tableAlias),
   baseTypeDefinition,
   baseModel: ctx.models.find((model) => model.name === baseTypeDefinition.name.value),
   typeDefinition: getType(ctx.info.schema, typeName),
@@ -75,11 +88,7 @@ export const getRootFieldNode = ({
   baseTypeDefinition: ObjectTypeDefinitionNode;
 }): FieldResolverNode => {
   const fieldName = node.name.value;
-  const fieldDefinition = summon(
-    baseTypeDefinition.fields || [],
-    (f: FieldDefinitionNode) => f.name.value === fieldName,
-    `No field ${fieldName} found in model ${baseTypeDefinition.name.value}.`
-  );
+  const fieldDefinition = summonByKey(baseTypeDefinition.fields || [], 'name.value', fieldName);
 
   const typeName = getTypeName(fieldDefinition.type);
 
@@ -87,6 +96,7 @@ export const getRootFieldNode = ({
     ctx,
     tableName: typeName,
     tableAlias: typeName,
+    shortTableAlias: ctx.aliases.getShort(typeName),
     baseTypeDefinition,
     typeDefinition: getType(ctx.info.schema, typeName),
     model: summonByName(ctx.models, typeName),
@@ -97,8 +107,15 @@ export const getRootFieldNode = ({
   };
 };
 
-export const getSimpleFields = (node: ResolverNode) =>
-  node.selectionSet.filter(isFieldNode).filter(({ selectionSet }) => !selectionSet);
+export const getSimpleFields = (node: ResolverNode) => {
+  return node.selectionSet.filter(isFieldNode).filter((selection) => {
+    if (!selection.selectionSet) {
+      return true;
+    }
+
+    return node.model.fields.some(({ json, name }) => json && name === selection.name.value);
+  });
+};
 
 export const getInlineFragments = (node: ResolverNode) =>
   node.selectionSet.filter(isInlineFragmentNode).map((subNode) =>
@@ -115,7 +132,7 @@ export const getFragmentSpreads = (node: ResolverNode) =>
   node.selectionSet.filter(isFragmentSpreadNode).map((subNode) =>
     getResolverNode({
       ctx: node.ctx,
-      node: node.ctx.info.fragments[subNode.name.value],
+      node: node.ctx.info.fragments[subNode.name.value]!,
       tableAlias: node.tableAlias,
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: node.model.name,
@@ -129,13 +146,13 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
     const baseTypeDefinition = node.typeDefinition;
     const fieldName = subNode.name.value;
     const fieldNameOrAlias = getNameOrAlias(subNode);
-    const fieldDefinition = summon(
-      baseTypeDefinition.fields || [],
-      (f: FieldDefinitionNode) => f.name.value === fieldName,
-      `No field ${fieldName} found in model ${baseTypeDefinition.name.value}.`
-    );
+    const fieldDefinition = summonByKey(baseTypeDefinition.fields || [], 'name.value', fieldName);
 
     const typeName = getTypeName(fieldDefinition.type);
+
+    if (isJsonObjectModel(summonByName(ctx.rawModels, typeName))) {
+      continue;
+    }
 
     const baseModel = summonByName(ctx.models, baseTypeDefinition.name.value);
 
@@ -154,10 +171,13 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       foreignKey = modelField.foreignKey;
     }
 
+    const tableAlias = node.tableAlias + '__' + fieldNameOrAlias;
+
     nodes.push({
       ctx,
       tableName: typeName,
-      tableAlias: toMany ? typeName : node.tableAlias + '__' + fieldNameOrAlias,
+      tableAlias,
+      shortTableAlias: ctx.aliases.getShort(tableAlias),
       baseTypeDefinition,
       baseModel,
       typeDefinition: getType(ctx.info.schema, typeName),

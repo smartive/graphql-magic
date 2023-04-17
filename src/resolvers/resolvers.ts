@@ -2,10 +2,8 @@ import { Models } from '../models';
 import { getModelPluralField, merge, typeToField } from '../utils';
 import { mutationResolver } from './mutations';
 import { queryResolver } from './resolver';
-import { scalars } from './scalars';
 
 export const getResolvers = (models: Models) => ({
-  ...scalars,
   Query: merge([
     {
       me: queryResolver,
