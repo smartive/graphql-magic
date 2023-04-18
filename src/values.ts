@@ -1,4 +1,3 @@
-import { Dictionary } from 'lodash';
 import { DateTime } from 'luxon';
 
 export class Enum {
@@ -7,7 +6,7 @@ export class Enum {
 
 export type BasicValue = undefined | null | boolean | string | number | DateTime;
 
-export type Value = BasicValue | Enum | Enum[] | Dictionary<Value> | Value[];
+export type Value = any; // BasicValue | Enum | Enum[] | Record<string, Value> | Value[];
 
 export type Values = {
   name: string;

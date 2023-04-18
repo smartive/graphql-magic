@@ -1,5 +1,5 @@
 import { buildASTSchema, DefinitionNode, DocumentNode, GraphQLSchema, print } from 'graphql';
-import { flatMap } from 'lodash';
+import flatMap from 'lodash/flatMap';
 import {
   Field,
   isEnumModel,

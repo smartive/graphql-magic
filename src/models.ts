@@ -1,4 +1,3 @@
-import type { Dictionary } from 'lodash';
 import type { Context } from './context';
 import type { OrderBy } from './resolvers/arguments';
 import type { Directive, Value } from './values';
@@ -194,11 +193,11 @@ export type ModelField = Field & {
 export type Models = Model[];
 
 export type Model = ObjectModel & {
-  fieldsByName: Dictionary<ModelField>;
+  fieldsByName: Record<string, ModelField>;
   relations: Relation[];
-  relationsByName: Dictionary<Relation>;
+  relationsByName: Record<string, Relation>;
   reverseRelations: ReverseRelation[];
-  reverseRelationsByName: Dictionary<ReverseRelation>;
+  reverseRelationsByName: Record<string, ReverseRelation>;
 };
 
 export type Relation = {

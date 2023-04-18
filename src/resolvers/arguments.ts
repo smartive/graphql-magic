@@ -1,12 +1,11 @@
 import type { GraphQLObjectType, GraphQLSchema, TypeDefinitionNode, TypeNode, ValueNode } from 'graphql';
 import { Kind } from 'graphql';
-import { Dictionary } from 'lodash';
 import { summonByKey } from '../utils';
 import { Value } from '../values';
 import { FieldResolverNode } from './node';
 import { Maybe, VariableValues } from './utils';
 
-export type Where = Dictionary<Value>;
+export type Where = Record<string, Value>;
 
 export type OrderBy = Record<string, 'ASC' | 'DESC'>[];
 
@@ -53,7 +52,7 @@ function getRawValue(value: ValueNode, values?: VariableValues): Value {
       if (!value.fields.length) {
         return;
       }
-      const res: Dictionary<Value> = {};
+      const res: Record<string, Value> = {};
       for (const field of value.fields) {
         res[field.name.value] = getRawValue(field.value, values);
       }
@@ -120,7 +119,7 @@ export const normalizeValueByTypeDefinition = (value: Value, type: Maybe<TypeDef
   const res: Record<string, Value> = {};
   for (const key of Object.keys(value)) {
     const field = summonByKey(type.fields, 'name.value', key);
-    const normalizedValue = normalizeValue((value as Dictionary<Value>)[key], field.type, schema);
+    const normalizedValue = normalizeValue((value as Record<string, Value>)[key], field.type, schema);
     if (normalizedValue === undefined) {
       continue;
     }

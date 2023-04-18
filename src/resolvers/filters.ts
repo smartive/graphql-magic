@@ -1,12 +1,11 @@
 import { Knex } from 'knex';
-import { Dictionary } from 'lodash';
 import { ForbiddenError, UserInputError } from '../errors';
 import { get, summonByName } from '../utils';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode, WhereNode } from './node';
 import { Joins, Ops, addJoin, apply, ors } from './utils';
 
-export const SPECIAL_FILTERS: Dictionary<string> = {
+export const SPECIAL_FILTERS: Record<string, string> = {
   GT: '?? > ?',
   GTE: '?? >= ?',
   LT: '?? < ?',

@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import { Dictionary } from 'lodash';
 import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { Model } from '../models';
@@ -87,7 +86,7 @@ export const applyPermissions = (
 export const getEntityToMutate = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
   model: Model,
-  where: Dictionary<BasicValue>,
+  where: Record<string, BasicValue>,
   action: 'UPDATE' | 'DELETE' | 'RESTORE'
 ) => {
   const query = ctx.knex(model.name).where(where).first();
@@ -112,7 +111,7 @@ export const getEntityToMutate = async (
 export const checkCanWrite = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
   model: Model,
-  data: Dictionary<BasicValue>,
+  data: Record<string, BasicValue>,
   action: 'CREATE' | 'UPDATE'
 ) => {
   const permissionStack = getPermissionStack(ctx, model.name, action);

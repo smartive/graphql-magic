@@ -1,4 +1,4 @@
-import { upperFirst } from 'lodash';
+import upperFirst from 'lodash/upperFirst';
 import { FullContext } from '../context';
 import {
   actionableRelations,

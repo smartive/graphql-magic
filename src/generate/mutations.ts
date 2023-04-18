@@ -1,4 +1,4 @@
-import { upperCase } from 'lodash';
+import upperCase from 'lodash/upperCase';
 import { Models } from '../models';
 
 const constantCase = (str: string) => upperCase(str).replace(/ /g, '_');
