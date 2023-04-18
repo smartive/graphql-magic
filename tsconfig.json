@@ -1,21 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDirs": ["./src"],
-    "declaration": true,
-    "sourceMap": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "noImplicitAny": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "strictNullChecks": true,
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true,
-    "module": "commonjs",
     "target": "esnext",
-    "jsx": "react"
-  },
-  "include": ["./src/**/*"]
+    "moduleResolution": "nodenext",
+    "allowSyntheticDefaultImports": true
+  }
 }

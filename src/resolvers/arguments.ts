@@ -75,7 +75,7 @@ export const normalizeArguments = (node: FieldResolverNode) => {
       if (normalizedValue === undefined) {
         continue;
       }
-      normalizedArguments[argument.name.value as keyof NormalizedArguments] = normalizedValue as any;
+      normalizedArguments[argument.name.value] = normalizedValue as any;
     }
   }
   return normalizedArguments;

@@ -156,7 +156,7 @@ export const it = <T>(object: T | null | undefined): ForSure<T> => {
   return object as ForSure<T>;
 };
 
-export const get = <T, U extends keyof T>(object: T | null | undefined, key: U): ForSure<ForSure<T>[U]> => {
+export const get = <T, U extends keyof ForSure<T>>(object: T | null | undefined, key: U): ForSure<ForSure<T>[U]> => {
   const value = it(object)[key];
   if (value === undefined || value === null) {
     console.trace();
