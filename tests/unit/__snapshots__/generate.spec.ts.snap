@@ -1,0 +1,105 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`generate generates a schema 1`] = `
+"type AnotherObject {
+  id: ID!
+  manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+}
+
+input AnotherObjectWhere {
+  id: [ID!]
+}
+
+input AnotherObjectWhereUnique {
+  id: ID
+}
+
+input CreateSomeObject {
+  xyz: Int!
+}
+
+scalar DateTime
+
+type Mutation {
+  createSomeObject(data: CreateSomeObject!): SomeObject!
+  updateSomeObject(where: SomeObjectWhereUnique!, data: UpdateSomeObject!): SomeObject!
+  deleteSomeObject(where: SomeObjectWhereUnique!, dryRun: Boolean): ID!
+  restoreSomeObject(where: SomeObjectWhereUnique!): ID!
+}
+
+enum Order {
+  ASC
+  DESC
+}
+
+type Query {
+  me: User
+  someObject(where: SomeObjectWhereUnique!): SomeObject!
+  manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+}
+
+enum SomeEnum {
+  A
+  B
+  C
+}
+
+type SomeObject {
+  id: ID!
+  field: String
+  another: AnotherObject!
+  list(magic: Boolean): [Float!]!
+  xyz: Int!
+  createdAt: DateTime!
+  createdBy: User!
+  updatedAt: DateTime!
+  updatedBy: User!
+  deleted: Boolean!
+  deletedAt: DateTime
+  deletedBy: User
+}
+
+input SomeObjectOrderBy {
+  xyz: Order
+  createdAt: Order
+  updatedAt: Order
+  deletedAt: Order
+}
+
+input SomeObjectWhere {
+  id: [ID!]
+  deleted: [Boolean!] = false
+  another: AnotherObjectWhere
+}
+
+input SomeObjectWhereUnique {
+  id: ID
+}
+
+type SomeRawObject {
+  field: String
+}
+
+input UpdateSomeObject {
+  xyz: Int
+}
+
+scalar Upload
+
+type User {
+  id: ID!
+  username: String
+  createdManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  updatedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  deletedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+}
+
+input UserWhere {
+  id: [ID!]
+}
+
+input UserWhereUnique {
+  id: ID
+}
+"
+`;

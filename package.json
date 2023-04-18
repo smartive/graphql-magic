@@ -6,27 +6,27 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "engines": {
-    "node": "^18"
+    "node": ">=18"
   },
   "scripts": {
     "bootstrap": "npm ci && npm run generate",
     "generate": "npm run generate:index-files",
     "generate:index-files": "cti create ./src --excludes types --withoutbackup",
-    "lint": "prettier --check src && eslint src",
-    "lint:fix": "prettier --write src && eslint src --fix",
-    "test": "npm run lint && npm run build",
-    "build": "tsup --format esm,cjs",
-    "publish": "semantic-release"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "npm run lint && npm run test:unit && npm run build",
+    "test:unit": "jest tests/unit --no-cache --no-watchman",
+    "build": "tsup --format esm,cjs"
   },
   "overrides": {
-    "graphql": "$graphql"
+    "graphql": "$graphql",
+    "rollup": "3.20.4"
   },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
     "access": "restricted"
   },
   "dependencies": {
-    "@types/node": "^18.15.11",
     "@apollo/server": "^4.0.0",
     "code-block-writer": "^12.0.0",
     "graphql": "^15.8.0",
@@ -35,25 +35,24 @@
     "knex-schema-inspector": "^3.0.1",
     "lodash": "^4.17.21",
     "luxon": "^3.3.0",
-    "tsup": "^6.7.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/commit-analyzer": "^9.0.2",
-    "@semantic-release/gitlab": "^12.0.1",
-    "@semantic-release/npm": "^10.0.3",
-    "@semantic-release/release-notes-generator": "^10.0.3",
     "@smartive/eslint-config": "^3.1.1",
     "@smartive/prettier-config": "^3.0.0",
+    "@types/jest": "^29.5.0",
     "@types/lodash": "^4.14.194",
     "@types/luxon": "^3.3.0",
+    "@types/node": "^18.15.11",
     "@types/uuid": "^9.0.1",
     "create-ts-index": "^1.14.0",
-    "del-cli": "^5.0.0",
     "eslint": "^8.38.0",
+    "jest": "^29.5.0",
+    "mock-knex": "^0.4.12",
     "prettier": "^2.8.7",
-    "semantic-release": "^21.0.1",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.7.0",
     "typescript": "^5.0.4"
   }
 }

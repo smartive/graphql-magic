@@ -18,22 +18,23 @@ stages:
 
 .default_template:
   extends: .base
-  image: node:18
+  image: node:18-alpine
   before_script:
     - npm ci
-
-.deploy_template:
-  extends: .default_template
-  stage: deploy
-  before_script:
-    - npm ci
-    - npm i -g vercel
 
 linting:
   extends: .default_template
   stage: test
   script:
     - npm run lint
+  only:
+    - merge_requests
+
+unit tests:
+  extends: .default_template
+  stage: test
+  script:
+    - npm run test:unit
   only:
     - merge_requests
 
@@ -46,11 +47,12 @@ test build:
     - merge_requests
 
 publish:
-  extends: .default_template
+  extends: .create-release
   stage: release
   script:
+    - npm ci
     - npm run build
-    - npm run publish
+    - semantic-release
   only:
     - main
     - next
