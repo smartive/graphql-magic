@@ -1,6 +1,5 @@
-import CodeBlockWriter from 'code-block-writer';
+import type TypeCodeBlockWriter from 'code-block-writer';
 import { Knex } from 'knex';
-import schemaInspector from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
 import { SchemaInspector } from 'knex-schema-inspector/dist/types/schema-inspector';
 import lowerFirst from 'lodash/lowerFirst';
@@ -9,6 +8,12 @@ import { get, getModels, summonByName, typeToField } from '../utils';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];
+
+// Workaround for commonjs build otherwise the imports are not resolved correctly
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const CodeBlockWriter = require('code-block-writer').default as typeof TypeCodeBlockWriter;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const schemaInspector = require('knex-schema-inspector').default;
 
 export class MigrationGenerator {
   private writer = new CodeBlockWriter({ useSingleQuote: true, indentNumberOfSpaces: 2 });
