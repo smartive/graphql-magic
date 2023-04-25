@@ -1,8 +1,9 @@
 {
-  "include": ["./src/**/*"],
+  "include": ["**/*.ts", "**/*.tsx", "**/unit/**/*.spec.ts"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "outDir": "./dist/esm",
-    "rootDir": "./src",
+    "rootDir": "./",
     "sourceMap": true,
     "declaration": true,
     "target": "esnext",

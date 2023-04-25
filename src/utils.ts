@@ -133,7 +133,7 @@ export const getModels = (rawModels: RawModels): Models => {
 
 export const summonByName = <T extends { name: string }>(array: T[], value: string) => summonByKey(array, 'name', value);
 
-export const summonByKey = <T, U extends keyof T>(array: readonly T[] | undefined, key: string, value: unknown) =>
+export const summonByKey = <T>(array: readonly T[] | undefined, key: string, value: unknown) =>
   summon(array, (element: T) => lodashGet(element, key) === value, `No element found with ${key} ${value}`);
 
 export const summon = <T>(array: readonly T[] | undefined, cb: Parameters<T[]['find']>[1], errorMessage?: string) => {
