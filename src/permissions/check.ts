@@ -228,6 +228,9 @@ const applyWhere = (model: Model, query: Knex.QueryBuilder, alias: string, where
         `${subAlias}.id`
       );
       applyWhere(relation.model, query, subAlias, value, aliases);
+    } else if (Array.isArray(value)) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
+      query.whereIn(`${alias}.${key}`, value);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
       query.where({ [`${alias}.${key}`]: value });
