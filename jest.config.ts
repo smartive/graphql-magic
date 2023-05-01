@@ -1,17 +1,11 @@
 import type { Config } from 'jest';
 
 const config: Config = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
   testTimeout: 45_000,
   transform: {
-    '^.+\\.(t|mj)sx?$': [
-      'ts-jest',
-      {
-        tsconfig: 'tsconfig.jest.json',
-        isolatedModules: true,
-        allowJs: true,
-      },
-    ],
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
   },
 };
 
