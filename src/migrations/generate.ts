@@ -1,7 +1,8 @@
-import type TypeCodeBlockWriter from 'code-block-writer';
+import CodeBlockWriter from 'code-block-writer';
 import { Knex } from 'knex';
+import { SchemaInspector } from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
-import { SchemaInspector } from 'knex-schema-inspector/dist/types/schema-inspector';
+import { SchemaInspector as SchemaInspectorType } from 'knex-schema-inspector/dist/types/schema-inspector';
 import lowerFirst from 'lodash/lowerFirst';
 import { EnumModel, isEnumModel, Model, ModelField, Models, RawModels } from '../models';
 import { get, getModels, summonByName, typeToField } from '../utils';
@@ -9,22 +10,19 @@ import { Value } from '../values';
 
 type Callbacks = (() => void)[];
 
-// Workaround for commonjs build otherwise the imports are not resolved correctly
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CodeBlockWriter = require('code-block-writer').default as typeof TypeCodeBlockWriter;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const schemaInspector = require('knex-schema-inspector').default;
-
 export class MigrationGenerator {
-  private writer = new CodeBlockWriter({ useSingleQuote: true, indentNumberOfSpaces: 2 });
-  private schema: SchemaInspector;
+  private writer = new (CodeBlockWriter['default'] || CodeBlockWriter)({
+    useSingleQuote: true,
+    indentNumberOfSpaces: 2,
+  });
+  private schema: SchemaInspectorType;
   private columns: Record<string, Column[]> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   private models: Models;
 
   constructor(knex: Knex, private rawModels: RawModels) {
-    this.schema = schemaInspector(knex);
+    this.schema = SchemaInspector(knex);
     this.models = getModels(rawModels);
   }
 
