@@ -4,7 +4,14 @@ import type { Directive, Value } from './values';
 
 export type RawModels = RawModel[];
 
-export type RawModel = ScalarModel | EnumModel | InterfaceModel | ObjectModel | RawObjectModel | JsonObjectModel;
+export type RawModel =
+  | ScalarModel
+  | EnumModel
+  | RawEnumModel
+  | InterfaceModel
+  | ObjectModel
+  | RawObjectModel
+  | JsonObjectModel;
 
 type BaseModel = {
   name: string;
@@ -15,6 +22,8 @@ type BaseModel = {
 export type ScalarModel = BaseModel & { type: 'scalar' };
 
 export type EnumModel = BaseModel & { type: 'enum'; values: string[]; deleted?: true };
+
+export type RawEnumModel = BaseModel & { type: 'raw-enum'; values: string[] };
 
 export type InterfaceModel = BaseModel & { type: 'interface'; fields: ModelField[] };
 
@@ -71,6 +80,8 @@ export type InputObject = {
 export const isObjectModel = (model: RawModel): model is ObjectModel => model.type === 'object';
 
 export const isEnumModel = (model: RawModel): model is EnumModel => model.type === 'enum';
+
+export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.type === 'raw-enum';
 
 export const isScalarModel = (model: RawModel): model is ScalarModel => model.type === 'scalar';
 
