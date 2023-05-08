@@ -5,6 +5,7 @@ import {
   isEnumModel,
   isJsonObjectModel,
   isQueriableField,
+  isRawEnumModel,
   isRawObjectModel,
   isScalarModel,
   RawModels,
@@ -22,6 +23,7 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     scalar('Upload'),
 
     ...rawModels.filter(isEnumModel).map((model) => enm(model.name, model.values)),
+    ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
     ...rawModels.filter(isRawObjectModel).map((model) => object(model.name, model.fields)),
     ...rawModels.filter(isJsonObjectModel).map((model) => object(model.name, model.fields)),
@@ -44,10 +46,10 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             [
               ...model.fields.filter(isQueriableField).map((field) => ({
                 ...field,
-                args:
-                  field.raw && hasRawFilters(rawModels, field.type)
-                    ? [{ name: 'where', type: `${field.type}Where` }]
-                    : field.args || [],
+                args: [
+                  ...(field.args || []),
+                  ...(hasRawFilters(rawModels, field.type) ? [{ name: 'where', type: `${field.type}Where` }] : []),
+                ],
                 directives: field.directives,
               })),
               ...model.reverseRelations.map(({ name, field, model }) => ({

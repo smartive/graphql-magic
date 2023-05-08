@@ -95,6 +95,7 @@ export const fields = (fields: Field[]): FieldDefinitionNode[] =>
         kind: 'InputValueDefinition',
         name: name(arg.name),
         type: fieldType(arg),
+        defaultValue: arg.default === undefined ? undefined : value(arg.default),
       })),
       directives: directives(field.directives),
     })
