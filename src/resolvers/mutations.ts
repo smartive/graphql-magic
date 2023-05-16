@@ -65,6 +65,7 @@ const update = async (model: Model, { where, data: input }: { where: any; data: 
 
   if (Object.keys(normalizedInput).length > 0) {
     await checkCanWrite(ctx, model, normalizedInput, 'UPDATE');
+    await ctx.handleUploads?.(normalizedInput);
 
     const next = { ...prev, ...normalizedInput };
     const data = { prev, input, normalizedInput, next };
