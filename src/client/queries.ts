@@ -1,5 +1,4 @@
 import upperFirst from 'lodash/upperFirst';
-import { FullContext } from '../context';
 import {
   actionableRelations,
   and,
@@ -16,7 +15,6 @@ import {
   ReverseRelation,
   VisibleRelationsByRole,
 } from '../models';
-import { getPermissionStack } from '../permissions/check';
 import { getModelPlural, getModelPluralField, summonByName, typeToField } from '../utils';
 
 export const getUpdateEntityQuery = (
@@ -70,23 +68,10 @@ export const getEditEntityRelationsQuery = (
   );
 };
 
-export const getManyToManyRelations = (
-  ctx: Pick<FullContext, 'permissions' | 'user'>,
-  model: Model,
-  fields?: string[],
-  ignoreFields?: string[]
-) => {
+export const getManyToManyRelations = (model: Model, fields?: string[], ignoreFields?: string[]) => {
   const manyToManyRelations: [ReverseRelation, Relation][] = [];
   for (const field of model.reverseRelations) {
-    if (
-      (fields && !fields.includes(field.name)) ||
-      (ignoreFields && ignoreFields.includes(field.name)) ||
-      !field.fieldModel.listQueriable ||
-      !field.model.creatable ||
-      !field.model.deletable ||
-      !getPermissionStack(ctx, field.model.name, 'CREATE') ||
-      !getPermissionStack(ctx, field.model.name, 'DELETE')
-    ) {
+    if ((fields && !fields.includes(field.name)) || (ignoreFields && ignoreFields.includes(field.name))) {
       continue;
     }
 
@@ -108,6 +93,8 @@ export const getManyToManyRelations = (
   }
   return manyToManyRelations;
 };
+
+export const getManyToManyRelation = (model: Model, name: string) => getManyToManyRelations(model, [name])[0];
 
 export const getManyToManyRelationsQuery = (
   model: Model,
