@@ -31,5 +31,5 @@ export const generateMutations = (models: Models) => {
     }
   }
 
-  return `import { gql } from "@smartive-private/graphql-magic";\n\n${parts.join('\n\n')}`;
+  return `import { gql } from "@smartive/graphql-magic";\n\n${parts.join('\n\n')}`;
 };
