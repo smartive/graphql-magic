@@ -1,6 +1,6 @@
 {
-  "name": "@smartive-private/graphql-magic",
-  "version": "1.0.0",
+  "name": "@smartive/graphql-magic",
+  "version": "0.0.0-development",
   "description": "",
   "source": "src/index.ts",
   "type": "module",
@@ -32,7 +32,7 @@
   },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "dependencies": {
     "@apollo/server": "^4.0.0",
