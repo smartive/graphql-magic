@@ -23,8 +23,7 @@
     "prebuild": "npm run clean",
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc",
-    "build:cjs": "esbuild src/index.ts --bundle --platform=node --outdir=dist/cjs --out-extension:.js=.cjs --format=cjs --packages=external",
-    "publish": "semantic-release"
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --outdir=dist/cjs --out-extension:.js=.cjs --format=cjs --packages=external"
   },
   "overrides": {
     "graphql": "$graphql",
