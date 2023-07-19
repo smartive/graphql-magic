@@ -61,6 +61,7 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   }
 
   if (!res[0]) {
+    console.error('Entity not found', query.toString());
     throw new NotFoundError('Entity not found');
   }
 
@@ -119,7 +120,11 @@ const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins
           }
 
           if (field.queriableBy && !field.queriableBy.includes(node.ctx.user.role)) {
-            throw new PermissionError('READ', `${node.model.name}'s field "${field.name}"`);
+            throw new PermissionError(
+              'READ',
+              `${node.model.name}'s field "${field.name}"`,
+              'field permission not available'
+            );
           }
 
           return true;

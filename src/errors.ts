@@ -26,7 +26,7 @@ export class UserInputError extends GraphQLError {
 }
 
 export class PermissionError extends ForbiddenError {
-  constructor(action: PermissionAction, what: string) {
-    super(`You do not have sufficient permissions to ${action.toLowerCase()} ${what}.`);
+  constructor(action: PermissionAction, what: string, why: string) {
+    super(`You do not have sufficient permissions to ${action.toLowerCase()} ${what} (${why}).`);
   }
 }
