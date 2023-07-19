@@ -11,7 +11,7 @@ import { Value } from '../values';
 type Callbacks = (() => void)[];
 
 export class MigrationGenerator {
-  private writer = new (CodeBlockWriter['default'] || CodeBlockWriter)({
+  private writer: CodeBlockWriter = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });
