@@ -1,6 +1,27 @@
 {
-  "$schema": "https://json.schemastore.org/semantic-release.json",
   "branches": [
-    "main"
+    "main",
+    {
+      "name": "next",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "angular",
+        "releaseRules": [
+          {
+            "type": "break",
+            "release": "major"
+          }
+        ]
+      }
+    ],
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/npm",
+    "@semantic-release/github"
   ]
 }
