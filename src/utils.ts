@@ -138,6 +138,7 @@ export const summonByKey = <T>(array: readonly T[] | undefined, key: string, val
 
 export const summon = <T>(array: readonly T[] | undefined, cb: Parameters<T[]['find']>[1], errorMessage?: string) => {
   if (array === undefined) {
+    console.trace();
     throw new Error('Base array is not defined.');
   }
   const result = array.find(cb);

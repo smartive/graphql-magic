@@ -45,6 +45,7 @@ export const applyPermissions = (
   }
 
   if (permissionStack === false) {
+    console.error(`No applicable permissions exist for ${ctx.user.role} ${type} ${action}.`);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
     query.where(false);
     return permissionStack;
@@ -93,13 +94,23 @@ export const getEntityToMutate = async (
   let entity = await query.clone();
 
   if (!entity) {
-    throw new NotFoundError('Entity to mutate');
+    console.error(
+      `Not found: ${Object.entries(where)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ')}`
+    );
+    throw new NotFoundError(`Entity to ${action.toLowerCase()}`);
   }
 
   applyPermissions(ctx, model.name, model.name, query, action);
   entity = await query;
   if (!entity) {
-    throw new PermissionError(action, `this ${model.name}`);
+    console.error(
+      `Permission error: ${Object.entries(where)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ')}`
+    );
+    throw new PermissionError(action, `this ${model.name}`, 'no available permissions applied');
   }
 
   return entity;
@@ -120,7 +131,7 @@ export const checkCanWrite = async (
     return;
   }
   if (permissionStack === false) {
-    throw new PermissionError(action, getModelPlural(model));
+    throw new PermissionError(action, getModelPlural(model), 'no applicable permissions');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- using `select(1 as any)` to instantiate an "empty" query builder
@@ -138,7 +149,7 @@ export const checkCanWrite = async (
 
     const fieldPermissions = field[action === 'CREATE' ? 'creatableBy' : 'updatableBy'];
     if (fieldPermissions && !fieldPermissions.includes(ctx.user.role)) {
-      throw new PermissionError(action, `this ${model.name}'s ${field.name}`);
+      throw new PermissionError(action, `this ${model.name}'s ${field.name}`, 'field permission not available');
     }
 
     linked = true;
@@ -153,7 +164,7 @@ export const checkCanWrite = async (
     }
 
     if (fieldPermissionStack === false || !fieldPermissionStack.length) {
-      throw new PermissionError(action, `this ${model.name}'s ${field.name}`);
+      throw new PermissionError(action, `this ${model.name}'s ${field.name}`, 'no applicable permissions on data to link');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
@@ -168,10 +179,10 @@ export const checkCanWrite = async (
   if (linked) {
     const canMutate = await query;
     if (!canMutate) {
-      throw new PermissionError(action, `this ${model.name} because there are no entities you can link it to`);
+      throw new PermissionError(action, `this ${model.name}`, 'no linkable entities');
     }
   } else if (action === 'CREATE') {
-    throw new PermissionError(action, `this ${model.name} because there are no entity types you can link it to`);
+    throw new PermissionError(action, `this ${model.name}`, 'no linkable entities');
   }
 };
 
