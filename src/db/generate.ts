@@ -1,5 +1,5 @@
 import CodeBlockWriter from 'code-block-writer';
-import { RawModels, getModels, isEnumModel } from '..';
+import { ModelField, RawModels, getModels, isEnumModel } from '..';
 
 const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -8,7 +8,10 @@ const PRIMITIVE_TYPES = {
   Int: 'number',
   Float: 'number',
   String: 'string',
+  DateTime: 'DateTime | string',
 };
+
+const OPTIONAL_SEED_FIELDS = ['createdAt', 'createdById', 'updatedAt', 'updatedById', 'deletedAt', 'deletedById'];
 
 export const generateDBModels = (rawModels: RawModels) => {
   const writer: CodeBlockWriter = new CodeBlockWriter['default']({
@@ -25,17 +28,16 @@ export const generateDBModels = (rawModels: RawModels) => {
   const models = getModels(rawModels);
 
   for (const model of models) {
+    // TODO: deprecate allowing to define foreignKey
+    const fields = model.fields.some((field) => field.foreignKey === 'id')
+      ? model.fields.filter((field) => field.name !== 'id')
+      : model.fields;
+
     writer
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
-        for (const { name, type, nonNull, relation } of model.fields.filter(({ raw }) => !raw)) {
-          writer
-            .write(
-              `'${name}${relation ? 'Id' : ''}': ${relation ? 'string' : PRIMITIVE_TYPES[type] || type}${
-                nonNull ? '' : ' | null'
-              },`
-            )
-            .newLine();
+        for (const field of fields.filter(({ raw }) => !raw)) {
+          writer.write(`'${getFieldName(field)}': ${getFieldOutputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
         }
       })
       .blankLine();
@@ -43,12 +45,12 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Initializer = `)
       .inlineBlock(() => {
-        for (const { name, type, nonNull, default: def, relation } of model.fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(({ raw }) => !raw)) {
           writer
             .write(
-              `'${name}${relation ? 'Id' : ''}'${nonNull && def === undefined ? '' : '?'}: ${
-                relation ? 'string' : PRIMITIVE_TYPES[type] || type
-              }${nonNull ? '' : ' | null'},`
+              `'${getFieldName(field)}'${field.nonNull && field.default === undefined ? '' : '?'}: ${getFieldInputType(
+                field
+              )}${field.nonNull ? '' : ' | null'},`
             )
             .newLine();
         }
@@ -58,12 +60,25 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Mutator = `)
       .inlineBlock(() => {
-        for (const { name, type, nonNull, relation } of model.fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(({ raw }) => !raw)) {
+          writer.write(`'${getFieldName(field)}'?: ${getFieldInputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
+        }
+      })
+      .blankLine();
+
+    writer
+      .write(`export type ${model.name}Seed = `)
+      .inlineBlock(() => {
+        for (const field of fields.filter(({ raw }) => !raw)) {
+          const fieldName = getFieldName(field);
           writer
             .write(
-              `'${name}${relation ? 'Id' : ''}'?: ${relation ? 'string' : PRIMITIVE_TYPES[type] || type}${
-                nonNull ? '' : ' | null'
-              },`
+              `'${getFieldName(field)}'${
+                field.nonNull && field.default === undefined && !OPTIONAL_SEED_FIELDS.includes(fieldName) ? '' : '?'
+              }: ${getFieldInputType(
+                field,
+                rawModels.filter(isEnumModel).map(({ name }) => name)
+              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'},`
             )
             .newLine();
         }
@@ -71,7 +86,38 @@ export const generateDBModels = (rawModels: RawModels) => {
       .blankLine();
   }
 
+  writer.write(`export type SeedData = `).inlineBlock(() => {
+    for (const model of models) {
+      writer.write(`${model.name}: ${model.name}Seed[],`).newLine();
+    }
+  });
+
   return writer.toString();
+};
+
+const getFieldName = ({ relation, name, foreignKey }: ModelField) => {
+  return foreignKey || `${name}${relation ? 'Id' : ''}`;
+};
+
+const getFieldOutputType = ({ relation, type, list, json }: ModelField) => {
+  if (json || relation) {
+    return 'string';
+  }
+
+  return (PRIMITIVE_TYPES[type] || type) + (list ? '[]' : '');
+};
+
+const getFieldInputType = (field: ModelField, stringTypes: string[] = []) => {
+  let outputType = getFieldOutputType(field);
+
+  if (field.list || stringTypes.includes(field.type)) {
+    outputType += ' | string';
+    if (field.list && stringTypes.includes(field.type)) {
+      outputType += ' | string[]';
+    }
+  }
+
+  return outputType;
 };
 
 export const generateKnexTables = (rawModels: RawModels) => {
