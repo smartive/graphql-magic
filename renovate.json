@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["gitlab>smartive/internal-it/renovate"],
+  "extends": ["github>smartive/renovate-config"],
   "packageRules": [
     {
       "packagePatterns": ["^@types[/]"],
