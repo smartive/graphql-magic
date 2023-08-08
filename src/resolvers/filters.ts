@@ -72,12 +72,12 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
     const specialFilter = key.match(/^(\w+)_(\w+)$/);
     if (specialFilter) {
       const [, actualKey, filter] = specialFilter;
-      if (!SPECIAL_FILTERS[filter!]) {
+      if (!SPECIAL_FILTERS[filter]) {
         // Should not happen
         throw new Error(`Invalid filter ${key}.`);
       }
       ops.push((query) =>
-        query.whereRaw(SPECIAL_FILTERS[filter!]!, [`${node.shortTableAlias}.${actualKey}`, value as string])
+        query.whereRaw(SPECIAL_FILTERS[filter], [`${node.shortTableAlias}.${actualKey}`, value as string])
       );
       continue;
     }
@@ -154,7 +154,7 @@ const applyOrderBy = (node: FieldResolverNode, orderBy: OrderBy, query: Knex.Que
       throw new UserInputError(`You need to specify exactly 1 value to order by for each orderBy entry.`);
     }
     const key = keys[0];
-    const value = vals[key!];
+    const value = vals[key];
 
     // Simple field
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here

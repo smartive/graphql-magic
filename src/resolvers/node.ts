@@ -132,7 +132,7 @@ export const getFragmentSpreads = (node: ResolverNode) =>
   node.selectionSet.filter(isFragmentSpreadNode).map((subNode) =>
     getResolverNode({
       ctx: node.ctx,
-      node: node.ctx.info.fragments[subNode.name.value]!,
+      node: node.ctx.info.fragments[subNode.name.value],
       tableAlias: node.tableAlias,
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: node.model.name,

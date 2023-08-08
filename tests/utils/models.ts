@@ -8,6 +8,11 @@ export const rawModels: RawModels = [
     type: 'enum',
     values: ['A', 'B', 'C'],
   },
+  {
+    name: 'Role',
+    type: 'enum',
+    values: ['ADMIN', 'USER'],
+  },
 
   {
     name: 'SomeRawObject',
@@ -23,7 +28,16 @@ export const rawModels: RawModels = [
         name: 'username',
         type: 'String',
       },
+      {
+        name: 'role',
+        type: 'Role',
+      },
     ],
+  },
+  {
+    type: 'object',
+    name: 'AnotherObject',
+    fields: [],
   },
   {
     type: 'object',
@@ -51,6 +65,8 @@ export const rawModels: RawModels = [
       {
         name: 'list',
         type: 'Float',
+        scale: 1,
+        precision: 1,
         nonNull: true,
         list: true,
         args: [{ name: 'magic', type: 'Boolean' }],
@@ -65,11 +81,6 @@ export const rawModels: RawModels = [
         orderable: true,
       },
     ],
-  },
-  {
-    type: 'object',
-    name: 'AnotherObject',
-    fields: [],
   },
 ];
 

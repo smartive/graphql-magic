@@ -165,7 +165,7 @@ const applySubQueries = async (
     if (!entriesById[entry[ID_ALIAS]]) {
       entriesById[entry[ID_ALIAS]] = [];
     }
-    entriesById[entry[ID_ALIAS]!]!.push(entry);
+    entriesById[entry[ID_ALIAS]].push(entry);
   }
   const ids = Object.keys(entriesById);
 
@@ -189,7 +189,7 @@ const applySubQueries = async (
     const children = hydrate(subNode, rawChildren);
 
     for (const child of children) {
-      for (const entry of entriesById[child[foreignKey] as string]!) {
+      for (const entry of entriesById[child[foreignKey] as string]) {
         if (isList) {
           (entry[fieldName] as Entry[]).push(cloneDeep(child));
         } else {

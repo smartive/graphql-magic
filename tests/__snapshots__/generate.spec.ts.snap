@@ -38,6 +38,11 @@ type Query {
   manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 enum SomeEnum {
   A
   B
@@ -89,6 +94,7 @@ scalar Upload
 type User {
   id: ID!
   username: String
+  role: Role
   createdManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
   updatedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
   deletedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!

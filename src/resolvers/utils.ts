@@ -72,13 +72,13 @@ export function hydrate<T extends Entry>(
     outer: for (const [column, value] of Object.entries(entry)) {
       let current = res;
       const shortParts = column.split('__');
-      const fieldName = shortParts.pop()!;
+      const fieldName = shortParts.pop();
       const columnWithoutField = shortParts.join('__');
       const longColumn = node.ctx.aliases.getLong(columnWithoutField);
       const longColumnWithoutRoot = longColumn.replace(new RegExp(`^${tableAlias}(__)?`), '');
       const allParts = [tableAlias, ...(longColumnWithoutRoot ? longColumnWithoutRoot.split('__') : []), fieldName];
       for (let i = 0; i < allParts.length - 1; i++) {
-        const part = allParts[i]!;
+        const part = allParts[i];
 
         if (!current[part]) {
           const idField = [node.ctx.aliases.getShort(allParts.slice(0, i + 1).join('__')), ID_ALIAS].join('__');

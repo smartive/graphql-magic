@@ -1,13 +1,13 @@
 {
-  "include": ["./src/**/*.ts", "./src/**/*.tsx"],
+  "include": ["./src/**/*.ts", "./src/**/*.tsx", "./tests/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "outDir": "./dist/esm",
-    "rootDir": "./src",
+    "rootDir": "./",
     "sourceMap": true,
     "declaration": true,
     "target": "esnext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
-  }
+  },
 }
