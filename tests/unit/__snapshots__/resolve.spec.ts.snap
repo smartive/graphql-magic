@@ -4,11 +4,14 @@ exports[`resolvers are generated correctly 1`] = `
 {
   "Mutation": {
     "createSomeObject": [Function],
+    "deleteAnotherObject": [Function],
     "deleteSomeObject": [Function],
+    "restoreAnotherObject": [Function],
     "restoreSomeObject": [Function],
     "updateSomeObject": [Function],
   },
   "Query": {
+    "anotherObjects": [Function],
     "manyObjects": [Function],
     "me": [Function],
     "someObject": [Function],

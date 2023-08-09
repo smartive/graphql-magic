@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`delete works with self-referential entities 1`] = `
+{
+  "deleteAnotherObject": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+}
+`;
+
+exports[`delete works with self-referential entities 2`] = `
+{
+  "anotherObjects": [
+    {
+      "deleted": true,
+      "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+    },
+  ],
+}
+`;
