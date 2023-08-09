@@ -71,7 +71,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
         rolePermissions[type] = {};
         for (const action of ACTIONS) {
           if (action === 'READ' || action in block) {
-            rolePermissions[type]![action] = true;
+            rolePermissions[type][action] = true;
           }
         }
       }
@@ -95,7 +95,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
 };
 
 const addPermissions = (models: Models, permissions: RolePermissions, links: PermissionLink[], block: PermissionsBlock) => {
-  const { type } = links[links.length - 1]!;
+  const { type } = links[links.length - 1];
   const model = summonByName(models, type);
 
   for (const action of ACTIONS) {
@@ -103,11 +103,11 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
       if (!permissions[type]) {
         permissions[type] = {};
       }
-      if (!permissions[type]![action]) {
-        permissions[type]![action] = [];
+      if (!permissions[type][action]) {
+        permissions[type][action] = [];
       }
-      if (permissions[type]![action] !== true) {
-        (permissions[type]![action] as PermissionStack).push(links);
+      if (permissions[type][action] !== true) {
+        (permissions[type][action] as PermissionStack).push(links);
       }
     }
   }
@@ -123,7 +123,7 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
           reverse: true,
         };
       } else {
-        const field = model.reverseRelationsByName[relation]!;
+        const field = model.reverseRelationsByName[relation];
 
         if (!field) {
           throw new Error(`Relation ${relation} in model ${model.name} does not exist.`);

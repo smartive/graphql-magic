@@ -12,7 +12,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
   return await partialCtx.knex.transaction(async (knex) => {
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     const ctx = { ...partialCtx, knex, info, aliases: new AliasGenerator() };
-    const model = summonByName(ctx.models, modelName!);
+    const model = summonByName(ctx.models, modelName);
     switch (mutation) {
       case 'create':
         return await create(model, args, ctx);
@@ -110,17 +110,20 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
       return;
     }
 
-    if (dryRun) {
-      if (!(currentModel.name in toDelete)) {
-        toDelete[currentModel.name] = {};
-      }
-      toDelete[currentModel.name]![entity.id] = entity[currentModel.displayField || 'id'] || entity.id;
-    } else {
+    if (!(currentModel.name in toDelete)) {
+      toDelete[currentModel.name] = {};
+    }
+    if (entity.id in toDelete[currentModel.name]) {
+      return;
+    }
+    entity[currentModel.displayField || 'id'] || entity.id;
+
+    if (!dryRun) {
       const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user.id };
       const data = { prev: entity, input: {}, normalizedInput, next: { ...entity, ...normalizedInput } };
       if (ctx.mutationHook) {
         beforeHooks.push(async () => {
-          await ctx.mutationHook!(currentModel, 'delete', 'before', data, ctx);
+          await ctx.mutationHook(currentModel, 'delete', 'before', data, ctx);
         });
       }
       mutations.push(async () => {
@@ -129,7 +132,7 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
       });
       if (ctx.mutationHook) {
         afterHooks.push(async () => {
-          await ctx.mutationHook!(currentModel, 'delete', 'after', data, ctx);
+          await ctx.mutationHook(currentModel, 'delete', 'after', data, ctx);
         });
       }
     }
@@ -148,13 +151,13 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
               if (!toUnlink[descendantModel.name]) {
                 toUnlink[descendantModel.name] = {};
               }
-              if (!toUnlink[descendantModel.name]![descendant.id]) {
-                toUnlink[descendantModel.name]![descendant.id] = {
+              if (!toUnlink[descendantModel.name][descendant.id]) {
+                toUnlink[descendantModel.name][descendant.id] = {
                   display: descendant[descendantModel.displayField || 'id'] || entity.id,
                   fields: [],
                 };
               }
-              toUnlink[descendantModel.name]![descendant.id]!.fields.push(name);
+              toUnlink[descendantModel.name][descendant.id].fields.push(name);
             } else {
               mutations.push(async () => {
                 await ctx
@@ -225,7 +228,7 @@ const restore = async (model: Model, { where }: { where: any }, ctx: FullContext
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook!(model, 'restore', 'before', data, ctx);
+        await ctx.mutationHook(model, 'restore', 'before', data, ctx);
       });
     }
     mutations.push(async () => {
@@ -234,7 +237,7 @@ const restore = async (model: Model, { where }: { where: any }, ctx: FullContext
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook!(model, 'restore', 'after', data, ctx);
+        await ctx.mutationHook(model, 'restore', 'after', data, ctx);
       });
     }
 

@@ -194,7 +194,7 @@ const permissionLinkQuery = (
 ) => {
   const aliases = new AliasGenerator();
   let alias = aliases.getShort();
-  const { type, me, where } = links[0]!;
+  const { type, me, where } = links[0];
   // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
   subQuery.from(`${type} as ${alias}`);
   if (me) {

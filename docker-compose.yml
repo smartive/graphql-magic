@@ -1,0 +1,17 @@
+version: '3.4'
+services:
+  postgres:
+    image: postgres:13-alpine
+    shm_size: 1gb
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+      TZ: 'Europe/Zurich'
+    ports:
+      - '5432:5432'
+    networks:
+      default:
+        aliases:
+          - postgres.local

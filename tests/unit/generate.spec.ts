@@ -1,5 +1,5 @@
-import { printSchemaFromModels } from '../../src/generate';
-import { rawModels } from './utils';
+import { printSchemaFromModels } from '../../src';
+import { rawModels } from '../utils/models';
 
 describe('generate', () => {
   it('generates a schema', () => {

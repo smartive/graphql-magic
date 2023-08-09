@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`query can be executed 1`] = `
+{
+  "manyObjects": [
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+        "manyObjects": [
+          {
+            "field": null,
+            "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+          },
+        ],
+      },
+      "field": null,
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+      "xyz": 1,
+    },
+  ],
+}
+`;

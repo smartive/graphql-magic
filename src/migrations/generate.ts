@@ -80,7 +80,7 @@ export class MigrationGenerator {
           this.renameTable(model.name, model.oldName!);
         });
         tables[tables.indexOf(model.oldName)] = model.name;
-        this.columns[model.name] = this.columns[model.oldName]!;
+        this.columns[model.name] = this.columns[model.oldName];
         delete this.columns[model.oldName];
 
         if (model.updatable) {
@@ -99,7 +99,7 @@ export class MigrationGenerator {
             });
           });
           tables[tables.indexOf(`${model.oldName}Revision`)] = `${model.name}Revision`;
-          this.columns[`${model.name}Revision`] = this.columns[`${model.oldName}Revision`]!;
+          this.columns[`${model.name}Revision`] = this.columns[`${model.oldName}Revision`];
           delete this.columns[`${model.oldName}Revision`];
         }
       }
@@ -131,7 +131,7 @@ export class MigrationGenerator {
           model,
           model.fields.filter(
             ({ name, relation, raw, foreignKey }) =>
-              !raw && !this.columns[model.name]!.some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+              !raw && !this.columns[model.name].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
           ),
           up,
           down
@@ -139,7 +139,7 @@ export class MigrationGenerator {
 
         // Update fields
         const existingFields = model.fields.filter(({ name, relation, nonNull }) => {
-          const col = this.columns[model.name]!.find((col) => col.name === (relation ? `${name}Id` : name));
+          const col = this.columns[model.name].find((col) => col.name === (relation ? `${name}Id` : name));
           if (!col) {
             return false;
           }
@@ -197,7 +197,7 @@ export class MigrationGenerator {
             ({ name, relation, raw, foreignKey, updatable }) =>
               !raw &&
               updatable &&
-              !this.columns[revisionTable]!.some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+              !this.columns[revisionTable].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
           );
 
           this.createRevisionFields(model, missingRevisionFields, up, down);
@@ -208,7 +208,7 @@ export class MigrationGenerator {
               !raw &&
               !updatable &&
               foreignKey !== 'id' &&
-              this.columns[revisionTable]!.some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+              this.columns[revisionTable].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
           );
           this.createRevisionFields(model, revisionFieldsToRemove, down, up);
         }
@@ -219,7 +219,7 @@ export class MigrationGenerator {
       if (tables.includes(model.name)) {
         this.createFields(
           model,
-          model.fields.filter(({ name, deleted }) => deleted && this.columns[model.name]!.some((col) => col.name === name)),
+          model.fields.filter(({ name, deleted }) => deleted && this.columns[model.name].some((col) => col.name === name)),
           down,
           up
         );
@@ -363,7 +363,7 @@ export class MigrationGenerator {
           this.column(
             field,
             { alter: true },
-            summonByName(this.columns[model.name]!, field.relation ? `${field.name}Id` : field.name)
+            summonByName(this.columns[model.name], field.relation ? `${field.name}Id` : field.name)
           );
         }
       });
@@ -389,7 +389,7 @@ export class MigrationGenerator {
             this.column(
               field,
               { alter: true },
-              summonByName(this.columns[model.name]!, field.relation ? `${field.name}Id` : field.name)
+              summonByName(this.columns[model.name], field.relation ? `${field.name}Id` : field.name)
             );
           }
         });
