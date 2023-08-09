@@ -2,11 +2,11 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { execute, parse, Source } from 'graphql';
 import knex from 'knex';
 import { DateTime } from 'luxon';
-import { gql } from '../src/client/gql';
-import { Context } from '../src/context';
-import { generate } from '../src/generate';
-import { getResolvers } from '../src/resolvers';
-import { models, permissions, rawModels } from './utils/models';
+import { gql } from '../../src/client/gql';
+import { Context } from '../../src/context';
+import { generate } from '../../src/generate';
+import { getResolvers } from '../../src/resolvers';
+import { models, permissions, rawModels } from '../utils/models';
 
 const test = async (operationName: string, query: string, variableValues: object, responses: unknown[]) => {
   const knexInstance = knex({

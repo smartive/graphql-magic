@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: ${{ matrix.version }}
       - run: npm ci
-      - run: npm test
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run build
 
   test_all:
     if: ${{ always() }}

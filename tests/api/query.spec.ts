@@ -1,6 +1,6 @@
-import { gql } from '../src';
-import { ANOTHER_ID, SOME_ID } from './utils/database/seed';
-import { withServer } from './utils/server';
+import { gql } from '../../src';
+import { ANOTHER_ID, SOME_ID } from '../utils/database/seed';
+import { withServer } from '../utils/server';
 
 describe('query', () => {
   it('can be executed', async () => {
