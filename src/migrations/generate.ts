@@ -583,7 +583,7 @@ export class MigrationGenerator {
       list
         ? this.writer.write(`table.specificType('${name}', '"${typeToField(type)}"[]');`)
         : this.writer
-            .write(`table.enum('${name}', null as any, `)
+            .write(`table.enum('${name}', null, `)
             .inlineBlock(() => {
               this.writer.writeLine(`useNative: true,`);
               this.writer.writeLine(`existingType: true,`);
