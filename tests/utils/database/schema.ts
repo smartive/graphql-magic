@@ -19,8 +19,19 @@ export const setupSchema = async (knex: Knex) => {
 
   await knex.schema.createTable('AnotherObject', (table) => {
     table.uuid('id').notNullable().primary();
+    table.uuid('myselfId').notNullable();
+    table.foreign('myselfId').references('id').inTable('AnotherObject');
+    table.boolean('deleted').notNullable().defaultTo(false);
+    table.timestamp('deletedAt').nullable();
+    table.uuid('deletedById').nullable();
+    table.foreign('deletedById').references('id').inTable('User');
   });
 
+  await knex.schema.createTable('AnotherObjectRevision', (table) => {
+    table.uuid('id').notNullable().primary();
+    table.boolean('deleted').notNullable();
+  });
+  
   await knex.schema.createTable('SomeObject', (table) => {
     table.uuid('id').notNullable().primary();
     table.string('field', undefined).nullable();

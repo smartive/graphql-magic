@@ -3,11 +3,21 @@
 exports[`generate generates a schema 1`] = `
 "type AnotherObject {
   id: ID!
+  myself: AnotherObject
+  deleted: Boolean!
+  deletedAt: DateTime
+  deletedBy: User
+  self(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): AnotherObject
   manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+}
+
+input AnotherObjectOrderBy {
+  deletedAt: Order
 }
 
 input AnotherObjectWhere {
   id: [ID!]
+  deleted: [Boolean!] = false
 }
 
 input AnotherObjectWhereUnique {
@@ -21,6 +31,8 @@ input CreateSomeObject {
 scalar DateTime
 
 type Mutation {
+  deleteAnotherObject(where: AnotherObjectWhereUnique!, dryRun: Boolean): ID!
+  restoreAnotherObject(where: AnotherObjectWhereUnique!): ID!
   createSomeObject(data: CreateSomeObject!): SomeObject!
   updateSomeObject(where: SomeObjectWhereUnique!, data: UpdateSomeObject!): SomeObject!
   deleteSomeObject(where: SomeObjectWhereUnique!, dryRun: Boolean): ID!
@@ -35,6 +47,7 @@ enum Order {
 type Query {
   me: User
   someObject(where: SomeObjectWhereUnique!): SomeObject!
+  anotherObjects(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
   manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
 }
 
@@ -95,6 +108,7 @@ type User {
   id: ID!
   username: String
   role: Role
+  deletedAnotherObjects(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
   createdManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
   updatedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
   deletedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!

@@ -37,7 +37,17 @@ export const rawModels: RawModels = [
   {
     type: 'object',
     name: 'AnotherObject',
-    fields: [],
+    listQueriable: true,
+    deletable: true,
+    fields: [
+      {
+        type: 'AnotherObject',
+        name: 'myself',
+        toOne: true,
+        reverse: 'self',
+        relation: true
+      }
+    ],
   },
   {
     type: 'object',

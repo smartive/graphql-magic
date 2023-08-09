@@ -116,7 +116,7 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
     if (entity.id in toDelete[currentModel.name]) {
       return;
     }
-    entity[currentModel.displayField || 'id'] || entity.id;
+    toDelete[currentModel.name][entity.id] = entity[currentModel.displayField || 'id'] || entity.id;
 
     if (!dryRun) {
       const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user.id };

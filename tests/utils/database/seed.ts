@@ -19,6 +19,7 @@ export const seed = {
   AnotherObject: [
     {
       id: ANOTHER_ID,
+      myselfId: ANOTHER_ID,
     },
   ],
   SomeObject: [
