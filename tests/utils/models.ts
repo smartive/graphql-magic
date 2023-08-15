@@ -39,7 +39,13 @@ export const rawModels: RawModels = [
     name: 'AnotherObject',
     listQueriable: true,
     deletable: true,
+    displayField: 'name',
     fields: [
+      {
+        type: 'String',
+        name: 'name',
+        orderable: true,
+      },
       {
         type: 'AnotherObject',
         name: 'myself',
@@ -70,6 +76,7 @@ export const rawModels: RawModels = [
         type: 'AnotherObject',
         relation: true,
         filterable: true,
+        updatable: true,
         nonNull: true,
       },
       {
