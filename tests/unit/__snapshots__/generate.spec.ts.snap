@@ -3,6 +3,7 @@
 exports[`generate generates a schema 1`] = `
 "type AnotherObject {
   id: ID!
+  name: String
   myself: AnotherObject
   deleted: Boolean!
   deletedAt: DateTime
@@ -12,6 +13,7 @@ exports[`generate generates a schema 1`] = `
 }
 
 input AnotherObjectOrderBy {
+  name: Order
   deletedAt: Order
 }
 
@@ -99,6 +101,7 @@ type SomeRawObject {
 }
 
 input UpdateSomeObject {
+  anotherId: ID
   xyz: Int
 }
 

@@ -54,6 +54,8 @@ export const setupSchema = async (knex: Knex) => {
   await knex.schema.createTable('SomeObjectRevision', (table) => {
     table.uuid('id').notNullable().primary();
     table.uuid('someObjectId').notNullable();
+    table.uuid('anotherId').notNullable();
+    table.foreign('anotherId').references('id').inTable('AnotherObject');
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();

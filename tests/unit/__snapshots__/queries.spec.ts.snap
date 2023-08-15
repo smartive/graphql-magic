@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`queries getEntityRelationsQuery applies filters 1`] = `
+"query UpdateSomeObjectRelations {
+      another: anotherObjects(orderBy: [{ name: ASC }]) {
+            id
+            display: name
+            
+          }
+    }"
+`;

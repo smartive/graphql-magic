@@ -57,9 +57,17 @@ export const getEditEntityRelationsQuery = (
         .map(({ name, type }) => {
           const model = summonByName(models, type);
 
-          return `${name}: ${getModelPluralField(model)} {
+          let filters = '';
+          if (model.displayField) {
+            const displayField = model.fieldsByName[model.displayField];
+            if (displayField.orderable) {
+              filters = `(orderBy: [{ ${model.displayField}: ASC }])`;
+            }
+          }
+
+          return `${name}: ${getModelPluralField(model)}${filters} {
             id
-            display: ${model.displayField || ''}
+            display: ${model.displayField || 'id'}
             ${additionalFields[name] || ''}
           }`;
         })
