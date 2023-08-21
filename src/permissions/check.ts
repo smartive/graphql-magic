@@ -3,7 +3,7 @@ import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { Model } from '../models';
 import { AliasGenerator, hash, ors } from '../resolvers/utils';
-import { get, getModelPlural, summonByName } from '../utils';
+import { get, getModelPlural, isRelation, summonByName } from '../utils';
 import { BasicValue } from '../values';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
@@ -139,7 +139,7 @@ export const checkCanWrite = async (
   let linked = false;
 
   for (const field of model.fields
-    .filter(({ relation }) => relation)
+    .filter(isRelation)
     .filter((field) => field.generated || (action === 'CREATE' ? field.creatable : field.updatable))) {
     const foreignKey = field.foreignKey || `${field.name}Id`;
     const foreignId = data[foreignKey] as string;

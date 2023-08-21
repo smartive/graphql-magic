@@ -1,5 +1,5 @@
 import CodeBlockWriter from 'code-block-writer';
-import { ModelField, RawModels, getModels, isEnumModel } from '..';
+import { ModelField, RawModels, get, getModels, isEnumModel, isRaw, not } from '..';
 
 const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -29,14 +29,14 @@ export const generateDBModels = (rawModels: RawModels) => {
 
   for (const model of models) {
     // TODO: deprecate allowing to define foreignKey
-    const fields = model.fields.some((field) => field.foreignKey === 'id')
+    const fields = model.fields.some((field) => field.type === 'relation' && field.foreignKey === 'id')
       ? model.fields.filter((field) => field.name !== 'id')
       : model.fields;
 
     writer
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(not(isRaw))) {
           writer.write(`'${getFieldName(field)}': ${getFieldOutputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
         }
       })
@@ -45,7 +45,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Initializer = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(not(isRaw))) {
           writer
             .write(
               `'${getFieldName(field)}'${field.nonNull && field.default === undefined ? '' : '?'}: ${getFieldInputType(
@@ -60,7 +60,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Mutator = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(not(isRaw))) {
           writer.write(`'${getFieldName(field)}'?: ${getFieldInputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
         }
       })
@@ -69,7 +69,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Seed = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(({ raw }) => !raw)) {
+        for (const field of fields.filter(not(isRaw))) {
           const fieldName = getFieldName(field);
           writer
             .write(
@@ -95,16 +95,23 @@ export const generateDBModels = (rawModels: RawModels) => {
   return writer.toString();
 };
 
-const getFieldName = ({ relation, name, foreignKey }: ModelField) => {
-  return foreignKey || `${name}${relation ? 'Id' : ''}`;
-};
+const getFieldName = (field: ModelField) => (field.type === 'relation' ? field.foreignKey || `${field.name}Id` : field.name);
 
-const getFieldOutputType = ({ relation, type, list, json }: ModelField) => {
-  if (json || relation) {
-    return 'string';
+const getFieldOutputType = (field: ModelField) => {
+  switch (field.type) {
+    case 'json':
+      // JSON data is stored as string
+      return 'string';
+    case 'relation':
+      // Relations are stored as ids
+      return 'string';
+    case 'enum':
+      return field.typeName + field.list ? '[]' : '';
+    case 'raw':
+      throw new Error(`Raw fields are not in the db.`);
+    default:
+      return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');
   }
-
-  return (PRIMITIVE_TYPES[type] || type) + (list ? '[]' : '');
 };
 
 const getFieldInputType = (field: ModelField, stringTypes: string[] = []) => {

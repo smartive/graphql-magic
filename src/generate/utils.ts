@@ -22,8 +22,18 @@ import {
   ValueNode,
 } from 'graphql';
 import { DateTime } from 'luxon';
-import { Field } from '../models';
 import { Directive, Enum, Value, Values } from '../values';
+
+export type Field = {
+  name: string;
+  type: string;
+  description?: string;
+  list?: boolean;
+  nonNull?: boolean;
+  default?: Value;
+  args?: Field[];
+  directives?: Directive[];
+};
 
 export type DirectiveLocation =
   | 'ARGUMENT_DEFINITION'

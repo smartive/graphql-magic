@@ -1,17 +1,12 @@
+import { DateTime } from 'luxon';
+import { Field } from '.';
 import type { Context } from './context';
 import type { OrderBy } from './resolvers/arguments';
-import type { Directive, Value } from './values';
+import type { Value } from './values';
 
 export type RawModels = RawModel[];
 
-export type RawModel =
-  | ScalarModel
-  | EnumModel
-  | RawEnumModel
-  | InterfaceModel
-  | ObjectModel
-  | RawObjectModel
-  | JsonObjectModel;
+export type RawModel = ScalarModel | EnumModel | RawEnumModel | InterfaceModel | ObjectModel | RawObjectModel;
 
 type BaseModel = {
   name: string;
@@ -28,19 +23,11 @@ export type RawEnumModel = BaseModel & { type: 'raw-enum'; values: string[] };
 export type InterfaceModel = BaseModel & { type: 'interface'; fields: ModelField[] };
 
 export type RawObjectModel = BaseModel & {
-  type: 'raw-object';
-  fields: ModelField[];
-  rawFilters?: { name: string; type: string; list?: boolean; nonNull?: boolean }[];
+  type: 'raw';
+  fields: RawObjectField[];
 };
 
-export type JsonObjectModel = BaseModel & {
-  type: 'json-object';
-  json: true;
-  fields: Pick<ModelField, 'type' | 'name' | 'nonNull'>[];
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- data is derived from the models
-export type Entity = Record<string, any>;
+export type Entity = Record<string, unknown> & { createdAt?: DateTime; deletedAt?: DateTime };
 
 export type Action = 'create' | 'update' | 'delete' | 'restore';
 
@@ -55,13 +42,13 @@ export type MutationHook = (
 export type ObjectModel = BaseModel & {
   type: 'object';
   interfaces?: string[];
-  // createdAt, createdBy, updatedAt, updatedBy can be null
-  nonStrict?: boolean;
   queriable?: boolean;
   listQueriable?: boolean;
-  creatable?: boolean;
-  updatable?: boolean;
-  deletable?: boolean;
+  creatable?: boolean | { createdBy?: Partial<RelationField>; createdAt?: Partial<DateTimeField> };
+  updatable?: boolean | { updatedBy?: Partial<RelationField>; updatedAt?: Partial<DateTimeField> };
+  deletable?:
+    | boolean
+    | { deleted?: Partial<BooleanField>; deletedBy?: Partial<RelationField>; deletedAt?: Partial<DateTimeField> };
   displayField?: string;
   defaultOrderBy?: OrderBy;
   fields: ModelField[];
@@ -71,135 +58,108 @@ export type ObjectModel = BaseModel & {
   oldName?: string;
 };
 
-export type InputObject = {
-  name: string;
-  type: string;
-  nonNull?: boolean;
-};
-
-export const isObjectModel = (model: RawModel): model is ObjectModel => model.type === 'object';
-
-export const isEnumModel = (model: RawModel): model is EnumModel => model.type === 'enum';
-
-export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.type === 'raw-enum';
-
-export const isScalarModel = (model: RawModel): model is ScalarModel => model.type === 'scalar';
-
-export const isRawObjectModel = (model: RawModel): model is RawObjectModel => model.type === 'raw-object';
-
-export const isJsonObjectModel = (model: RawModel): model is RawObjectModel => model.type === 'json-object';
-
-export const isEnumList = (models: RawModels, field: ModelField) =>
-  field?.list === true && models.find(({ name }) => name === field.type)?.type === 'enum';
-
-export const and =
-  (...predicates: ((field: ModelField) => boolean)[]) =>
-  (field: ModelField) =>
-    predicates.every((predicate) => predicate(field));
-
-export const not = (predicate: (field: ModelField) => boolean) => (field: ModelField) => !predicate(field);
-
-export const isRelation = ({ relation }: ModelField) => !!relation;
-
-export type VisibleRelationsByRole = Record<string, Record<string, string[]>>;
-
-export const isVisibleRelation = (visibleRelationsByRole: VisibleRelationsByRole, modelName: string, role: string) => {
-  const whitelist = visibleRelationsByRole[role]?.[modelName];
-  return ({ name }: Field) => (whitelist ? whitelist.includes(name) : true);
-};
-
-export const isToOneRelation = ({ toOne }: ModelField) => !!toOne;
-
-export const isQueriableField = ({ queriable }: ModelField) => queriable !== false;
-
-export const isRaw = ({ raw }: ModelField) => !!raw;
-
-export const isVisible = ({ hidden }: ModelField) => hidden !== true;
-
-export const isSimpleField = and(not(isRelation), not(isRaw));
-
-export const isUpdatable = ({ updatable }: ModelField) => !!updatable;
-
-export const isCreatable = ({ creatable }: ModelField) => !!creatable;
-
-export const isQueriableBy = (role: string) => (field: ModelField) =>
-  isQueriableField(field) && (!field.queriableBy || field.queriableBy.includes(role));
-
-export const isUpdatableBy = (role: string) => (field: ModelField) =>
-  isUpdatable(field) && (!field.updatableBy || field.updatableBy.includes(role));
-
-export const isCreatableBy = (role: string) => (field: ModelField) =>
-  isCreatable(field) && (!field.creatableBy || field.creatableBy.includes(role));
-
-export const actionableRelations = (model: Model, action: 'create' | 'update' | 'filter') =>
-  model.fields.filter(
-    ({ relation, ...field }) =>
-      relation &&
-      field[`${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable']
-  );
-
-export type Field = {
-  name: string;
-  type: string;
-  default?: Value;
-  list?: boolean;
-  nonNull?: boolean;
-  args?: Field[];
-  directives?: Directive[];
-};
-
-export type ModelField = Field & {
-  primary?: boolean;
-  unique?: boolean;
-  filterable?: boolean;
-  defaultFilter?: Value;
-  searchable?: boolean;
-  possibleValues?: Value[];
-  orderable?: boolean;
-  comparable?: boolean;
-  relation?: boolean;
-  onDelete?: 'cascade' | 'set-null';
-  reverse?: string;
-  toOne?: boolean;
-  foreignKey?: string;
-  queriable?: false;
-  queriableBy?: string[];
-  creatable?: boolean;
-  creatableBy?: string[];
-  updatable?: boolean;
-  updatableBy?: string[];
-  generated?: boolean;
-  raw?: boolean;
-  json?: boolean;
-  dateTimeType?: 'year' | 'date' | 'datetime' | 'year_and_month';
-  stringType?: 'email' | 'url' | 'phone';
-  floatType?: 'currency' | 'percentage';
+type BaseNumberType = {
   unit?: 'million';
-  intType?: 'currency';
   min?: number;
   max?: number;
-  // The tooltip is "hidden" behind an icon in the admin forms
-  tooltip?: string;
-  // The description is always visible below the inputs in the admin forms
-  description?: string;
-  large?: true;
-  maxLength?: number;
-  double?: boolean;
-  precision?: number;
-  scale?: number;
-  defaultValue?: string | number | ReadonlyArray<string> | undefined;
-  endOfDay?: boolean;
-  obfuscate?: true;
-  // If true the field must be filled within forms but can be null in the database
-  required?: boolean;
-  indent?: boolean;
-  // If true the field is hidden in the admin interface
-  hidden?: boolean;
-
-  // temporary fields for the generation of migrations
-  deleted?: true;
-  oldName?: string;
 };
+
+type BaseField = Omit<Field, 'type'>;
+
+type PrimitiveField =
+  | { type: 'ID' }
+  | { type: 'Boolean' }
+  | {
+      type: 'String';
+      stringType?: 'email' | 'url' | 'phone';
+      large?: true;
+      maxLength?: number;
+    }
+  | {
+      type: 'DateTime';
+      dateTimeType?: 'year' | 'date' | 'datetime' | 'year_and_month';
+      endOfDay?: boolean;
+    }
+  | ({
+      type: 'Int';
+      intType?: 'currency';
+    } & BaseNumberType)
+  | ({
+      type: 'Float';
+      floatType?: 'currency' | 'percentage';
+      double?: boolean;
+      precision?: number;
+      scale?: number;
+    } & BaseNumberType)
+  | { type: 'Upload' };
+
+type RawObjectField = BaseField & PrimitiveField;
+
+export type ModelField = BaseField &
+  (
+    | PrimitiveField
+    | { type: 'json'; typeName: string }
+    | { type: 'enum'; typeName: string; possibleValues?: Value[] }
+    | { type: 'raw'; typeName: string }
+    | {
+        type: 'relation';
+        typeName: string;
+        toOne?: boolean;
+        reverse?: string;
+        foreignKey?: string;
+        onDelete?: 'cascade' | 'set-null';
+      }
+  ) & {
+    primary?: boolean;
+    unique?: boolean;
+    filterable?:
+      | boolean
+      | {
+          default?: Value;
+        };
+    searchable?: boolean;
+    orderable?: boolean;
+    comparable?: boolean;
+    queriable?:
+      | boolean
+      | {
+          roles?: string[];
+        };
+    creatable?:
+      | boolean
+      | {
+          roles?: string[];
+        };
+    updatable?:
+      | boolean
+      | {
+          roles?: string[];
+        };
+    generated?: boolean;
+    // The tooltip is "hidden" behind an icon in the admin forms
+    tooltip?: string;
+    defaultValue?: string | number | ReadonlyArray<string> | undefined;
+    // If true the field must be filled within forms but can be null in the database
+    required?: boolean;
+    indent?: boolean;
+    // If true the field is hidden in the admin interface
+    hidden?: boolean;
+
+    // temporary fields for the generation of migrations
+    deleted?: true;
+    oldName?: string;
+  };
+
+export type IDField = Extract<ModelField, { type: 'ID' }>;
+export type BooleanField = Extract<ModelField, { type: 'Boolean' }>;
+export type StringField = Extract<ModelField, { type: 'String' }>;
+export type DateTimeField = Extract<ModelField, { type: 'DateTime' }>;
+export type IntField = Extract<ModelField, { type: 'Int' }>;
+export type FloatField = Extract<ModelField, { type: 'Float' }>;
+export type JsonField = Extract<ModelField, { type: 'json' }>;
+export type EnumField = Extract<ModelField, { type: 'enum' }>;
+export type RawField = Extract<ModelField, { type: 'raw' }>;
+export type RelationField = Extract<ModelField, { type: 'relation' }>;
 
 export type Models = Model[];
 
@@ -212,17 +172,13 @@ export type Model = ObjectModel & {
 };
 
 export type Relation = {
-  field: ModelField;
+  field: RelationField;
   model: Model;
   reverseRelation: ReverseRelation;
 };
 
-export type ReverseRelation = {
-  name: string;
-  type: string;
-  foreignKey: string;
-  toOne: boolean;
+export type ReverseRelation = RelationField & {
   model: Model;
-  field: ModelField;
+  field: RelationField;
   fieldModel: Model;
 };

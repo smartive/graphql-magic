@@ -4,7 +4,24 @@ import camelCase from 'lodash/camelCase';
 import lodashGet from 'lodash/get';
 import kebabCase from 'lodash/kebabCase';
 import startCase from 'lodash/startCase';
-import { Model, Models, ObjectModel, RawModels, Relation, ReverseRelation, isObjectModel } from './models';
+import {
+  BooleanField,
+  DateTimeField,
+  EnumModel,
+  Model,
+  ModelField,
+  Models,
+  ObjectModel,
+  RawEnumModel,
+  RawField,
+  RawModel,
+  RawModels,
+  RawObjectModel,
+  Relation,
+  RelationField,
+  ReverseRelation,
+  ScalarModel,
+} from './models';
 
 const isNotFalsy = <T>(v: T | null | undefined | false): v is T => typeof v !== 'undefined' && v !== null && v !== false;
 
@@ -26,6 +43,59 @@ export const getModelLabel = (model: Model) => getLabel(model.name);
 
 export const getLabel = (s: string) => startCase(camelCase(s));
 
+export const isObjectModel = (model: RawModel): model is ObjectModel => model.type === 'object';
+
+export const isEnumModel = (model: RawModel): model is EnumModel => model.type === 'enum';
+
+export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.type === 'raw-enum';
+
+export const isScalarModel = (model: RawModel): model is ScalarModel => model.type === 'scalar';
+
+export const isRawObjectModel = (model: RawModel): model is RawObjectModel => model.type === 'raw';
+
+export const isEnumList = (models: RawModels, field: ModelField) =>
+  field?.list === true && models.find(({ name }) => name === field.type)?.type === 'enum';
+
+export const and =
+  (...predicates: ((field: ModelField) => boolean)[]) =>
+  (field: ModelField) =>
+    predicates.every((predicate) => predicate(field));
+
+export const not = (predicate: (field: ModelField) => boolean) => (field: ModelField) => !predicate(field);
+
+export const isRelation = (field: ModelField): field is RelationField => field.type === 'relation';
+
+export const isToOneRelation = (field: ModelField): field is RelationField => isRelation(field) && !!field.toOne;
+
+export const isQueriableField = ({ queriable }: ModelField) => queriable !== false;
+
+export const isRaw = (field: ModelField): field is RawField => field.type === 'raw';
+
+export const isVisible = ({ hidden }: ModelField) => hidden !== true;
+
+export const isSimpleField = and(not(isRelation), not(isRaw));
+
+export const isUpdatable = ({ updatable }: ModelField) => !!updatable;
+
+export const isCreatable = ({ creatable }: ModelField) => !!creatable;
+
+export const isQueriableBy = (role: string) => (field: ModelField) =>
+  field.queriable !== false && (field.queriable == true || !field.queriable.roles || field.queriable.roles.includes(role));
+
+export const isUpdatableBy = (role: string) => (field: ModelField) =>
+  field.updatable && (field.updatable === true || !field.updatable.roles || field.updatable.roles.includes(role));
+
+export const isCreatableBy = (role: string) => (field: ModelField) =>
+  field.creatable && (field.creatable === true || !field.creatable.roles || field.creatable.roles.includes(role));
+
+export const actionableRelations = (model: Model, action: 'create' | 'update' | 'filter') =>
+  model.fields
+    .filter(isRelation)
+    .filter(
+      (field) =>
+        field[`${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable']
+    );
+
 export const getModels = (rawModels: RawModels): Models => {
   const models: Models = rawModels.filter(isObjectModel).map((model) => {
     const objectModel: Model = {
@@ -35,60 +105,86 @@ export const getModels = (rawModels: RawModels): Models => {
       relationsByName: {},
       reverseRelations: [],
       reverseRelationsByName: {},
-      fields: [
-        { name: 'id', type: 'ID', nonNull: true, unique: true, primary: true, generated: true },
-        ...model.fields,
-        ...(model.creatable
-          ? [
-              { name: 'createdAt', type: 'DateTime', nonNull: !model.nonStrict, orderable: true, generated: true },
-              {
-                name: 'createdBy',
-                type: 'User',
-                relation: true,
-                nonNull: !model.nonStrict,
-                reverse: `created${getModelPlural(model)}`,
-                generated: true,
-              },
-            ]
-          : []),
-        ...(model.updatable
-          ? [
-              { name: 'updatedAt', type: 'DateTime', nonNull: !model.nonStrict, orderable: true, generated: true },
-              {
-                name: 'updatedBy',
-                type: 'User',
-                relation: true,
-                nonNull: !model.nonStrict,
-                reverse: `updated${getModelPlural(model)}`,
-                generated: true,
-              },
-            ]
-          : []),
-        ...(model.deletable
-          ? [
-              {
-                name: 'deleted',
-                type: 'Boolean',
-                nonNull: true,
-                default: false,
-                filterable: true,
-                defaultFilter: false,
-                generated: true,
-              },
-              { name: 'deletedAt', type: 'DateTime', orderable: true, generated: true },
-              {
-                name: 'deletedBy',
-                type: 'User',
-                relation: true,
-                reverse: `deleted${getModelPlural(model)}`,
-                generated: true,
-              },
-            ]
-          : []),
-      ].map(({ foreignKey, ...field }) => ({
+      fields: (
+        [
+          { name: 'id', type: 'ID', nonNull: true, unique: true, primary: true, generated: true },
+          ...model.fields,
+          ...(model.creatable
+            ? [
+                {
+                  name: 'createdAt',
+                  type: 'DateTime',
+
+                  nonNull: true,
+                  orderable: true,
+                  generated: true,
+                  ...(typeof model.creatable === 'object' && model.creatable.createdAt),
+                } satisfies DateTimeField,
+                {
+                  name: 'createdBy',
+                  type: 'relation',
+                  typeName: 'User',
+                  nonNull: true,
+                  reverse: `created${getModelPlural(model)}`,
+                  generated: true,
+                  ...(typeof model.creatable === 'object' && model.creatable.createdBy),
+                } satisfies RelationField,
+              ]
+            : []),
+          ...(model.updatable
+            ? [
+                {
+                  name: 'updatedAt',
+                  type: 'DateTime',
+                  nonNull: true,
+                  orderable: true,
+                  generated: true,
+                  ...(typeof model.updatable === 'object' && model.updatable.updatedAt),
+                } satisfies DateTimeField,
+                {
+                  name: 'updatedBy',
+                  type: 'relation',
+                  typeName: 'User',
+                  nonNull: true,
+                  reverse: `updated${getModelPlural(model)}`,
+                  generated: true,
+                  ...(typeof model.updatable === 'object' && model.updatable.updatedBy),
+                } satisfies RelationField,
+              ]
+            : []),
+          ...(model.deletable
+            ? [
+                {
+                  name: 'deleted',
+                  type: 'Boolean',
+                  nonNull: true,
+                  default: false,
+                  filterable: { default: false },
+                  generated: true,
+                  ...(typeof model.deletable === 'object' && model.deletable.deleted),
+                } satisfies BooleanField,
+                {
+                  name: 'deletedAt',
+                  type: 'DateTime',
+                  orderable: true,
+                  generated: true,
+                  ...(typeof model.deletable === 'object' && model.deletable.deletedAt),
+                } satisfies DateTimeField,
+                {
+                  name: 'deletedBy',
+                  type: 'relation',
+                  typeName: 'User',
+                  reverse: `deleted${getModelPlural(model)}`,
+                  generated: true,
+                  ...(typeof model.deletable === 'object' && model.deletable.deletedBy),
+                } satisfies RelationField,
+              ]
+            : []),
+        ] satisfies ModelField[]
+      ).map((field: ModelField) => ({
         ...field,
-        ...(field.relation && {
-          foreignKey: foreignKey || `${field.name}Id`,
+        ...(field.type === 'relation' && {
+          foreignKey: field.foreignKey || `${field.name}Id`,
         }),
       })),
     };
@@ -101,13 +197,18 @@ export const getModels = (rawModels: RawModels): Models => {
   });
 
   for (const model of models) {
-    for (const field of model.fields.filter(({ relation }) => relation)) {
-      const fieldModel = summonByName(models, field.type);
+    for (const field of model.fields) {
+      if (field.type !== 'relation') {
+        continue;
+      }
+
+      const fieldModel = summonByName(models, field.typeName);
 
       const reverseRelation: ReverseRelation = {
+        type: 'relation',
         name: field.reverse || (field.toOne ? typeToField(model.name) : getModelPluralField(model)),
         foreignKey: get(field, 'foreignKey'),
-        type: model.name,
+        typeName: model.name,
         toOne: !!field.toOne,
         fieldModel,
         field,

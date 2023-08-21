@@ -1,17 +1,18 @@
 import { buildASTSchema, DefinitionNode, DocumentNode, GraphQLSchema, print } from 'graphql';
 import flatMap from 'lodash/flatMap';
+import { RawModels } from '../models';
 import {
-  Field,
+  getModelPluralField,
+  getModels,
   isEnumModel,
-  isJsonObjectModel,
   isQueriableField,
   isRawEnumModel,
   isRawObjectModel,
+  isRelation,
   isScalarModel,
-  RawModels,
-} from '../models';
-import { getModelPluralField, getModels, typeToField } from '../utils';
-import { document, enm, input, object, scalar } from './utils';
+  typeToField,
+} from '../utils';
+import { document, enm, Field, input, object, scalar } from './utils';
 
 export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
   const models = getModels(rawModels);
@@ -26,17 +27,6 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
     ...rawModels.filter(isRawObjectModel).map((model) => object(model.name, model.fields)),
-    ...rawModels.filter(isJsonObjectModel).map((model) => object(model.name, model.fields)),
-    ...rawModels
-      .filter(isRawObjectModel)
-      .filter(({ rawFilters }) => rawFilters)
-      .map((model) =>
-        input(
-          `${model.name}Where`,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- array gets filtered above to only include models with rawFilters
-          model.rawFilters!.map(({ name, type, list = false, nonNull = false }) => ({ name, type, list, nonNull }))
-        )
-      ),
 
     ...flatMap(
       models.map((model) => {
@@ -46,10 +36,9 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             [
               ...model.fields.filter(isQueriableField).map((field) => ({
                 ...field,
-                args: [
-                  ...(field.args || []),
-                  ...(hasRawFilters(rawModels, field.type) ? [{ name: 'where', type: `${field.type}Where` }] : []),
-                ],
+                type:
+                  field.type === 'relation' || field.type === 'enum' || field.type === 'raw' ? field.typeName : field.type,
+                args: [...(field.args || [])],
                 directives: field.directives,
               })),
               ...model.reverseRelations.map(({ name, field, model }) => ({
@@ -72,8 +61,13 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
           ),
           input(`${model.name}Where`, [
             ...model.fields
-              .filter(({ unique, filterable, relation }) => (unique || filterable) && !relation)
-              .map(({ name, type, defaultFilter }) => ({ name, type, list: true, default: defaultFilter })),
+              .filter(({ type, unique, filterable }) => (unique || filterable) && type !== 'relation')
+              .map(({ type, name, filterable }) => ({
+                name,
+                type,
+                list: true,
+                default: typeof filterable === 'object' ? filterable.default : undefined,
+              })),
             ...flatMap(
               model.fields.filter(({ comparable }) => comparable),
               ({ name, type }) => [
@@ -84,10 +78,11 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               ]
             ),
             ...model.fields
-              .filter(({ filterable, relation }) => filterable && relation)
-              .map(({ name, type }) => ({
+              .filter(isRelation)
+              .filter(({ filterable }) => filterable)
+              .map(({ name, typeName }) => ({
                 name,
-                type: `${type}Where`,
+                type: `${typeName}Where`,
               })),
           ]),
           input(
@@ -110,10 +105,10 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               `Create${model.name}`,
               model.fields
                 .filter(({ creatable }) => creatable)
-                .map(({ name, relation, type, nonNull, list, default: defaultValue }) =>
-                  relation
+                .map(({ name, nonNull, list, default: defaultValue, ...field }) =>
+                  field.type === 'relation'
                     ? { name: `${name}Id`, type: 'ID', nonNull }
-                    : { name, type, list, nonNull: nonNull && defaultValue === undefined }
+                    : { name, type: field.type, list, nonNull: nonNull && defaultValue === undefined }
                 )
             )
           );
@@ -125,8 +120,8 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               `Update${model.name}`,
               model.fields
                 .filter(({ updatable }) => updatable)
-                .map(({ name, relation, type, list }) =>
-                  relation ? { name: `${name}Id`, type: 'ID' } : { name, type, list }
+                .map(({ name, type, list }) =>
+                  type === 'relation' ? { name: `${name}Id`, type: 'ID' } : { name, type, list }
                 )
             )
           );
@@ -264,9 +259,6 @@ export const printSchema = (schema: GraphQLSchema): string =>
     .filter(Boolean)
     .map((s) => `${s}\n`)
     .join('\n');
-
-const hasRawFilters = (models: RawModels, type: string) =>
-  models.filter(isRawObjectModel).some(({ name, rawFilters }) => name === type && !!rawFilters);
 
 export const printSchemaFromDocument = (document: DocumentNode) => printSchema(buildASTSchema(document));
 

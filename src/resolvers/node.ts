@@ -8,8 +8,8 @@ import type {
 } from 'graphql';
 
 import { FullContext } from '../context';
-import { isJsonObjectModel, Model } from '../models';
-import { get, summonByKey, summonByName } from '../utils';
+import { Model } from '../models';
+import { get, isRawObjectModel, summonByKey, summonByName } from '../utils';
 import {
   getFragmentTypeName,
   getNameOrAlias,
@@ -113,7 +113,7 @@ export const getSimpleFields = (node: ResolverNode) => {
       return true;
     }
 
-    return node.model.fields.some(({ json, name }) => json && name === selection.name.value);
+    return node.model.fields.some(({ type, name }) => type === 'json' && name === selection.name.value);
   });
 };
 
@@ -150,13 +150,13 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
 
     const typeName = getTypeName(fieldDefinition.type);
 
-    if (isJsonObjectModel(summonByName(ctx.rawModels, typeName))) {
+    if (isRawObjectModel(summonByName(ctx.rawModels, typeName))) {
       continue;
     }
 
     const baseModel = summonByName(ctx.models, baseTypeDefinition.name.value);
 
-    let foreignKey;
+    let foreignKey: string | undefined;
     if (toMany) {
       const reverseRelation = baseModel.reverseRelationsByName[fieldName];
       if (!reverseRelation) {
@@ -165,7 +165,7 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       foreignKey = reverseRelation.foreignKey;
     } else {
       const modelField = baseModel.fieldsByName[fieldName];
-      if (!modelField || modelField.raw) {
+      if (modelField?.type !== 'relation') {
         continue;
       }
       foreignKey = modelField.foreignKey;

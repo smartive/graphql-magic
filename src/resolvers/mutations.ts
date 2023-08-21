@@ -1,10 +1,11 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { Context, FullContext } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
-import { Entity, Model, ModelField, isEnumList } from '../models';
+import { Entity, Model, ModelField } from '../models';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
-import { get, it, summonByName, typeToField } from '../utils';
+import { get, isEnumList, it, summonByName, typeToField } from '../utils';
 import { resolve } from './resolver';
 import { AliasGenerator } from './utils';
 
@@ -113,10 +114,10 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
     if (!(currentModel.name in toDelete)) {
       toDelete[currentModel.name] = {};
     }
-    if (entity.id in toDelete[currentModel.name]) {
+    if ((entity.id as string) in toDelete[currentModel.name]) {
       return;
     }
-    toDelete[currentModel.name][entity.id] = entity[currentModel.displayField || 'id'] || entity.id;
+    toDelete[currentModel.name][entity.id as string] = (entity[currentModel.displayField || 'id'] || entity.id) as string;
 
     if (!dryRun) {
       const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user.id };
@@ -275,8 +276,8 @@ const createRevision = async (model: Model, data: Entity, ctx: Context) => {
       revisionData.deleted = data.deleted || false;
     }
 
-    for (const { name, relation, nonNull, ...field } of model.fields.filter(({ updatable }) => updatable)) {
-      const col = relation ? `${name}Id` : name;
+    for (const { type, name, nonNull, ...field } of model.fields.filter(({ updatable }) => updatable)) {
+      const col = type === 'relation' ? `${name}Id` : name;
       if (nonNull && (!(col in data) || col === undefined || col === null)) {
         revisionData[col] = get(field, 'default');
       } else {
@@ -301,16 +302,16 @@ const sanitize = (ctx: FullContext, model: Model, data: Entity) => {
     }
 
     if (isEndOfDay(field) && data[key]) {
-      data[key] = data[key].endOf('day');
+      data[key] = (data[key] as DateTime).endOf('day');
       continue;
     }
 
     if (isEnumList(ctx.rawModels, field) && Array.isArray(data[key])) {
-      data[key] = `{${data[key].join(',')}}`;
+      data[key] = `{${(data[key] as string[]).join(',')}}`;
       continue;
     }
   }
 };
 
 const isEndOfDay = (field?: ModelField) =>
-  field?.endOfDay === true && field?.dateTimeType === 'date' && field?.type === 'DateTime';
+  field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date' && field?.type === 'DateTime';

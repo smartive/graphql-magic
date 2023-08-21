@@ -85,7 +85,7 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
     const field = summonByName(node.model.fields, key);
     const fullKey = `${node.shortTableAlias}.${key}`;
 
-    if (field.relation) {
+    if (field.type === 'relation') {
       const relation = get(node.model.relationsByName, field.name);
       const tableAlias = `${node.model.name}__W__${key}`;
       const subNode: WhereNode = {

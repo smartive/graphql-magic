@@ -4,8 +4,8 @@ import { SchemaInspector } from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
 import { SchemaInspector as SchemaInspectorType } from 'knex-schema-inspector/dist/types/schema-inspector';
 import lowerFirst from 'lodash/lowerFirst';
-import { EnumModel, isEnumModel, Model, ModelField, Models, RawModels } from '../models';
-import { get, getModels, summonByName, typeToField } from '../utils';
+import { EnumModel, Model, ModelField, Models, RawModels } from '../models';
+import { get, getModels, isEnumModel, summonByName, typeToField } from '../utils';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];
@@ -130,20 +130,23 @@ export class MigrationGenerator {
         this.createFields(
           model,
           model.fields.filter(
-            ({ name, relation, raw, foreignKey }) =>
-              !raw && !this.columns[model.name].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+            ({ name, ...field }) =>
+              field.type !== 'raw' &&
+              !this.columns[model.name].some(
+                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+              )
           ),
           up,
           down
         );
 
         // Update fields
-        const existingFields = model.fields.filter(({ name, relation, nonNull }) => {
-          const col = this.columns[model.name].find((col) => col.name === (relation ? `${name}Id` : name));
+        const existingFields = model.fields.filter(({ name, type, nonNull }) => {
+          const col = this.columns[model.name].find((col) => col.name === (type === 'relation' ? `${name}Id` : name));
           if (!col) {
             return false;
           }
-          return !model.nonStrict && !nonNull && !col.is_nullable;
+          return !nonNull && !col.is_nullable;
         });
         this.updateFields(model, existingFields, up, down);
       }
@@ -174,8 +177,8 @@ export class MigrationGenerator {
                           writer.writeLine(`deleted: row.deleted,`);
                         }
 
-                        for (const { name, relation } of model.fields.filter(({ updatable }) => updatable)) {
-                          const col = relation ? `${name}Id` : name;
+                        for (const { name, type } of model.fields.filter(({ updatable }) => updatable)) {
+                          const col = type === 'relation' ? `${name}Id` : name;
 
                           writer.writeLine(`${col}: row.${col},`);
                         }
@@ -194,21 +197,25 @@ export class MigrationGenerator {
         } else {
           const revisionTable = `${model.name}Revision`;
           const missingRevisionFields = model.fields.filter(
-            ({ name, relation, raw, foreignKey, updatable }) =>
-              !raw &&
+            ({ name, updatable, ...field }) =>
+              field.type !== 'raw' &&
               updatable &&
-              !this.columns[revisionTable].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+              !this.columns[revisionTable].some(
+                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+              )
           );
 
           this.createRevisionFields(model, missingRevisionFields, up, down);
 
           const revisionFieldsToRemove = model.fields.filter(
-            ({ name, updatable, foreignKey, relation, raw, generated }) =>
+            ({ name, updatable, generated, ...field }) =>
               !generated &&
-              !raw &&
+              field.type !== 'raw' &&
               !updatable &&
-              foreignKey !== 'id' &&
-              this.columns[revisionTable].some((col) => col.name === (foreignKey || (relation ? `${name}Id` : name)))
+              !(field.type === 'relation' && field.foreignKey === 'id') &&
+              this.columns[revisionTable].some(
+                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+              )
           );
           this.createRevisionFields(model, revisionFieldsToRemove, down, up);
         }
@@ -269,8 +276,8 @@ export class MigrationGenerator {
       for (const field of fields) {
         this.alterTable(model.name, () => {
           this.renameColumn(
-            field.relation ? `${field.oldName}Id` : get(field, 'oldName'),
-            field.relation ? `${field.name}Id` : field.name
+            field.type === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
+            field.type === 'relation' ? `${field.name}Id` : field.name
           );
         });
       }
@@ -280,8 +287,8 @@ export class MigrationGenerator {
       for (const field of fields) {
         this.alterTable(model.name, () => {
           this.renameColumn(
-            field.relation ? `${field.name}Id` : field.name,
-            field.relation ? `${field.oldName}Id` : get(field, 'oldName')
+            field.type === 'relation' ? `${field.name}Id` : field.name,
+            field.type === 'relation' ? `${field.oldName}Id` : get(field, 'oldName')
           );
         });
       }
@@ -289,9 +296,8 @@ export class MigrationGenerator {
 
     for (const field of fields) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      summonByName(this.columns[model.name]!, field.relation ? `${field.oldName!}Id` : field.oldName!).name = field.relation
-        ? `${field.name}Id`
-        : field.name;
+      summonByName(this.columns[model.name]!, field.type === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
+        field.type === 'relation' ? `${field.name}Id` : field.name;
     }
   }
 
@@ -337,8 +343,8 @@ export class MigrationGenerator {
 
     down.push(() => {
       this.alterTable(model.name, () => {
-        for (const { relation, name } of fields) {
-          this.dropColumn(relation ? `${name}Id` : name);
+        for (const { type, name } of fields) {
+          this.dropColumn(type === 'relation' ? `${name}Id` : name);
         }
       });
     });
@@ -363,7 +369,7 @@ export class MigrationGenerator {
           this.column(
             field,
             { alter: true },
-            summonByName(this.columns[model.name], field.relation ? `${field.name}Id` : field.name)
+            summonByName(this.columns[model.name], field.type === 'relation' ? `${field.name}Id` : field.name)
           );
         }
       });
@@ -389,7 +395,7 @@ export class MigrationGenerator {
             this.column(
               field,
               { alter: true },
-              summonByName(this.columns[model.name], field.relation ? `${field.name}Id` : field.name)
+              summonByName(this.columns[model.name], field.type === 'relation' ? `${field.name}Id` : field.name)
             );
           }
         });
@@ -405,9 +411,7 @@ export class MigrationGenerator {
       writer.writeLine(`table.uuid('id').notNullable().primary();`);
       writer.writeLine(`table.uuid('${typeToField(model.name)}Id').notNullable();`);
       writer.write(`table.uuid('createdById')`);
-      if (!model.nonStrict) {
-        writer.write('.notNullable()');
-      }
+      writer.write('.notNullable()');
       writer.write(';').newLine();
       writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
       if (model.deletable) {
@@ -435,8 +439,8 @@ export class MigrationGenerator {
         this.writer
           .write(`await knex('${model.name}Revision').update(`)
           .inlineBlock(() => {
-            for (const { name, relation } of missingRevisionFields) {
-              const col = relation ? `${name}Id` : name;
+            for (const { name, type } of missingRevisionFields) {
+              const col = type === 'relation' ? `${name}Id` : name;
               this.writer
                 .write(
                   `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
@@ -463,7 +467,7 @@ export class MigrationGenerator {
       down.push(() => {
         this.alterTable(revisionTable, () => {
           for (const field of missingRevisionFields) {
-            this.dropColumn(field.relation ? `${field.name}Id` : field.name);
+            this.dropColumn(field.type === 'relation' ? `${field.name}Id` : field.name);
           }
         });
       });
@@ -538,7 +542,7 @@ export class MigrationGenerator {
   }
 
   private column(
-    { name, relation, type, primary, list, ...field }: ModelField,
+    { name, primary, list, ...field }: ModelField,
     { setUnique = true, setNonNull = true, alter = false, foreign = true, setDefault = true } = {},
     toColumn?: Column
   ) {
@@ -574,60 +578,58 @@ export class MigrationGenerator {
       }
       this.writer.write(';').newLine();
     };
-    if (relation) {
-      col(`table.uuid('${name}Id')`);
-      if (foreign && !alter) {
-        this.writer.writeLine(`table.foreign('${name}Id').references('id').inTable('${type}');`);
-      }
-    } else if (this.rawModels.some((m) => m.name === type && m.type === 'enum')) {
-      list
-        ? this.writer.write(`table.specificType('${name}', '"${typeToField(type)}"[]');`)
-        : this.writer
+    switch (field.type) {
+      case 'Boolean':
+        col(`table.boolean('${name}')`);
+        break;
+      case 'Int':
+        col(`table.integer('${name}')`);
+        break;
+      case 'Float':
+        if (field.double) {
+          col(`table.double('${name}')`);
+        } else {
+          col(`table.decimal('${name}', ${get(field, 'precision')}, ${get(field, 'scale')})`);
+        }
+        break;
+      case 'String':
+        if (field.large) {
+          col(`table.text('${name}')`);
+        } else {
+          col(`table.string('${name}', ${field.maxLength})`);
+        }
+        break;
+      case 'DateTime':
+        col(`table.timestamp('${name}')`);
+        break;
+      case 'ID':
+        col(`table.uuid('${name}')`);
+        break;
+      case 'Upload':
+        break;
+      case 'relation':
+        col(`table.uuid('${name}Id')`);
+        if (foreign && !alter) {
+          this.writer.writeLine(`table.foreign('${name}Id').references('id').inTable('${field.typeName}');`);
+        }
+        break;
+      case 'enum':
+        if (list) {
+          this.writer.write(`table.specificType('${name}', '"${typeToField(field.type)}"[]');`);
+        } else {
+          this.writer
             .write(`table.enum('${name}', null as any, `)
             .inlineBlock(() => {
               this.writer.writeLine(`useNative: true,`);
               this.writer.writeLine(`existingType: true,`);
-              this.writer.writeLine(`enumName: '${typeToField(type)}',`);
+              this.writer.writeLine(`enumName: '${typeToField(field.type)}',`);
             })
             .write(')');
-      col();
-    } else {
-      switch (type) {
-        case 'Boolean':
-          col(`table.boolean('${name}')`);
-          break;
-        case 'Int':
-          col(`table.integer('${name}')`);
-          break;
-        case 'Float':
-          if (field.double) {
-            col(`table.double('${name}')`);
-          } else {
-            col(`table.decimal('${name}', ${get(field, 'precision')}, ${get(field, 'scale')})`);
-          }
-          break;
-        case 'String':
-          if (field.large) {
-            col(`table.text('${name}')`);
-          } else {
-            col(`table.string('${name}', ${field.maxLength})`);
-          }
-          break;
-        case 'DateTime':
-          col(`table.timestamp('${name}')`);
-          break;
-        case 'ID':
-          if (field.maxLength) {
-            col(`table.string('${name}', ${get(field, 'maxLength')})`);
-          } else {
-            col(`table.uuid('${name}')`);
-          }
-          break;
-        case 'Upload':
-          break;
-        default:
-          throw new Error(`Unknown field type ${type}`);
-      }
+        }
+        col();
+        break;
+      default:
+        throw new Error(`Unknown field type ${field.type}`);
     }
   }
 }
