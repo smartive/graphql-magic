@@ -16,7 +16,7 @@ export const rawModels: RawModels = [
 
   {
     name: 'SomeRawObject',
-    type: 'raw-object',
+    type: 'raw',
     fields: [{ name: 'field', type: 'String' }],
   },
 
@@ -30,7 +30,8 @@ export const rawModels: RawModels = [
       },
       {
         name: 'role',
-        type: 'Role',
+        type: 'enum',
+        typeName: 'Role',
       },
     ],
   },
@@ -47,11 +48,11 @@ export const rawModels: RawModels = [
         orderable: true,
       },
       {
-        type: 'AnotherObject',
+        type: 'relation',
+        typeName: 'AnotherObject',
         name: 'myself',
         toOne: true,
         reverse: 'self',
-        relation: true
       }
     ],
   },
@@ -73,8 +74,8 @@ export const rawModels: RawModels = [
       },
       {
         name: 'another',
-        type: 'AnotherObject',
-        relation: true,
+        type: 'relation',
+        typeName: 'AnotherObject',
         filterable: true,
         updatable: true,
         nonNull: true,

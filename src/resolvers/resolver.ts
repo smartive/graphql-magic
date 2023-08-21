@@ -115,11 +115,11 @@ const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins
         .filter((n) => {
           const field = node.model.fields.find(({ name }) => name === n.name.value);
 
-          if (!field || field.relation || field.raw) {
+          if (!field || field.type === 'relation' || field.type === 'raw') {
             return false;
           }
 
-          if (field.queriableBy && !field.queriableBy.includes(node.ctx.user.role)) {
+          if (typeof field.queriable === 'object' && !field.queriable.roles?.includes(node.ctx.user.role)) {
             throw new PermissionError(
               'READ',
               `${node.model.name}'s field "${field.name}"`,

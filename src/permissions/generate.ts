@@ -1,5 +1,5 @@
 import { Models } from '../models';
-import { summonByName } from '../utils';
+import { isRelation, summonByName } from '../utils';
 
 export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
 
@@ -114,7 +114,7 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
 
   if (block.RELATIONS) {
     for (const [relation, subBlock] of Object.entries(block.RELATIONS)) {
-      const field = model.fields.find((field) => field.relation && field.name === relation);
+      const field = model.fields.filter(isRelation).find((field) => field.name === relation);
       let link: PermissionLink;
       if (field) {
         link = {

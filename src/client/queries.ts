@@ -1,21 +1,20 @@
 import upperFirst from 'lodash/upperFirst';
+import { Field } from '..';
+import { Model, Models, Relation, ReverseRelation } from '../models';
 import {
   actionableRelations,
   and,
+  getModelPlural,
+  getModelPluralField,
   isQueriableBy,
   isRelation,
   isSimpleField,
   isToOneRelation,
   isUpdatableBy,
-  isVisibleRelation,
-  Model,
-  Models,
   not,
-  Relation,
-  ReverseRelation,
-  VisibleRelationsByRole,
-} from '../models';
-import { getModelPlural, getModelPluralField, summonByName, typeToField } from '../utils';
+  summonByName,
+  typeToField,
+} from '../utils';
 
 export const getUpdateEntityQuery = (
   model: Model,
@@ -54,8 +53,8 @@ export const getEditEntityRelationsQuery = (
     !!relations.length &&
     `query ${upperFirst(action)}${model.name}Relations {
       ${relations
-        .map(({ name, type }) => {
-          const model = summonByName(models, type);
+        .map(({ name, typeName }) => {
+          const model = summonByName(models, typeName);
 
           let filters = '';
           if (model.displayField) {
@@ -205,6 +204,13 @@ export const getEntityListQuery = (
     }
   ${root ? '}' : ''}
 }`;
+
+export type VisibleRelationsByRole = Record<string, Record<string, string[]>>;
+
+export const isVisibleRelation = (visibleRelationsByRole: VisibleRelationsByRole, modelName: string, role: string) => {
+  const whitelist = visibleRelationsByRole[role]?.[modelName];
+  return ({ name }: Field) => (whitelist ? whitelist.includes(name) : true);
+};
 
 export const getEntityQuery = (
   models: Models,
