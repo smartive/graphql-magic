@@ -1,5 +1,5 @@
-import { Models } from '../models';
-import { isRelation, summonByName } from '../utils';
+import { Models } from '../models/models';
+import { isRelation, summonByName } from '../models/utils';
 
 export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
 

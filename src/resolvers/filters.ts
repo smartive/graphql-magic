@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { ForbiddenError, UserInputError } from '../errors';
-import { get, summonByName } from '../utils';
+import { get, summonByName } from '../models/utils';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode, WhereNode } from './node';
 import { Joins, Ops, addJoin, apply, ors } from './utils';

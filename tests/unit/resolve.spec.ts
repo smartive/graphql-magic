@@ -1,14 +1,11 @@
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { execute, parse, Source } from 'graphql';
 import knex from 'knex';
 import { DateTime } from 'luxon';
+import { execute } from '../../src';
 import { gql } from '../../src/client/gql';
-import { Context } from '../../src/context';
-import { generate } from '../../src/generate';
 import { getResolvers } from '../../src/resolvers';
 import { models, permissions, rawModels } from '../utils/models';
 
-const test = async (operationName: string, query: string, variableValues: object, responses: unknown[]) => {
+const test = async (operationName: string, query: string, variables: object, responses: unknown[]) => {
   const knexInstance = knex({
     client: 'postgresql',
   });
@@ -25,11 +22,8 @@ const test = async (operationName: string, query: string, variableValues: object
   });
 
   const user = await knexInstance('User').where({ id: 1 }).first();
-  const typeDefs = generate(rawModels);
-  const contextValue: Context = {
-    req: null as any,
+  const result = await execute({
     knex: knexInstance,
-    document: typeDefs,
     locale: 'en',
     locales: ['en'],
     user,
@@ -37,16 +31,7 @@ const test = async (operationName: string, query: string, variableValues: object
     models,
     permissions,
     now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),
-  };
-  const result = await execute({
-    schema: makeExecutableSchema({
-      typeDefs,
-      resolvers: getResolvers(models),
-    }),
-    document: parse(new Source(query, 'GraphQL request')),
-    contextValue,
-    variableValues,
-    operationName,
+    body: { operationName, query, variables }
   });
 
   expect(result).toMatchSnapshot();

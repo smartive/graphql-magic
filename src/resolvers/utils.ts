@@ -12,7 +12,7 @@ import type {
 import { Kind } from 'graphql';
 import { Knex } from 'knex';
 import { UserInputError } from '../errors';
-import { get, it } from '../utils';
+import { get, it } from '../models/utils';
 import { Value } from '../values';
 import { FieldResolverNode } from './node';
 

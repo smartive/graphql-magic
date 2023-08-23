@@ -4,8 +4,8 @@ import { SchemaInspector } from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
 import { SchemaInspector as SchemaInspectorType } from 'knex-schema-inspector/dist/types/schema-inspector';
 import lowerFirst from 'lodash/lowerFirst';
-import { EnumModel, Model, ModelField, Models, RawModels } from '../models';
-import { get, getModels, isEnumModel, summonByName, typeToField } from '../utils';
+import { EnumModel, Model, ModelField, Models, RawModels } from '../models/models';
+import { get, getModels, isEnumModel, summonByName, typeToField } from '../models/utils';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];

@@ -1,12 +1,9 @@
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { execute, parse, Source, TypedQueryDocumentNode } from 'graphql';
+import { TypedQueryDocumentNode } from 'graphql';
 import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
-import { createServer, RequestListener } from 'http';
+import { RequestListener, createServer } from 'http';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { Context } from '../../src/context';
-import { generate } from '../../src/generate';
-import { getResolvers } from '../../src/resolvers';
+import { execute } from '../../src';
 import { getKnex } from './database/knex';
 import { setupSchema } from './database/schema';
 import { ADMIN_ID, setupSeed } from './database/seed';
@@ -50,25 +47,7 @@ export const withServer = async (
 
     handler = async (req, res) => {
       const user = await knex('User').where({ id: ADMIN_ID }).first();
-
-      const typeDefs = generate(rawModels);
-      const contextValue: Context = {
-        req,
-        knex,
-        document: typeDefs,
-        locale: 'en',
-        locales: ['en'],
-        user,
-        rawModels,
-        models,
-        permissions,
-        now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),
-      };
-      const {
-        query,
-        variables: variableValues,
-        operationName,
-      } = await new Promise<any>((res) => {
+      const body = await new Promise<any>((res) => {
         const chunks: any = [];
         req
           .on('data', (chunk) => {
@@ -79,14 +58,15 @@ export const withServer = async (
           });
       });
       const result = await execute({
-        schema: makeExecutableSchema({
-          typeDefs,
-          resolvers: getResolvers(models),
-        }),
-        document: parse(new Source(query, 'GraphQL request')),
-        contextValue,
-        variableValues,
-        operationName,
+        knex,
+        locale: 'en',
+        locales: ['en'],
+        user,
+        rawModels,
+        models,
+        permissions,
+        now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),
+        body,
       });
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
