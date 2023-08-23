@@ -1,6 +1,6 @@
 import upperFirst from 'lodash/upperFirst';
 import { Field } from '..';
-import { Model, Models, Relation, ReverseRelation } from '../models';
+import { Model, Models, Relation, ReverseRelation } from '../models/models';
 import {
   actionableRelations,
   and,
@@ -14,7 +14,7 @@ import {
   not,
   summonByName,
   typeToField,
-} from '../utils';
+} from '../models/utils';
 
 export const getUpdateEntityQuery = (
   model: Model,

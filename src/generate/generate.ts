@@ -1,6 +1,6 @@
 import { buildASTSchema, DefinitionNode, DocumentNode, GraphQLSchema, print } from 'graphql';
 import flatMap from 'lodash/flatMap';
-import { RawModels } from '../models';
+import { RawModels } from '../models/models';
 import {
   getModelPluralField,
   getModels,
@@ -11,7 +11,7 @@ import {
   isRelation,
   isScalarModel,
   typeToField,
-} from '../utils';
+} from '../models/utils';
 import { document, enm, Field, input, object, scalar } from './utils';
 
 export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {

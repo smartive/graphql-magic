@@ -1,5 +1,5 @@
-import { Models } from '../models';
-import { getModelPluralField, merge, typeToField } from '../utils';
+import { Models } from '../models/models';
+import { getModelPluralField, merge, typeToField } from '../models/utils';
 import { mutationResolver } from './mutations';
 import { queryResolver } from './resolver';
 

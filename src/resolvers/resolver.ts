@@ -4,9 +4,9 @@ import cloneDeep from 'lodash/cloneDeep';
 import flatMap from 'lodash/flatMap';
 import { Context, FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
+import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
-import { get, summonByKey } from '../utils';
 import { applyFilters } from './filters';
 import {
   FieldResolverNode,

@@ -1,6 +1,6 @@
 import type { GraphQLObjectType, GraphQLSchema, TypeDefinitionNode, TypeNode, ValueNode } from 'graphql';
 import { Kind } from 'graphql';
-import { summonByKey } from '../utils';
+import { summonByKey } from '../models/utils';
 import { Value } from '../values';
 import { FieldResolverNode } from './node';
 import { Maybe, VariableValues } from './utils';

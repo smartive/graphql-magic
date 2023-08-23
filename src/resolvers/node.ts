@@ -8,8 +8,8 @@ import type {
 } from 'graphql';
 
 import { FullContext } from '../context';
-import { Model } from '../models';
-import { get, isRawObjectModel, summonByKey, summonByName } from '../utils';
+import { Model } from '../models/models';
+import { get, isRawObjectModel, summonByKey, summonByName } from '../models/utils';
 import {
   getFragmentTypeName,
   getNameOrAlias,

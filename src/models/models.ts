@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
-import { Field } from '.';
-import type { Context } from './context';
-import type { OrderBy } from './resolvers/arguments';
-import type { Value } from './values';
+import { Field } from '..';
+import type { Context } from '../context';
+import type { OrderBy } from '../resolvers/arguments';
+import type { Value } from '../values';
 
 export type RawModels = RawModel[];
 

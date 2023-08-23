@@ -1,9 +1,9 @@
 import { Knex } from 'knex';
 import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
-import { Model } from '../models';
+import { Model } from '../models/models';
+import { get, getModelPlural, isRelation, summonByName } from '../models/utils';
 import { AliasGenerator, hash, ors } from '../resolvers/utils';
-import { get, getModelPlural, isRelation, summonByName } from '../utils';
 import { BasicValue } from '../values';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 

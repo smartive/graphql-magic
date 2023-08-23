@@ -3,9 +3,9 @@ import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { Context, FullContext } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
-import { Entity, Model, ModelField } from '../models';
+import { Entity, Model, ModelField } from '../models/models';
+import { get, isEnumList, it, summonByName, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
-import { get, isEnumList, it, summonByName, typeToField } from '../utils';
 import { resolve } from './resolver';
 import { AliasGenerator } from './utils';
 
