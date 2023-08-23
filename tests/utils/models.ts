@@ -1,6 +1,6 @@
 import { RawModels } from '../../src/models';
+import { getModels } from '../../src/models/utils';
 import { generatePermissions, PermissionsConfig } from '../../src/permissions/generate';
-import { getModels } from '../../src/utils';
 
 export const rawModels: RawModels = [
   {
