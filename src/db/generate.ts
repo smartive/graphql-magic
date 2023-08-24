@@ -106,7 +106,7 @@ const getFieldOutputType = (field: ModelField) => {
       // Relations are stored as ids
       return 'string';
     case 'enum':
-      return field.typeName + field.list ? '[]' : '';
+      return field.typeName + (field.list ? '[]' : '');
     case 'raw':
       throw new Error(`Raw fields are not in the db.`);
     default:
