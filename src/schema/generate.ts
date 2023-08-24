@@ -27,6 +27,22 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
     ...rawModels.filter(isRawObjectModel).map((model) => object(model.name, model.fields)),
+    ...rawModels
+      .filter(isRawObjectModel)
+      .filter((model) =>
+        models.some(
+          (m) => m.creatable && m.fields.some((f) => f.creatable && f.type === 'json' && f.typeName === model.name)
+        )
+      )
+      .map((model) => input(`Create${model.name}`, model.fields)),
+    ...rawModels
+      .filter(isRawObjectModel)
+      .filter((model) =>
+        models.some(
+          (m) => m.creatable && m.fields.some((f) => f.creatable && f.type === 'json' && f.typeName === model.name)
+        )
+      )
+      .map((model) => input(`Update${model.name}`, model.fields)),
 
     ...flatMap(
       models.map((model) => {
@@ -108,7 +124,17 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
                 .map(({ name, nonNull, list, default: defaultValue, ...field }) =>
                   field.type === 'relation'
                     ? { name: `${name}Id`, type: 'ID', nonNull }
-                    : { name, type: field.type, list, nonNull: nonNull && defaultValue === undefined }
+                    : {
+                        name,
+                        type:
+                          field.type === 'enum'
+                            ? field.typeName
+                            : field.type === 'json'
+                            ? `Create${field.typeName}`
+                            : field.type,
+                        list,
+                        nonNull: nonNull && defaultValue === undefined,
+                      }
                 )
             )
           );
@@ -120,8 +146,19 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               `Update${model.name}`,
               model.fields
                 .filter(({ updatable }) => updatable)
-                .map(({ name, type, list }) =>
-                  type === 'relation' ? { name: `${name}Id`, type: 'ID' } : { name, type, list }
+                .map(({ name, list, ...field }) =>
+                  field.type === 'relation'
+                    ? { name: `${name}Id`, type: 'ID' }
+                    : {
+                        name,
+                        type:
+                          field.type === 'enum'
+                            ? field.typeName
+                            : field.type === 'json'
+                            ? `Update${field.typeName}`
+                            : field.type,
+                        list,
+                      }
                 )
             )
           );
