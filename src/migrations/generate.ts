@@ -615,14 +615,14 @@ export class MigrationGenerator {
         break;
       case 'enum':
         if (list) {
-          this.writer.write(`table.specificType('${name}', '"${typeToField(field.type)}"[]');`);
+          this.writer.write(`table.specificType('${name}', '"${typeToField(field.typeName)}"[]');`);
         } else {
           this.writer
             .write(`table.enum('${name}', null as any, `)
             .inlineBlock(() => {
               this.writer.writeLine(`useNative: true,`);
               this.writer.writeLine(`existingType: true,`);
-              this.writer.writeLine(`enumName: '${typeToField(field.type)}',`);
+              this.writer.writeLine(`enumName: '${typeToField(field.typeName)}',`);
             })
             .write(')');
         }
