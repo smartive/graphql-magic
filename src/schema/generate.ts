@@ -53,7 +53,9 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               ...model.fields.filter(isQueriableField).map((field) => ({
                 ...field,
                 type:
-                  field.type === 'relation' || field.type === 'enum' || field.type === 'raw' ? field.typeName : field.type,
+                  field.type === 'relation' || field.type === 'enum' || field.type === 'raw' || field.type === 'json'
+                    ? field.typeName
+                    : field.type,
                 args: [...(field.args || [])],
                 directives: field.directives,
               })),
