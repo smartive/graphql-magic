@@ -23,6 +23,7 @@ const test = async (operationName: string, query: string, variables: object, res
 
   const user = await knexInstance('User').where({ id: 1 }).first();
   const result = await execute({
+    req: null as any,
     knex: knexInstance,
     locale: 'en',
     locales: ['en'],

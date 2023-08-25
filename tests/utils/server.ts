@@ -58,6 +58,7 @@ export const withServer = async (
           });
       });
       const result = await execute({
+        req,
         knex,
         locale: 'en',
         locales: ['en'],

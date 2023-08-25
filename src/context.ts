@@ -1,4 +1,5 @@
 import { DocumentNode, GraphQLResolveInfo } from 'graphql';
+import { IncomingMessage } from 'http';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { Entity, Models, MutationHook, RawModels } from './models/models';
@@ -9,6 +10,7 @@ import { AliasGenerator } from './resolvers/utils';
 export type User = { id: string; role: string };
 
 export type Context = {
+  req: IncomingMessage;
   now: DateTime;
   knex: Knex;
   document: DocumentNode;
