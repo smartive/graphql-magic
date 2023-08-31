@@ -87,7 +87,11 @@ export const isUpdatable = ({ updatable }: ModelField) => !!updatable;
 export const isCreatable = ({ creatable }: ModelField) => !!creatable;
 
 export const isQueriableBy = (role: string) => (field: ModelField) =>
-  field.queriable !== false && (field.queriable == true || !field.queriable.roles || field.queriable.roles.includes(role));
+  field.queriable !== false &&
+  (field.queriable === undefined ||
+    field.queriable === true ||
+    !field.queriable.roles ||
+    field.queriable.roles.includes(role));
 
 export const isUpdatableBy = (role: string) => (field: ModelField) =>
   field.updatable && (field.updatable === true || !field.updatable.roles || field.updatable.roles.includes(role));
