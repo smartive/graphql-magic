@@ -19,7 +19,7 @@ input AnotherObjectOrderBy {
 
 input AnotherObjectWhere {
   id: [ID!]
-  deleted: [Boolean!] = false
+  deleted: [Boolean!]
 }
 
 input AnotherObjectWhereUnique {
@@ -88,7 +88,7 @@ input SomeObjectOrderBy {
 
 input SomeObjectWhere {
   id: [ID!]
-  deleted: [Boolean!] = false
+  deleted: [Boolean!]
   another: AnotherObjectWhere
 }
 
