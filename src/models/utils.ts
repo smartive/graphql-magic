@@ -7,11 +7,13 @@ import startCase from 'lodash/startCase';
 import {
   BooleanField,
   DateTimeField,
+  EnumField,
   EnumModel,
   Model,
   ModelField,
   Models,
   ObjectModel,
+  PrimitiveField,
   RawEnumModel,
   RawField,
   RawModel,
@@ -43,18 +45,18 @@ export const getModelLabel = (model: Model) => getLabel(model.name);
 
 export const getLabel = (s: string) => startCase(camelCase(s));
 
-export const isObjectModel = (model: RawModel): model is ObjectModel => model.type === 'object';
+export const isObjectModel = (model: RawModel): model is ObjectModel => model.kind === 'object';
 
-export const isEnumModel = (model: RawModel): model is EnumModel => model.type === 'enum';
+export const isEnumModel = (model: RawModel): model is EnumModel => model.kind === 'enum';
 
-export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.type === 'raw-enum';
+export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.kind === 'raw-enum';
 
-export const isScalarModel = (model: RawModel): model is ScalarModel => model.type === 'scalar';
+export const isScalarModel = (model: RawModel): model is ScalarModel => model.kind === 'scalar';
 
-export const isRawObjectModel = (model: RawModel): model is RawObjectModel => model.type === 'raw';
+export const isRawObjectModel = (model: RawModel): model is RawObjectModel => model.kind === 'raw';
 
 export const isEnumList = (models: RawModels, field: ModelField) =>
-  field?.list === true && models.find(({ name }) => name === field.type)?.type === 'enum';
+  field?.list === true && models.find(({ name }) => name === field.kind)?.kind === 'enum';
 
 export const and =
   (...predicates: ((field: ModelField) => boolean)[]) =>
@@ -63,13 +65,18 @@ export const and =
 
 export const not = (predicate: (field: ModelField) => boolean) => (field: ModelField) => !predicate(field);
 
-export const isRelation = (field: ModelField): field is RelationField => field.type === 'relation';
+export const isPrimitive = (field: ModelField): field is PrimitiveField =>
+  field.kind === undefined || field.kind === 'primitive';
+
+export const isEnum = (field: ModelField): field is EnumField => field.kind === 'enum';
+
+export const isRelation = (field: ModelField): field is RelationField => field.kind === 'relation';
 
 export const isToOneRelation = (field: ModelField): field is RelationField => isRelation(field) && !!field.toOne;
 
 export const isQueriableField = ({ queriable }: ModelField) => queriable !== false;
 
-export const isRaw = (field: ModelField): field is RawField => field.type === 'raw';
+export const isRaw = (field: ModelField): field is RawField => field.kind === 'raw';
 
 export const isVisible = ({ hidden }: ModelField) => hidden !== true;
 
@@ -114,7 +121,6 @@ export const getModels = (rawModels: RawModels): Models => {
                 {
                   name: 'createdAt',
                   type: 'DateTime',
-
                   nonNull: true,
                   orderable: true,
                   generated: true,
@@ -122,8 +128,8 @@ export const getModels = (rawModels: RawModels): Models => {
                 } satisfies DateTimeField,
                 {
                   name: 'createdBy',
-                  type: 'relation',
-                  typeName: 'User',
+                  kind: 'relation',
+                  type: 'User',
                   nonNull: true,
                   reverse: `created${getModelPlural(model)}`,
                   generated: true,
@@ -143,8 +149,8 @@ export const getModels = (rawModels: RawModels): Models => {
                 } satisfies DateTimeField,
                 {
                   name: 'updatedBy',
-                  type: 'relation',
-                  typeName: 'User',
+                  kind: 'relation',
+                  type: 'User',
                   nonNull: true,
                   reverse: `updated${getModelPlural(model)}`,
                   generated: true,
@@ -158,7 +164,7 @@ export const getModels = (rawModels: RawModels): Models => {
                   name: 'deleted',
                   type: 'Boolean',
                   nonNull: true,
-                  default: false,
+                  defaultValue: false,
                   filterable: { default: false },
                   generated: true,
                   ...(typeof model.deletable === 'object' && model.deletable.deleted),
@@ -172,8 +178,8 @@ export const getModels = (rawModels: RawModels): Models => {
                 } satisfies DateTimeField,
                 {
                   name: 'deletedBy',
-                  type: 'relation',
-                  typeName: 'User',
+                  kind: 'relation',
+                  type: 'User',
                   reverse: `deleted${getModelPlural(model)}`,
                   generated: true,
                   ...(typeof model.deletable === 'object' && model.deletable.deletedBy),
@@ -183,7 +189,7 @@ export const getModels = (rawModels: RawModels): Models => {
         ] satisfies ModelField[]
       ).map((field: ModelField) => ({
         ...field,
-        ...(field.type === 'relation' && {
+        ...(field.kind === 'relation' && {
           foreignKey: field.foreignKey || `${field.name}Id`,
         }),
       })),
@@ -198,17 +204,17 @@ export const getModels = (rawModels: RawModels): Models => {
 
   for (const model of models) {
     for (const field of model.fields) {
-      if (field.type !== 'relation') {
+      if (field.kind !== 'relation') {
         continue;
       }
 
-      const fieldModel = summonByName(models, field.typeName);
+      const fieldModel = summonByName(models, field.type);
 
       const reverseRelation: ReverseRelation = {
-        type: 'relation',
+        kind: 'relation',
         name: field.reverse || (field.toOne ? typeToField(model.name) : getModelPluralField(model)),
         foreignKey: get(field, 'foreignKey'),
-        typeName: model.name,
+        type: model.name,
         toOne: !!field.toOne,
         fieldModel,
         field,

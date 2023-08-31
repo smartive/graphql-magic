@@ -1,4 +1,4 @@
-import { buildASTSchema, DefinitionNode, DocumentNode, GraphQLSchema, print } from 'graphql';
+import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import flatMap from 'lodash/flatMap';
 import { RawModels } from '../models/models';
 import {
@@ -12,7 +12,7 @@ import {
   isScalarModel,
   typeToField,
 } from '../models/utils';
-import { document, enm, Field, input, object, scalar } from './utils';
+import { Field, document, enm, input, object, scalar } from './utils';
 
 export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
   const models = getModels(rawModels);
@@ -30,17 +30,13 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     ...rawModels
       .filter(isRawObjectModel)
       .filter((model) =>
-        models.some(
-          (m) => m.creatable && m.fields.some((f) => f.creatable && f.type === 'json' && f.typeName === model.name)
-        )
+        models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
       )
       .map((model) => input(`Create${model.name}`, model.fields)),
     ...rawModels
       .filter(isRawObjectModel)
       .filter((model) =>
-        models.some(
-          (m) => m.creatable && m.fields.some((f) => f.creatable && f.type === 'json' && f.typeName === model.name)
-        )
+        models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
       )
       .map((model) => input(`Update${model.name}`, model.fields)),
 
@@ -52,10 +48,7 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             [
               ...model.fields.filter(isQueriableField).map((field) => ({
                 ...field,
-                type:
-                  field.type === 'relation' || field.type === 'enum' || field.type === 'raw' || field.type === 'json'
-                    ? field.typeName
-                    : field.type,
+                type: field.type,
                 args: [...(field.args || [])],
                 directives: field.directives,
               })),
@@ -79,33 +72,33 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
           ),
           input(`${model.name}Where`, [
             ...model.fields
-              .filter(({ type, unique, filterable }) => (unique || filterable) && type !== 'relation')
-              .map(({ type, name, filterable }) => ({
-                name,
-                type,
+              .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
+              .map((field) => ({
+                name: field.name,
+                type: field.type,
                 list: true,
-                default: typeof filterable === 'object' ? filterable.default : undefined,
+                default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
               })),
             ...flatMap(
               model.fields.filter(({ comparable }) => comparable),
-              ({ name, type }) => [
-                { name: `${name}_GT`, type },
-                { name: `${name}_GTE`, type },
-                { name: `${name}_LT`, type },
-                { name: `${name}_LTE`, type },
+              (field) => [
+                { name: `${field.name}_GT`, type: field.type },
+                { name: `${field.name}_GTE`, type: field.type },
+                { name: `${field.name}_LT`, type: field.type },
+                { name: `${field.name}_LTE`, type: field.type },
               ]
             ),
             ...model.fields
               .filter(isRelation)
               .filter(({ filterable }) => filterable)
-              .map(({ name, typeName }) => ({
+              .map(({ name, type }) => ({
                 name,
-                type: `${typeName}Where`,
+                type: `${type}Where`,
               })),
           ]),
           input(
             `${model.name}WhereUnique`,
-            model.fields.filter(({ unique }) => unique).map(({ name, type }) => ({ name, type }))
+            model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type }))
           ),
           ...(model.fields.some(({ orderable }) => orderable)
             ? [
@@ -123,19 +116,14 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               `Create${model.name}`,
               model.fields
                 .filter(({ creatable }) => creatable)
-                .map(({ name, nonNull, list, default: defaultValue, ...field }) =>
-                  field.type === 'relation'
-                    ? { name: `${name}Id`, type: 'ID', nonNull }
+                .map((field) =>
+                  field.kind === 'relation'
+                    ? { name: `${field.name}Id`, type: 'ID', nonNull: field.nonNull }
                     : {
-                        name,
-                        type:
-                          field.type === 'enum'
-                            ? field.typeName
-                            : field.type === 'json'
-                            ? `Create${field.typeName}`
-                            : field.type,
-                        list,
-                        nonNull: nonNull && defaultValue === undefined,
+                        name: field.name,
+                        type: field.kind === 'json' ? `Create${field.type}` : field.type,
+                        list: field.list,
+                        nonNull: field.nonNull && field.defaultValue === undefined,
                       }
                 )
             )
@@ -148,18 +136,13 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               `Update${model.name}`,
               model.fields
                 .filter(({ updatable }) => updatable)
-                .map(({ name, list, ...field }) =>
-                  field.type === 'relation'
-                    ? { name: `${name}Id`, type: 'ID' }
+                .map((field) =>
+                  field.kind === 'relation'
+                    ? { name: `${field.name}Id`, type: 'ID' }
                     : {
-                        name,
-                        type:
-                          field.type === 'enum'
-                            ? field.typeName
-                            : field.type === 'json'
-                            ? `Update${field.typeName}`
-                            : field.type,
-                        list,
+                        name: field.name,
+                        type: field.kind === 'json' ? `Update${field.type}` : field.type,
+                        list: field.list,
                       }
                 )
             )

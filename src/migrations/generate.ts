@@ -131,9 +131,9 @@ export class MigrationGenerator {
           model,
           model.fields.filter(
             ({ name, ...field }) =>
-              field.type !== 'raw' &&
+              field.kind !== 'raw' &&
               !this.columns[model.name].some(
-                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               )
           ),
           up,
@@ -141,8 +141,8 @@ export class MigrationGenerator {
         );
 
         // Update fields
-        const existingFields = model.fields.filter(({ name, type, nonNull }) => {
-          const col = this.columns[model.name].find((col) => col.name === (type === 'relation' ? `${name}Id` : name));
+        const existingFields = model.fields.filter(({ name, kind, nonNull }) => {
+          const col = this.columns[model.name].find((col) => col.name === (kind === 'relation' ? `${name}Id` : name));
           if (!col) {
             return false;
           }
@@ -177,8 +177,8 @@ export class MigrationGenerator {
                           writer.writeLine(`deleted: row.deleted,`);
                         }
 
-                        for (const { name, type } of model.fields.filter(({ updatable }) => updatable)) {
-                          const col = type === 'relation' ? `${name}Id` : name;
+                        for (const { name, kind } of model.fields.filter(({ updatable }) => updatable)) {
+                          const col = kind === 'relation' ? `${name}Id` : name;
 
                           writer.writeLine(`${col}: row.${col},`);
                         }
@@ -198,10 +198,10 @@ export class MigrationGenerator {
           const revisionTable = `${model.name}Revision`;
           const missingRevisionFields = model.fields.filter(
             ({ name, updatable, ...field }) =>
-              field.type !== 'raw' &&
+              field.kind !== 'raw' &&
               updatable &&
               !this.columns[revisionTable].some(
-                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               )
           );
 
@@ -210,11 +210,11 @@ export class MigrationGenerator {
           const revisionFieldsToRemove = model.fields.filter(
             ({ name, updatable, generated, ...field }) =>
               !generated &&
-              field.type !== 'raw' &&
+              field.kind !== 'raw' &&
               !updatable &&
-              !(field.type === 'relation' && field.foreignKey === 'id') &&
+              !(field.kind === 'relation' && field.foreignKey === 'id') &&
               this.columns[revisionTable].some(
-                (col) => col.name === (field.type === 'relation' ? field.foreignKey || `${name}Id` : name)
+                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               )
           );
           this.createRevisionFields(model, revisionFieldsToRemove, down, up);
@@ -276,8 +276,8 @@ export class MigrationGenerator {
       for (const field of fields) {
         this.alterTable(model.name, () => {
           this.renameColumn(
-            field.type === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
-            field.type === 'relation' ? `${field.name}Id` : field.name
+            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
+            field.kind === 'relation' ? `${field.name}Id` : field.name
           );
         });
       }
@@ -287,8 +287,8 @@ export class MigrationGenerator {
       for (const field of fields) {
         this.alterTable(model.name, () => {
           this.renameColumn(
-            field.type === 'relation' ? `${field.name}Id` : field.name,
-            field.type === 'relation' ? `${field.oldName}Id` : get(field, 'oldName')
+            field.kind === 'relation' ? `${field.name}Id` : field.name,
+            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName')
           );
         });
       }
@@ -296,8 +296,8 @@ export class MigrationGenerator {
 
     for (const field of fields) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      summonByName(this.columns[model.name]!, field.type === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
-        field.type === 'relation' ? `${field.name}Id` : field.name;
+      summonByName(this.columns[model.name]!, field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
+        field.kind === 'relation' ? `${field.name}Id` : field.name;
     }
   }
 
@@ -311,10 +311,10 @@ export class MigrationGenerator {
       const updates: Callbacks = [];
       const postAlter: Callbacks = [];
       for (const field of fields) {
-        alter.push(() => this.column(field, { setNonNull: field.default !== undefined }));
+        alter.push(() => this.column(field, { setNonNull: field.defaultValue !== undefined }));
 
         // If the field is not nullable but has no default, write placeholder code
-        if (field.nonNull && field.default === undefined) {
+        if (field.nonNull && field.defaultValue === undefined) {
           updates.push(() => this.writer.write(`${field.name}: 'TODO',`).newLine());
           postAlter.push(() => this.column(field, { alter: true, foreign: false }));
         }
@@ -343,8 +343,8 @@ export class MigrationGenerator {
 
     down.push(() => {
       this.alterTable(model.name, () => {
-        for (const { type, name } of fields) {
-          this.dropColumn(type === 'relation' ? `${name}Id` : name);
+        for (const { kind, name } of fields) {
+          this.dropColumn(kind === 'relation' ? `${name}Id` : name);
         }
       });
     });
@@ -369,7 +369,7 @@ export class MigrationGenerator {
           this.column(
             field,
             { alter: true },
-            summonByName(this.columns[model.name], field.type === 'relation' ? `${field.name}Id` : field.name)
+            summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name)
           );
         }
       });
@@ -395,7 +395,7 @@ export class MigrationGenerator {
             this.column(
               field,
               { alter: true },
-              summonByName(this.columns[model.name], field.type === 'relation' ? `${field.name}Id` : field.name)
+              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name)
             );
           }
         });
@@ -439,7 +439,7 @@ export class MigrationGenerator {
         this.writer
           .write(`await knex('${model.name}Revision').update(`)
           .inlineBlock(() => {
-            for (const { name, type } of missingRevisionFields) {
+            for (const { name, kind: type } of missingRevisionFields) {
               const col = type === 'relation' ? `${name}Id` : name;
               this.writer
                 .write(
@@ -467,7 +467,7 @@ export class MigrationGenerator {
       down.push(() => {
         this.alterTable(revisionTable, () => {
           for (const field of missingRevisionFields) {
-            this.dropColumn(field.type === 'relation' ? `${field.name}Id` : field.name);
+            this.dropColumn(field.kind === 'relation' ? `${field.name}Id` : field.name);
           }
         });
       });
@@ -565,8 +565,8 @@ export class MigrationGenerator {
           }
         }
       }
-      if (setDefault && field.default !== undefined) {
-        this.writer.write(`.defaultTo(${this.value(field.default)})`);
+      if (setDefault && field.defaultValue !== undefined) {
+        this.writer.write(`.defaultTo(${this.value(field.defaultValue)})`);
       }
       if (primary) {
         this.writer.write('.primary()');
@@ -578,39 +578,44 @@ export class MigrationGenerator {
       }
       this.writer.write(';').newLine();
     };
-    switch (field.type) {
-      case 'Boolean':
-        col(`table.boolean('${name}')`);
-        break;
-      case 'Int':
-        col(`table.integer('${name}')`);
-        break;
-      case 'Float':
-        if (field.double) {
-          col(`table.double('${name}')`);
-        } else {
-          col(`table.decimal('${name}', ${get(field, 'precision')}, ${get(field, 'scale')})`);
+    const kind = field.kind;
+    switch (kind) {
+      case 'primitive':
+        switch (field.type) {
+          case 'Boolean':
+            col(`table.boolean('${name}')`);
+            break;
+          case 'Int':
+            col(`table.integer('${name}')`);
+            break;
+          case 'Float':
+            if (field.double) {
+              col(`table.double('${name}')`);
+            } else {
+              col(`table.decimal('${name}', ${get(field, 'precision')}, ${get(field, 'scale')})`);
+            }
+            break;
+          case 'String':
+            if (field.large) {
+              col(`table.text('${name}')`);
+            } else {
+              col(`table.string('${name}', ${field.maxLength})`);
+            }
+            break;
+          case 'DateTime':
+            col(`table.timestamp('${name}')`);
+            break;
+          case 'ID':
+            col(`table.uuid('${name}')`);
+            break;
+          case 'Upload':
+            break;
         }
-        break;
-      case 'String':
-        if (field.large) {
-          col(`table.text('${name}')`);
-        } else {
-          col(`table.string('${name}', ${field.maxLength})`);
-        }
-        break;
-      case 'DateTime':
-        col(`table.timestamp('${name}')`);
-        break;
-      case 'ID':
-        col(`table.uuid('${name}')`);
-        break;
-      case 'Upload':
         break;
       case 'relation':
         col(`table.uuid('${name}Id')`);
         if (foreign && !alter) {
-          this.writer.writeLine(`table.foreign('${name}Id').references('id').inTable('${field.typeName}');`);
+          this.writer.writeLine(`table.foreign('${name}Id').references('id').inTable('${field.type}');`);
         }
         break;
       case 'enum':
@@ -628,8 +633,15 @@ export class MigrationGenerator {
         }
         col();
         break;
-      default:
-        throw new Error(`Unknown field type ${field.type}`);
+      case 'json':
+        this.writer.write(`table.json('${typeToField(field.type)}')`);
+        break;
+      case 'raw':
+        throw new Error("Raw fields aren't stored in the database");
+      default: {
+        const exhaustiveCheck: never = kind;
+        throw new Error(exhaustiveCheck);
+      }
     }
   }
 }

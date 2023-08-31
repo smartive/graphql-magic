@@ -30,7 +30,7 @@ export type Field = {
   description?: string;
   list?: boolean;
   nonNull?: boolean;
-  default?: Value;
+  defaultValue?: Value;
   args?: Field[];
   directives?: Directive[];
 };
@@ -90,7 +90,7 @@ export const inputValues = (fields: Field[]): InputValueDefinitionNode[] =>
       kind: 'InputValueDefinition',
       name: name(field.name),
       type: fieldType(field),
-      defaultValue: field.default === undefined ? undefined : value(field.default),
+      defaultValue: field.defaultValue === undefined ? undefined : value(field.defaultValue),
       directives: directives(field.directives),
     })
   );
@@ -105,7 +105,7 @@ export const fields = (fields: Field[]): FieldDefinitionNode[] =>
         kind: 'InputValueDefinition',
         name: name(arg.name),
         type: fieldType(arg),
-        defaultValue: arg.default === undefined ? undefined : value(arg.default),
+        defaultValue: arg.defaultValue === undefined ? undefined : value(arg.defaultValue),
       })),
       directives: directives(field.directives),
     })
