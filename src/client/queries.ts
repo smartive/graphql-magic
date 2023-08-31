@@ -1,5 +1,5 @@
 import upperFirst from 'lodash/upperFirst';
-import { Field } from '..';
+import { ModelField } from '..';
 import { Model, Models, Relation, ReverseRelation } from '../models/models';
 import {
   actionableRelations,
@@ -53,8 +53,8 @@ export const getEditEntityRelationsQuery = (
     !!relations.length &&
     `query ${upperFirst(action)}${model.name}Relations {
       ${relations
-        .map(({ name, typeName }) => {
-          const model = summonByName(models, typeName);
+        .map(({ name, type }) => {
+          const model = summonByName(models, type);
 
           let filters = '';
           if (model.displayField) {
@@ -209,7 +209,7 @@ export type VisibleRelationsByRole = Record<string, Record<string, string[]>>;
 
 export const isVisibleRelation = (visibleRelationsByRole: VisibleRelationsByRole, modelName: string, role: string) => {
   const whitelist = visibleRelationsByRole[role]?.[modelName];
-  return ({ name }: Field) => (whitelist ? whitelist.includes(name) : true);
+  return ({ name }: ModelField) => (whitelist ? whitelist.includes(name) : true);
 };
 
 export const getEntityQuery = (
@@ -224,7 +224,7 @@ export const getEntityQuery = (
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
     ${queryRelations(
       models,
-      model.fields.filter(and(isRelation, isVisibleRelation(visibleRelationsByRole, model.name, role))),
+      model.fields.filter(isRelation).filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
       role,
       typesWithSubRelations
     )}

@@ -147,8 +147,8 @@ export const checkCanWrite = async (
       continue;
     }
 
-    const fieldPermissions = field[action === 'CREATE' ? 'creatableBy' : 'updatableBy'];
-    if (fieldPermissions && !fieldPermissions.includes(ctx.user.role)) {
+    const fieldPermissions = field[action === 'CREATE' ? 'creatable' : 'updatable'];
+    if (fieldPermissions && typeof fieldPermissions === 'object' && !fieldPermissions.roles?.includes(ctx.user.role)) {
       throw new PermissionError(action, `this ${model.name}'s ${field.name}`, 'field permission not available');
     }
 

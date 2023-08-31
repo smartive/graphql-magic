@@ -5,23 +5,23 @@ import { generatePermissions, PermissionsConfig } from '../../src/permissions/ge
 export const rawModels: RawModels = [
   {
     name: 'SomeEnum',
-    type: 'enum',
+    kind: 'enum',
     values: ['A', 'B', 'C'],
   },
   {
     name: 'Role',
-    type: 'enum',
+    kind: 'enum',
     values: ['ADMIN', 'USER'],
   },
 
   {
     name: 'SomeRawObject',
-    type: 'raw',
+    kind: 'raw',
     fields: [{ name: 'field', type: 'String' }],
   },
 
   {
-    type: 'object',
+    kind: 'object',
     name: 'User',
     fields: [
       {
@@ -30,13 +30,13 @@ export const rawModels: RawModels = [
       },
       {
         name: 'role',
-        type: 'enum',
-        typeName: 'Role',
+        kind: 'enum',
+        type: 'Role',
       },
     ],
   },
   {
-    type: 'object',
+    kind: 'object',
     name: 'AnotherObject',
     listQueriable: true,
     deletable: true,
@@ -48,8 +48,8 @@ export const rawModels: RawModels = [
         orderable: true,
       },
       {
-        type: 'relation',
-        typeName: 'AnotherObject',
+        kind: 'relation',
+        type: 'AnotherObject',
         name: 'myself',
         toOne: true,
         reverse: 'self',
@@ -57,7 +57,7 @@ export const rawModels: RawModels = [
     ],
   },
   {
-    type: 'object',
+    kind: 'object',
     name: 'SomeObject',
     plural: 'ManyObjects',
     description: 'An object',
@@ -74,8 +74,8 @@ export const rawModels: RawModels = [
       },
       {
         name: 'another',
-        type: 'relation',
-        typeName: 'AnotherObject',
+        kind: 'relation',
+        type: 'AnotherObject',
         filterable: true,
         updatable: true,
         nonNull: true,

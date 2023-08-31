@@ -3,8 +3,9 @@ import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { Context, FullContext } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
-import { Entity, Model, ModelField } from '../models/models';
-import { get, isEnumList, it, summonByName, typeToField } from '../models/utils';
+import { Model, ModelField } from '../models/models';
+import { Entity, FullEntity } from '../models/mutation-hook';
+import { get, isEnumList, isPrimitive, it, summonByName, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { resolve } from './resolver';
 import { AliasGenerator } from './utils';
@@ -106,7 +107,7 @@ const del = async (model: Model, { where, dryRun }: { where: any; dryRun: boolea
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const deleteCascade = async (currentModel: Model, entity: Entity) => {
+  const deleteCascade = async (currentModel: Model, entity: FullEntity) => {
     if (entity.deleted) {
       return;
     }
@@ -220,7 +221,7 @@ const restore = async (model: Model, { where }: { where: any }, ctx: FullContext
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const restoreCascade = async (currentModel: Model, relatedEntity: Entity) => {
+  const restoreCascade = async (currentModel: Model, relatedEntity: FullEntity) => {
     if (!relatedEntity.deleted || !relatedEntity.deletedAt || !relatedEntity.deletedAt.equals(entity.deletedAt)) {
       return;
     }
@@ -265,7 +266,7 @@ const restore = async (model: Model, { where }: { where: any }, ctx: FullContext
 
 const createRevision = async (model: Model, data: Entity, ctx: Context) => {
   if (model.updatable) {
-    const revisionData = {
+    const revisionData: Entity = {
       id: uuid(),
       [`${typeToField(model.name)}Id`]: data.id,
       createdAt: ctx.now,
@@ -276,10 +277,10 @@ const createRevision = async (model: Model, data: Entity, ctx: Context) => {
       revisionData.deleted = data.deleted || false;
     }
 
-    for (const { type, name, nonNull, ...field } of model.fields.filter(({ updatable }) => updatable)) {
+    for (const { kind: type, name, nonNull, ...field } of model.fields.filter(({ updatable }) => updatable)) {
       const col = type === 'relation' ? `${name}Id` : name;
       if (nonNull && (!(col in data) || col === undefined || col === null)) {
-        revisionData[col] = get(field, 'default');
+        revisionData[col] = get(field, 'defaultValue');
       } else {
         revisionData[col] = data[col];
       }
@@ -314,4 +315,4 @@ const sanitize = (ctx: FullContext, model: Model, data: Entity) => {
 };
 
 const isEndOfDay = (field?: ModelField) =>
-  field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date' && field?.type === 'DateTime';
+  isPrimitive(field) && field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date';

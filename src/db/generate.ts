@@ -29,7 +29,7 @@ export const generateDBModels = (rawModels: RawModels) => {
 
   for (const model of models) {
     // TODO: deprecate allowing to define foreignKey
-    const fields = model.fields.some((field) => field.type === 'relation' && field.foreignKey === 'id')
+    const fields = model.fields.some((field) => field.kind === 'relation' && field.foreignKey === 'id')
       ? model.fields.filter((field) => field.name !== 'id')
       : model.fields;
 
@@ -37,7 +37,7 @@ export const generateDBModels = (rawModels: RawModels) => {
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
         for (const field of fields.filter(not(isRaw))) {
-          writer.write(`'${getFieldName(field)}': ${getFieldOutputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
+          writer.write(`'${getFieldName(field)}': ${getFieldType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
         }
       })
       .blankLine();
@@ -48,9 +48,9 @@ export const generateDBModels = (rawModels: RawModels) => {
         for (const field of fields.filter(not(isRaw))) {
           writer
             .write(
-              `'${getFieldName(field)}'${field.nonNull && field.default === undefined ? '' : '?'}: ${getFieldInputType(
+              `'${getFieldName(field)}'${field.nonNull && field.defaultValue === undefined ? '' : '?'}: ${getFieldType(
                 field
-              )}${field.nonNull ? '' : ' | null'},`
+              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'},`
             )
             .newLine();
         }
@@ -61,7 +61,13 @@ export const generateDBModels = (rawModels: RawModels) => {
       .write(`export type ${model.name}Mutator = `)
       .inlineBlock(() => {
         for (const field of fields.filter(not(isRaw))) {
-          writer.write(`'${getFieldName(field)}'?: ${getFieldInputType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
+          writer
+            .write(
+              `'${getFieldName(field)}'?: ${getFieldType(field)}${field.list ? ' | string' : ''}${
+                field.nonNull ? '' : ' | null'
+              },`
+            )
+            .newLine();
         }
       })
       .blankLine();
@@ -74,11 +80,10 @@ export const generateDBModels = (rawModels: RawModels) => {
           writer
             .write(
               `'${getFieldName(field)}'${
-                field.nonNull && field.default === undefined && !OPTIONAL_SEED_FIELDS.includes(fieldName) ? '' : '?'
-              }: ${getFieldInputType(
-                field,
-                rawModels.filter(isEnumModel).map(({ name }) => name)
-              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'},`
+                field.nonNull && field.defaultValue === undefined && !OPTIONAL_SEED_FIELDS.includes(fieldName) ? '' : '?'
+              }: ${field.kind === 'enum' ? (field.list ? 'string[]' : 'string') : getFieldType(field)}${
+                field.list ? ' | string' : ''
+              }${field.nonNull ? '' : ' | null'},`
             )
             .newLine();
         }
@@ -95,10 +100,11 @@ export const generateDBModels = (rawModels: RawModels) => {
   return writer.toString();
 };
 
-const getFieldName = (field: ModelField) => (field.type === 'relation' ? field.foreignKey || `${field.name}Id` : field.name);
+const getFieldName = (field: ModelField) => (field.kind === 'relation' ? field.foreignKey || `${field.name}Id` : field.name);
 
-const getFieldOutputType = (field: ModelField) => {
-  switch (field.type) {
+const getFieldType = (field: ModelField) => {
+  const kind = field.kind;
+  switch (kind) {
     case 'json':
       // JSON data is stored as string
       return 'string';
@@ -106,25 +112,17 @@ const getFieldOutputType = (field: ModelField) => {
       // Relations are stored as ids
       return 'string';
     case 'enum':
-      return field.typeName + (field.list ? '[]' : '');
+      return field.type + (field.list ? '[]' : '');
     case 'raw':
       throw new Error(`Raw fields are not in the db.`);
-    default:
+    case 'primitive':
+    case undefined:
       return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');
-  }
-};
-
-const getFieldInputType = (field: ModelField, stringTypes: string[] = []) => {
-  let outputType = getFieldOutputType(field);
-
-  if (field.list || stringTypes.includes(field.type)) {
-    outputType += ' | string';
-    if (field.list && stringTypes.includes(field.type)) {
-      outputType += ' | string[]';
+    default: {
+      const exhaustiveCheck: never = kind;
+      throw new Error(exhaustiveCheck);
     }
   }
-
-  return outputType;
 };
 
 export const generateKnexTables = (rawModels: RawModels) => {

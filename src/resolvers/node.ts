@@ -113,7 +113,7 @@ export const getSimpleFields = (node: ResolverNode) => {
       return true;
     }
 
-    return node.model.fields.some(({ type, name }) => type === 'json' && name === selection.name.value);
+    return node.model.fields.some(({ kind: type, name }) => type === 'json' && name === selection.name.value);
   });
 };
 
@@ -165,7 +165,7 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       foreignKey = reverseRelation.foreignKey;
     } else {
       const modelField = baseModel.fieldsByName[fieldName];
-      if (modelField?.type !== 'relation') {
+      if (modelField?.kind !== 'relation') {
         continue;
       }
       foreignKey = modelField.foreignKey;
