@@ -14,11 +14,11 @@ export type RawModel = {
   | { kind: 'raw-enum'; values: string[] }
   | { kind: 'interface'; fields: ModelField[] }
   | {
-      kind: 'raw';
-      fields: RawObjectField[];
+      kind: 'object';
+      fields: ObjectField[];
     }
   | {
-      kind: 'object';
+      kind: 'entity';
       interfaces?: string[];
       queriable?: boolean;
       listQueriable?: boolean;
@@ -41,8 +41,8 @@ export type ScalarModel = Extract<RawModel, { kind: 'scalar' }>;
 export type EnumModel = Extract<RawModel, { kind: 'enum' }>;
 export type RawEnumModel = Extract<RawModel, { kind: 'raw-enum' }>;
 export type InterfaceModel = Extract<RawModel, { kind: 'interface' }>;
-export type RawObjectModel = Extract<RawModel, { kind: 'raw' }>;
 export type ObjectModel = Extract<RawModel, { kind: 'object' }>;
+export type EntityModel = Extract<RawModel, { kind: 'entity' }>;
 
 type BaseNumberType = {
   unit?: 'million';
@@ -81,9 +81,9 @@ type FieldBase2 =
       | { type: 'Upload' }
     ))
   | { kind: 'enum'; type: string; possibleValues?: Value[] }
-  | { kind: 'raw'; type: string };
+  | { kind: 'custom'; type: string };
 
-export type RawObjectField = FieldBase & FieldBase2;
+export type ObjectField = FieldBase & FieldBase2;
 
 export type ModelField = FieldBase &
   (
@@ -149,12 +149,12 @@ export type FloatField = Extract<PrimitiveField, { type: 'Float' }>;
 export type UploadField = Extract<PrimitiveField, { type: 'Upload' }>;
 export type JsonField = Extract<ModelField, { kind: 'json' }>;
 export type EnumField = Extract<ModelField, { kind: 'enum' }>;
-export type RawField = Extract<ModelField, { kind: 'raw' }>;
+export type CustomField = Extract<ModelField, { kind: 'custom' }>;
 export type RelationField = Extract<ModelField, { kind: 'relation' }>;
 
 export type Models = Model[];
 
-export type Model = ObjectModel & {
+export type Model = EntityModel & {
   fieldsByName: Record<string, ModelField>;
   relations: Relation[];
   relationsByName: Record<string, Relation>;

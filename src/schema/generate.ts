@@ -5,9 +5,9 @@ import {
   getModelPluralField,
   getModels,
   isEnumModel,
+  isObjectModel,
   isQueriableField,
   isRawEnumModel,
-  isRawObjectModel,
   isRelation,
   isScalarModel,
   typeToField,
@@ -26,15 +26,15 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     ...rawModels.filter(isEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
-    ...rawModels.filter(isRawObjectModel).map((model) => object(model.name, model.fields)),
+    ...rawModels.filter(isObjectModel).map((model) => object(model.name, model.fields)),
     ...rawModels
-      .filter(isRawObjectModel)
+      .filter(isObjectModel)
       .filter((model) =>
         models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
       )
       .map((model) => input(`Create${model.name}`, model.fields)),
     ...rawModels
-      .filter(isRawObjectModel)
+      .filter(isObjectModel)
       .filter((model) =>
         models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
       )

@@ -9,7 +9,7 @@ import type {
 
 import { FullContext } from '../context';
 import { Model } from '../models/models';
-import { get, isRawObjectModel, summonByKey, summonByName } from '../models/utils';
+import { get, isObjectModel, summonByKey, summonByName } from '../models/utils';
 import {
   getFragmentTypeName,
   getNameOrAlias,
@@ -150,7 +150,7 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
 
     const typeName = getTypeName(fieldDefinition.type);
 
-    if (isRawObjectModel(summonByName(ctx.rawModels, typeName))) {
+    if (isObjectModel(summonByName(ctx.rawModels, typeName))) {
       continue;
     }
 

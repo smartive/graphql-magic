@@ -6,7 +6,9 @@ import kebabCase from 'lodash/kebabCase';
 import startCase from 'lodash/startCase';
 import {
   BooleanField,
+  CustomField,
   DateTimeField,
+  EntityModel,
   EnumField,
   EnumModel,
   Model,
@@ -15,10 +17,8 @@ import {
   ObjectModel,
   PrimitiveField,
   RawEnumModel,
-  RawField,
   RawModel,
   RawModels,
-  RawObjectModel,
   Relation,
   RelationField,
   ReverseRelation,
@@ -33,7 +33,7 @@ export const merge = <T>(objects: ({ [name: string]: T } | undefined | false)[] 
 // Target -> target
 export const typeToField = (type: string) => type.substr(0, 1).toLowerCase() + type.substr(1);
 
-export const getModelPlural = (model: ObjectModel | Model) => model.plural || pluralize(model.name);
+export const getModelPlural = (model: EntityModel | Model) => model.plural || pluralize(model.name);
 
 export const getModelPluralField = (model: Model) => typeToField(getModelPlural(model));
 
@@ -45,7 +45,7 @@ export const getModelLabel = (model: Model) => getLabel(model.name);
 
 export const getLabel = (s: string) => startCase(camelCase(s));
 
-export const isObjectModel = (model: RawModel): model is ObjectModel => model.kind === 'object';
+export const isEntityModel = (model: RawModel): model is EntityModel => model.kind === 'entity';
 
 export const isEnumModel = (model: RawModel): model is EnumModel => model.kind === 'enum';
 
@@ -53,7 +53,7 @@ export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.
 
 export const isScalarModel = (model: RawModel): model is ScalarModel => model.kind === 'scalar';
 
-export const isRawObjectModel = (model: RawModel): model is RawObjectModel => model.kind === 'raw';
+export const isObjectModel = (model: RawModel): model is ObjectModel => model.kind === 'object';
 
 export const isEnumList = (models: RawModels, field: ModelField) =>
   field?.list === true && models.find(({ name }) => name === field.kind)?.kind === 'enum';
@@ -76,11 +76,11 @@ export const isToOneRelation = (field: ModelField): field is RelationField => is
 
 export const isQueriableField = ({ queriable }: ModelField) => queriable !== false;
 
-export const isRaw = (field: ModelField): field is RawField => field.kind === 'raw';
+export const isCustomField = (field: ModelField): field is CustomField => field.kind === 'custom';
 
 export const isVisible = ({ hidden }: ModelField) => hidden !== true;
 
-export const isSimpleField = and(not(isRelation), not(isRaw));
+export const isSimpleField = and(not(isRelation), not(isCustomField));
 
 export const isUpdatable = ({ updatable }: ModelField) => !!updatable;
 
@@ -108,7 +108,7 @@ export const actionableRelations = (model: Model, action: 'create' | 'update' | 
     );
 
 export const getModels = (rawModels: RawModels): Models => {
-  const models: Models = rawModels.filter(isObjectModel).map((model) => {
+  const models: Models = rawModels.filter(isEntityModel).map((model) => {
     const objectModel: Model = {
       ...model,
       fieldsByName: {},
