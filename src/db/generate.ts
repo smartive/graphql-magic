@@ -1,5 +1,5 @@
 import CodeBlockWriter from 'code-block-writer';
-import { ModelField, RawModels, get, getModels, isEnumModel, isRaw, not } from '..';
+import { ModelField, RawModels, get, getModels, isCustomField, isEnumModel, not } from '..';
 
 const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -36,7 +36,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isRaw))) {
+        for (const field of fields.filter(not(isCustomField))) {
           writer.write(`'${getFieldName(field)}': ${getFieldType(field)}${field.nonNull ? '' : ' | null'},`).newLine();
         }
       })
@@ -45,7 +45,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Initializer = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isRaw))) {
+        for (const field of fields.filter(not(isCustomField))) {
           writer
             .write(
               `'${getFieldName(field)}'${field.nonNull && field.defaultValue === undefined ? '' : '?'}: ${getFieldType(
@@ -60,7 +60,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Mutator = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isRaw))) {
+        for (const field of fields.filter(not(isCustomField))) {
           writer
             .write(
               `'${getFieldName(field)}'?: ${getFieldType(field)}${field.list ? ' | string' : ''}${
@@ -75,7 +75,7 @@ export const generateDBModels = (rawModels: RawModels) => {
     writer
       .write(`export type ${model.name}Seed = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isRaw))) {
+        for (const field of fields.filter(not(isCustomField))) {
           const fieldName = getFieldName(field);
           writer
             .write(
@@ -113,8 +113,8 @@ const getFieldType = (field: ModelField) => {
       return 'string';
     case 'enum':
       return field.type + (field.list ? '[]' : '');
-    case 'raw':
-      throw new Error(`Raw fields are not in the db.`);
+    case 'custom':
+      throw new Error(`Custom fields are not in the db.`);
     case 'primitive':
     case undefined:
       return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');

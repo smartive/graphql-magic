@@ -131,7 +131,7 @@ export class MigrationGenerator {
           model,
           model.fields.filter(
             ({ name, ...field }) =>
-              field.kind !== 'raw' &&
+              field.kind !== 'custom' &&
               !this.columns[model.name].some(
                 (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               )
@@ -198,7 +198,7 @@ export class MigrationGenerator {
           const revisionTable = `${model.name}Revision`;
           const missingRevisionFields = model.fields.filter(
             ({ name, updatable, ...field }) =>
-              field.kind !== 'raw' &&
+              field.kind !== 'custom' &&
               updatable &&
               !this.columns[revisionTable].some(
                 (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
@@ -210,7 +210,7 @@ export class MigrationGenerator {
           const revisionFieldsToRemove = model.fields.filter(
             ({ name, updatable, generated, ...field }) =>
               !generated &&
-              field.kind !== 'raw' &&
+              field.kind !== 'custom' &&
               !updatable &&
               !(field.kind === 'relation' && field.foreignKey === 'id') &&
               this.columns[revisionTable].some(
@@ -636,8 +636,8 @@ export class MigrationGenerator {
       case 'json':
         this.writer.write(`table.json('${typeToField(field.type)}')`);
         break;
-      case 'raw':
-        throw new Error("Raw fields aren't stored in the database");
+      case 'custom':
+        throw new Error("Custom fields aren't stored in the database");
       default: {
         const exhaustiveCheck: never = kind;
         throw new Error(exhaustiveCheck);

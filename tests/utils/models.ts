@@ -16,12 +16,12 @@ export const rawModels: RawModels = [
 
   {
     name: 'SomeRawObject',
-    kind: 'raw',
+    kind: 'object',
     fields: [{ name: 'field', type: 'String' }],
   },
 
   {
-    kind: 'object',
+    kind: 'entity',
     name: 'User',
     fields: [
       {
@@ -36,7 +36,7 @@ export const rawModels: RawModels = [
     ],
   },
   {
-    kind: 'object',
+    kind: 'entity',
     name: 'AnotherObject',
     listQueriable: true,
     deletable: true,
@@ -57,7 +57,7 @@ export const rawModels: RawModels = [
     ],
   },
   {
-    kind: 'object',
+    kind: 'entity',
     name: 'SomeObject',
     plural: 'ManyObjects',
     description: 'An object',

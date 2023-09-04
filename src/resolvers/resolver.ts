@@ -115,7 +115,7 @@ const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins
         .filter((n) => {
           const field = node.model.fields.find(({ name }) => name === n.name.value);
 
-          if (!field || field.kind === 'relation' || field.kind === 'raw') {
+          if (!field || field.kind === 'relation' || field.kind === 'custom') {
             return false;
           }
 
