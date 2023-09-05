@@ -11,6 +11,7 @@ import {
   EntityModel,
   EnumField,
   EnumModel,
+  InputModel,
   Model,
   ModelField,
   Models,
@@ -54,6 +55,8 @@ export const isRawEnumModel = (model: RawModel): model is RawEnumModel => model.
 export const isScalarModel = (model: RawModel): model is ScalarModel => model.kind === 'scalar';
 
 export const isObjectModel = (model: RawModel): model is ObjectModel => model.kind === 'object';
+
+export const isInputModel = (model: RawModel): model is InputModel => model.kind === 'input';
 
 export const isEnumList = (models: RawModels, field: ModelField) =>
   field?.list === true && models.find(({ name }) => name === field.kind)?.kind === 'enum';

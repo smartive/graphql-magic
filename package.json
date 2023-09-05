@@ -14,7 +14,7 @@
   "scripts": {
     "bootstrap": "npm ci && npm run generate",
     "generate": "npm run generate:index-files",
-    "generate:index-files": "cti create ./src --excludes types --withoutbackup",
+    "generate:index-files": "cti create ./src --excludes bin --withoutbackup",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "deps": "docker-compose up",
@@ -25,9 +25,13 @@
     "generate-migration": "esbuild tests/utils/generate-migration.ts --bundle --platform=node --outdir=tmp --out-extension:.js=.cjs --format=cjs --packages=external && node tmp/generate-migration.cjs",
     "clean": "del-cli dist/**",
     "prebuild": "npm run clean",
-    "build": "npm run build:esm && npm run build:cjs",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:bin",
     "build:esm": "tsc",
-    "build:cjs": "esbuild src/index.ts --bundle --platform=node --outdir=dist/cjs --out-extension:.js=.cjs --format=cjs --packages=external"
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --outdir=dist/cjs --out-extension:.js=.cjs --format=cjs --packages=external",
+    "build:bin": "esbuild src/bin/gqm.ts --bundle --platform=node --outdir=dist/bin --out-extension:.js=.cjs --format=cjs --packages=external"
+  },
+  "bin": {
+    "gqm": "dist/bin/gqm.cjs"
   },
   "overrides": {
     "graphql": "$graphql",
@@ -39,13 +43,21 @@
   },
   "dependencies": {
     "@apollo/server": "^4.0.0",
+    "@graphql-codegen/add": "^5.0.0",
+    "@graphql-codegen/cli": "^5.0.0",
+    "@graphql-codegen/typescript": "^4.0.1",
+    "@graphql-codegen/typescript-compatibility": "^2.1.5",
+    "@graphql-codegen/typescript-operations": "^4.0.1",
+    "@graphql-codegen/typescript-resolvers": "^4.0.1",
     "code-block-writer": "^12.0.0",
+    "commander": "^11.0.0",
     "graphql": "^15.8.0",
     "inflection": "^2.0.1",
     "knex": "^2.4.2",
     "knex-schema-inspector": "^3.0.1",
     "lodash": "^4.17.21",
     "luxon": "^3.3.0",
+    "ts-morph": "^19.0.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

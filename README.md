@@ -25,12 +25,6 @@ Dev Dependencies:
 npm i -D @graphql-codegen/add @graphql-codegen/cli @graphql-codegen/schema-ast @graphql-codegen/typescript @graphql-codegen/typescript-compatibility @graphql-codegen/typescript-operations @graphql-codegen/typescript-resolvers simple-git
 ```
 
-Create and add the following files:
-
-* `src/generated/api/.gitkeep`
-* `src/generated/client/.gitkeep`
-* `src/generated/client/.gitkeep`
-
 Add the following scripts to your package:
 
 ```
