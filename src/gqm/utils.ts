@@ -7,7 +7,7 @@ export const findDeclarationInFile = (sourceFile: SourceFile, name: string) => {
   }
   const declaration = findDeclaration(syntaxList, name);
   if (!declaration) {
-    throw new Error('No rawModels declaration');
+    throw new Error(`No ${name} declaration`);
   }
   return declaration;
 };

@@ -47,8 +47,11 @@ const visitor: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.SpreadElement]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.SpreadAssignment]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.Identifier]: (node: Identifier, context) => {
-    if (node.getText() === 'undefined') {
-      return undefined;
+    switch (node.getText()) {
+      case 'undefined':
+        return undefined;
+      case 'process':
+        return process;
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {

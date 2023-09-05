@@ -87,7 +87,7 @@ const ensureDirectoryExists = (filePath: string) => {
   }
 };
 
-const ensureFileExists = (filePath: string, content: string) => {
+export const ensureFileExists = (filePath: string, content: string) => {
   if (!existsSync(filePath)) {
     console.info(`Creating ${filePath}`);
     ensureDirectoryExists(filePath);
@@ -96,7 +96,17 @@ const ensureFileExists = (filePath: string, content: string) => {
 };
 
 export const writeToFile = (filePath: string, content: string) => {
-  console.info(`Writing to ${filePath}`);
   ensureDirectoryExists(filePath);
-  writeFileSync(filePath, content);
+  if (existsSync(filePath)) {
+    const currentContent = readFileSync(filePath, 'utf-8');
+    if (content === currentContent) {
+      // console.info(`${filePath} unchanged`);
+    } else {
+      writeFileSync(filePath, content);
+      console.info(`${filePath} updated`);
+    }
+  } else {
+    writeFileSync(filePath, content);
+    console.info(`Created ${filePath}`);
+  }
 };
