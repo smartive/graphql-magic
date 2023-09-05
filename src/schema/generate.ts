@@ -5,6 +5,7 @@ import {
   getModelPluralField,
   getModels,
   isEnumModel,
+  isInputModel,
   isObjectModel,
   isQueriableField,
   isRawEnumModel,
@@ -26,7 +27,11 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
     ...rawModels.filter(isEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
     ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
-    ...rawModels.filter(isObjectModel).map((model) => object(model.name, model.fields)),
+    ...rawModels
+      .filter(isObjectModel)
+      .filter(({ name }) => !['Query', 'Mutation'].includes(name))
+      .map((model) => object(model.name, model.fields)),
+    ...rawModels.filter(isInputModel).map((model) => input(model.name, model.fields)),
     ...rawModels
       .filter(isObjectModel)
       .filter((model) =>
@@ -188,6 +193,10 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             { name: 'offset', type: 'Int' },
           ],
         })),
+      ...rawModels
+        .filter(isObjectModel)
+        .filter((model) => model.name === 'Query')
+        .flatMap((model) => model.fields),
     ]),
 
     object('Mutation', [
@@ -264,6 +273,10 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
           return mutations;
         })
       ),
+      ...rawModels
+        .filter(isObjectModel)
+        .filter((model) => model.name === 'Mutation')
+        .flatMap((model) => model.fields),
     ]),
   ];
 };

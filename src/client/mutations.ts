@@ -1,11 +1,12 @@
 import upperCase from 'lodash/upperCase';
-import { Models } from '../models/models';
+import { isEntityModel } from '..';
+import { RawModels } from '../models/models';
 
 const constantCase = (str: string) => upperCase(str).replace(/ /g, '_');
 
-export const generateMutations = (models: Models) => {
+export const generateMutations = (models: RawModels) => {
   const parts: string[] = [];
-  for (const { name, creatable, updatable, deletable } of models) {
+  for (const { name, creatable, updatable, deletable } of models.filter(isEntityModel)) {
     if (creatable) {
       parts.push(
         `export const CREATE_${constantCase(

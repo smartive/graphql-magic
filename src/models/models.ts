@@ -14,6 +14,10 @@ export type RawModel = {
   | { kind: 'raw-enum'; values: string[] }
   | { kind: 'interface'; fields: ModelField[] }
   | {
+      kind: 'input';
+      fields: ObjectField[];
+    }
+  | {
       kind: 'object';
       fields: ObjectField[];
     }
@@ -42,6 +46,7 @@ export type EnumModel = Extract<RawModel, { kind: 'enum' }>;
 export type RawEnumModel = Extract<RawModel, { kind: 'raw-enum' }>;
 export type InterfaceModel = Extract<RawModel, { kind: 'interface' }>;
 export type ObjectModel = Extract<RawModel, { kind: 'object' }>;
+export type InputModel = Extract<RawModel, { kind: 'input' }>;
 export type EntityModel = Extract<RawModel, { kind: 'entity' }>;
 
 type BaseNumberType = {
