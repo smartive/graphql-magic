@@ -65,7 +65,7 @@
     "@smartive/eslint-config": "3.2.0",
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "29.5.4",
-    "@types/lodash": "4.14.197",
+    "@types/lodash": "4.14.198",
     "@types/luxon": "3.3.2",
     "@types/uuid": "9.0.3",
     "create-ts-index": "1.14.0",
