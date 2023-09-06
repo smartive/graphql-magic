@@ -12,12 +12,12 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
-import { generateGraphqlApiTypes, generateGraphqlClientTypes } from '../gqm/codegen';
-import { KNEXFILE_PATH, parseKnexfile } from '../gqm/parse-knexfile';
-import { parseModels } from '../gqm/parse-models';
-import { readLine } from '../gqm/readline';
-import { ensureFileExists, getSetting, getSettings, writeToFile } from '../gqm/settings';
-import { KNEXFILE } from '../gqm/templates';
+import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
+import { KNEXFILE_PATH, parseKnexfile } from './parse-knexfile';
+import { parseModels } from './parse-models';
+import { readLine } from './readline';
+import { ensureFileExists, getSetting, getSettings, writeToFile } from './settings';
+import { KNEXFILE } from './templates';
 
 config({
   path: '.env',
