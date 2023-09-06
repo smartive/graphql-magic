@@ -22,7 +22,7 @@ import {
   ValueNode,
 } from 'graphql';
 import { DateTime } from 'luxon';
-import { Directive, Enum, Value, Values } from '../values';
+import { Directive, Value, Values } from '../values';
 
 export type Field = {
   name: string;
@@ -206,10 +206,10 @@ export const value = (val: Value = null): ValueNode =>
         kind: 'StringValue',
         value: val,
       }
-    : val instanceof Enum
+    : val instanceof Symbol
     ? {
         kind: 'EnumValue',
-        value: val.value,
+        value: val.description,
       }
     : Array.isArray(val)
     ? {
