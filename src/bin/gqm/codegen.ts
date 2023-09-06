@@ -6,7 +6,7 @@ export const generateGraphqlApiTypes = async () => {
   await generate({
     overwrite: true,
     schema: `${generatedFolderPath}/schema.graphql`,
-    documents: null,
+    documents: undefined,
     generates: {
       [`${generatedFolderPath}/api/index.ts`]: {
         plugins: ['typescript', 'typescript-resolvers', { add: { content: `import { DateTime } from 'luxon';` } }],
@@ -22,9 +22,10 @@ export const generateGraphqlApiTypes = async () => {
 
 export const generateGraphqlClientTypes = async () => {
   const generatedFolderPath = await getSetting('generatedFolderPath');
+  const graphqlQueriesPath = await getSetting('graphqlQueriesPath');
   await generate({
     schema: `${generatedFolderPath}/schema.graphql`,
-    documents: ['./src/**/*.ts', './src/**/*.tsx'],
+    documents: [graphqlQueriesPath],
     generates: {
       [`${generatedFolderPath}/client/index.ts`]: {
         plugins: ['typescript', 'typescript-operations', 'typescript-compatibility'],
