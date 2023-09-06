@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { readLine } from './readline';
-import { CLIENT_CODEGEN, EMPTY_MODELS, GRAPHQL_CODEGEN } from './templates';
+import { EMPTY_MODELS } from './templates';
 
 const SETTINGS_PATH = '.gqmrc.json';
 
@@ -21,15 +21,19 @@ const DEFAULTS = {
       ensureFileExists(`${path}/db/.gitkeep`, '');
       ensureFileExists(`${path}/api/.gitkeep`, '');
       ensureFileExists(`${path}/client/.gitkeep`, '');
-      ensureFileExists(`graphql-codegen.yml`, GRAPHQL_CODEGEN(path));
-      ensureFileExists(`client-codegen.yml`, CLIENT_CODEGEN(path));
+    },
+  },
+  graphqlQueriesPath: {
+    question: 'Where to look for graphql queries?',
+    defaultValue: 'src/graphql/client/queries',
+    init: (path: string) => {
+      ensureDirectoryExists(path);
     },
   },
 };
 
 type Settings = {
-  modelsPath: string;
-  generatedFolderPath: string;
+  [key in keyof typeof DEFAULTS]: string;
 };
 
 const initSetting = async (name: string) => {
@@ -67,9 +71,7 @@ export const getSetting = async (name: keyof Settings): Promise<string> => {
   return settings[name];
 };
 
-const ensureDirectoryExists = (filePath: string) => {
-  const dir = dirname(filePath);
-
+const ensureDirectoryExists = (dir: string) => {
   if (existsSync(dir)) {
     return true;
   }
@@ -77,6 +79,7 @@ const ensureDirectoryExists = (filePath: string) => {
   ensureDirectoryExists(dir);
 
   try {
+    console.info(`Creating directory ${dir}`);
     mkdirSync(dir);
     return true;
   } catch (err) {
@@ -90,13 +93,13 @@ const ensureDirectoryExists = (filePath: string) => {
 export const ensureFileExists = (filePath: string, content: string) => {
   if (!existsSync(filePath)) {
     console.info(`Creating ${filePath}`);
-    ensureDirectoryExists(filePath);
+    ensureDirectoryExists(dirname(filePath));
     writeFileSync(filePath, content);
   }
 };
 
 export const writeToFile = (filePath: string, content: string) => {
-  ensureDirectoryExists(filePath);
+  ensureDirectoryExists(dirname(filePath));
   if (existsSync(filePath)) {
     const currentContent = readFileSync(filePath, 'utf-8');
     if (content === currentContent) {
