@@ -13,10 +13,10 @@ import {
 } from 'ts-morph';
 import { Visitor, visit } from './visitor';
 
-export const staticEval = (node: Node, context: Dictionary<unknown>) =>
-  visit<unknown, Dictionary<unknown>>(node, context, visitor);
+export const staticEval = (node: Node | undefined, context: Dictionary<unknown>) =>
+  visit<unknown, Dictionary<unknown>>(node, context, VISITOR);
 
-const visitor: Visitor<unknown, Dictionary<unknown>> = {
+const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   undefined: () => undefined,
   [SyntaxKind.VariableDeclaration]: (node, context) => staticEval(node.getInitializer(), context),
   [SyntaxKind.ArrayLiteralExpression]: (node, context) => {
@@ -52,6 +52,8 @@ const visitor: Visitor<unknown, Dictionary<unknown>> = {
         return undefined;
       case 'process':
         return process;
+      case 'Symbol':
+        return Symbol;
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {
@@ -68,6 +70,7 @@ const visitor: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.TrueKeyword]: () => true,
   [SyntaxKind.FalseKeyword]: () => false,
   [SyntaxKind.NumericLiteral]: (node) => node.getLiteralValue(),
+  [SyntaxKind.BigIntLiteral]: (node) => node.getLiteralValue(),
   [SyntaxKind.CallExpression]: (node, context) => {
     const method = staticEval(node.getExpression(), context) as (...args: unknown[]) => unknown;
     const args = node.getArguments().map((arg) => staticEval(arg, context));
@@ -200,4 +203,5 @@ const visitor: Visitor<unknown, Dictionary<unknown>> = {
     return target[argument];
   },
   [SyntaxKind.NoSubstitutionTemplateLiteral]: (node) => node.getLiteralValue(),
+  [SyntaxKind.NullKeyword]: () => null,
 };
