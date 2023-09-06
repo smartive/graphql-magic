@@ -25,7 +25,7 @@ export const generateGraphqlClientTypes = async () => {
   const graphqlQueriesPath = await getSetting('graphqlQueriesPath');
   await generate({
     schema: `${generatedFolderPath}/schema.graphql`,
-    documents: [graphqlQueriesPath],
+    documents: [graphqlQueriesPath, `${generatedFolderPath}/client/mutations.ts`],
     generates: {
       [`${generatedFolderPath}/client/index.ts`]: {
         plugins: ['typescript', 'typescript-operations', 'typescript-compatibility'],
