@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { IResolvers } from '@graphql-tools/utils';
 import { GraphQLResolveInfo, Source, execute as graphqlExecute, parse } from 'graphql';
+import { merge } from 'lodash';
 import { Context, generate, get, getResolvers } from '..';
 
 export const execute = async ({
@@ -17,10 +18,7 @@ export const execute = async ({
 
   const schema = makeExecutableSchema({
     typeDefs: document,
-    resolvers: {
-      ...generatedResolvers,
-      ...additionalResolvers,
-    },
+    resolvers: merge(generatedResolvers, additionalResolvers),
   });
 
   const contextValue: Context = {
