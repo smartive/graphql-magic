@@ -28,7 +28,7 @@
     "build": "npm run build:esm && npm run build:cjs && npm run build:bin",
     "build:esm": "tsc",
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --outdir=dist/cjs --out-extension:.js=.cjs --format=cjs --packages=external",
-    "build:bin": "esbuild src/bin/gqm.ts --bundle --platform=node --outdir=dist/bin --out-extension:.js=.cjs --format=cjs --packages=external"
+    "build:bin": "esbuild src/bin/gqm/index.ts --bundle --platform=node --outdir=dist/bin --out-extension:.js=.cjs --format=cjs --packages=external"
   },
   "bin": {
     "gqm": "dist/bin/gqm.cjs"

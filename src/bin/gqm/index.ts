@@ -11,7 +11,7 @@ import {
   generateMutations,
   getMigrationDate,
   printSchemaFromModels,
-} from '..';
+} from '../..';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from '../gqm/codegen';
 import { KNEXFILE_PATH, parseKnexfile } from '../gqm/parse-knexfile';
 import { parseModels } from '../gqm/parse-models';
@@ -115,7 +115,7 @@ program
   .action(async () => {
     const git = simpleGit();
 
-    let name = process.argv[2] || (await git.branch()).current.split('/').pop();
+    let name = process.argv[process.argv.indexOf('gqm') + 1] || (await git.branch()).current.split('/').pop();
 
     if (name && ['staging', 'production'].includes(name)) {
       name = await readLine('Migration name:');
