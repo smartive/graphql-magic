@@ -1,5 +1,5 @@
 import { KindToNodeMappings, Node, SyntaxKind } from 'ts-morph';
-import { get } from '..';
+import { get } from '../..';
 
 export type Visitor<T, C> = {
   undefined?: () => T;

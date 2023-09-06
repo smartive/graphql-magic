@@ -1,5 +1,5 @@
 import { IndentationText, Project } from 'ts-morph';
-import { RawModels } from '..';
+import { RawModels } from '../..';
 import { getSetting, writeToFile } from './settings';
 import { staticEval } from './static-eval';
 import { findDeclarationInFile } from './utils';
