@@ -110,14 +110,16 @@ program
   });
 
 program
-  .command('generate-migration')
+  .command('generate-migration [<name>] [<date>]')
   .description('Generate Migration')
-  .action(async () => {
+  .action(async (name, date) => {
     const git = simpleGit();
 
-    let name = process.argv[process.argv.indexOf('gqm') + 1] || (await git.branch()).current.split('/').pop();
+    if (!name) {
+      name = (await git.branch()).current.split('/').pop();
+    }
 
-    if (name && ['staging', 'production'].includes(name)) {
+    if (!name || ['main', 'staging', 'production'].includes(name)) {
       name = await readLine('Migration name:');
     }
 
@@ -125,10 +127,10 @@ program
     const db = knex(knexfile);
 
     try {
-      const rawModels = await parseModels();
-      const migrations = await new MigrationGenerator(db, rawModels).generate();
+      const models = await parseModels();
+      const migrations = await new MigrationGenerator(db, models).generate();
 
-      writeToFile(`migrations/${getMigrationDate()}_${name}.ts`, migrations);
+      writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
     } finally {
       await db.destroy();
     }
