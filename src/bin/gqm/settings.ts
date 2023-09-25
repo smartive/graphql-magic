@@ -76,7 +76,7 @@ const ensureDirectoryExists = (dir: string) => {
     return true;
   }
 
-  ensureDirectoryExists(dir);
+  ensureDirectoryExists(dirname(dir));
 
   try {
     console.info(`Creating directory ${dir}`);
