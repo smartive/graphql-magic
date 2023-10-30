@@ -1,9 +1,9 @@
 import { Knex } from 'knex';
 import { ForbiddenError, UserInputError } from '../errors';
-import { get, summonByName } from '../models/utils';
+import { get, it } from '../models/utils';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode, WhereNode } from './node';
-import { Joins, Ops, addJoin, apply, ors } from './utils';
+import { Joins, Ops, addJoin, apply, getColumn, ors } from './utils';
 
 export const SPECIAL_FILTERS: Record<string, string> = {
   GT: '?? > ?',
@@ -52,16 +52,20 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
     applyOrderBy(node, orderBy, query);
   }
 
+  if (node.model.parent) {
+    void query.where({
+      [getColumn(node, 'type')]: node.model.name,
+    });
+  }
+
   if (where) {
     const ops: Ops<Knex.QueryBuilder> = [];
     applyWhere(node, where, ops, joins);
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    apply(query, ops);
+    void apply(query, ops);
   }
 
   if (search) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    applySearch(node, search, query);
+    void applySearch(node, search, query);
   }
 };
 
@@ -76,37 +80,42 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
         // Should not happen
         throw new Error(`Invalid filter ${key}.`);
       }
-      ops.push((query) =>
-        query.whereRaw(SPECIAL_FILTERS[filter], [`${node.shortTableAlias}.${actualKey}`, value as string])
-      );
+      ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [getColumn(node, actualKey), value as string]));
       continue;
     }
 
-    const field = summonByName(node.model.fields, key);
-    const fullKey = `${node.shortTableAlias}.${key}`;
+    const field = it(node.model.fieldsByName[key]);
 
     if (field.kind === 'relation') {
       const relation = get(node.model.relationsByName, field.name);
-      const tableAlias = `${node.model.name}__W__${key}`;
+      const targetModel = relation.targetModel;
+      const rootModel = targetModel.parentModel || targetModel;
+      const rootTableAlias = `${node.model.name}__W__${key}`;
+      const tableAlias = targetModel === rootModel ? rootTableAlias : `${node.model.name}__WS__${key}`;
       const subNode: WhereNode = {
         ctx: node.ctx,
-        model: relation.model,
-        tableName: relation.model.name,
+
+        rootModel,
+        rootTableAlias,
+
+        model: targetModel,
         tableAlias,
-        shortTableAlias: node.ctx.aliases.getShort(tableAlias),
+
         foreignKey: relation.field.foreignKey,
       };
-      addJoin(joins, node.tableAlias, subNode.tableName, subNode.tableAlias, get(subNode, 'foreignKey'), 'id');
+      addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, get(subNode, 'foreignKey'), 'id');
       applyWhere(subNode, value as Where, ops, joins);
       continue;
     }
+
+    const column = getColumn(node, key);
 
     if (Array.isArray(value)) {
       if (field && field.list) {
         ops.push((query) =>
           ors(
             query,
-            value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, fullKey] as string[]))
+            value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, column] as string[]))
           )
         );
         continue;
@@ -116,22 +125,22 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
         if (value.some((v) => v !== null)) {
           ops.push((query) =>
             ors(query, [
-              (subQuery) => subQuery.whereIn(fullKey, value.filter((v) => v !== null) as string[]),
-              (subQuery) => subQuery.whereNull(fullKey),
+              (subQuery) => subQuery.whereIn(column, value.filter((v) => v !== null) as string[]),
+              (subQuery) => subQuery.whereNull(column),
             ])
           );
           continue;
         }
 
-        ops.push((query) => query.whereNull(fullKey));
+        ops.push((query) => query.whereNull(column));
         continue;
       }
 
-      ops.push((query) => query.whereIn(fullKey, value as string[]));
+      ops.push((query) => query.whereIn(column, value as string[]));
       continue;
     }
 
-    ops.push((query) => query.where({ [fullKey]: value }));
+    ops.push((query) => query.where({ [column]: value }));
   }
 };
 
@@ -143,7 +152,7 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
       .map(
         ({ name }) =>
           (query) =>
-            query.whereILike(`${node.shortTableAlias}.${name}`, `%${search}%`)
+            query.whereILike(getColumn(node, name), `%${search}%`)
       )
   );
 
@@ -157,7 +166,6 @@ const applyOrderBy = (node: FieldResolverNode, orderBy: OrderBy, query: Knex.Que
     const value = vals[key];
 
     // Simple field
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    query.orderBy(`${node.shortTableAlias}.${key}`, value);
+    void query.orderBy(getColumn(node, key), value);
   }
 };

@@ -3,18 +3,41 @@
 exports[`resolvers are generated correctly 1`] = `
 {
   "Mutation": {
+    "createAnswer": [Function],
+    "createQuestion": [Function],
+    "createReview": [Function],
     "createSomeObject": [Function],
     "deleteAnotherObject": [Function],
+    "deleteAnswer": [Function],
+    "deleteQuestion": [Function],
+    "deleteReview": [Function],
     "deleteSomeObject": [Function],
     "restoreAnotherObject": [Function],
+    "restoreAnswer": [Function],
+    "restoreQuestion": [Function],
+    "restoreReview": [Function],
     "restoreSomeObject": [Function],
+    "updateAnswer": [Function],
+    "updateQuestion": [Function],
+    "updateReview": [Function],
     "updateSomeObject": [Function],
   },
   "Query": {
     "anotherObjects": [Function],
+    "answer": [Function],
+    "answers": [Function],
     "manyObjects": [Function],
     "me": [Function],
+    "question": [Function],
+    "questions": [Function],
+    "reaction": [Function],
+    "reactions": [Function],
+    "review": [Function],
+    "reviews": [Function],
     "someObject": [Function],
+  },
+  "Reaction": {
+    "__resolveType": [Function],
   },
 }
 `;

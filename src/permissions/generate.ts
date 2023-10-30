@@ -1,5 +1,5 @@
 import { Models } from '../models/models';
-import { isRelation, summonByName } from '../models/utils';
+import { isRelation } from '../models/utils';
 
 export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
 
@@ -96,7 +96,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
 
 const addPermissions = (models: Models, permissions: RolePermissions, links: PermissionLink[], block: PermissionsBlock) => {
   const { type } = links[links.length - 1];
-  const model = summonByName(models, type);
+  const model = models.getModel(type, 'entity');
 
   for (const action of ACTIONS) {
     if (action === 'READ' || action in block) {
@@ -123,15 +123,15 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
           reverse: true,
         };
       } else {
-        const field = model.reverseRelationsByName[relation];
+        const reverseRelation = model.reverseRelationsByName[relation];
 
-        if (!field) {
+        if (!reverseRelation) {
           throw new Error(`Relation ${relation} in model ${model.name} does not exist.`);
         }
 
         link = {
-          type: field.model.name,
-          foreignKey: field.foreignKey,
+          type: reverseRelation.targetModel.name,
+          foreignKey: reverseRelation.field.foreignKey,
         };
       }
       if (subBlock.WHERE) {

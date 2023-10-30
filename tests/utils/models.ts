@@ -1,8 +1,7 @@
-import { RawModels } from '../../src/models';
-import { getModels } from '../../src/models/utils';
-import { generatePermissions, PermissionsConfig } from '../../src/permissions/generate';
+import { ModelDefinitions, Models } from '../../src/models';
+import { PermissionsConfig, generatePermissions } from '../../src/permissions/generate';
 
-export const rawModels: RawModels = [
+const modelDefinitions: ModelDefinitions = [
   {
     name: 'SomeEnum',
     kind: 'enum',
@@ -53,7 +52,7 @@ export const rawModels: RawModels = [
         name: 'myself',
         toOne: true,
         reverse: 'self',
-      }
+      },
     ],
   },
   {
@@ -81,10 +80,16 @@ export const rawModels: RawModels = [
         nonNull: true,
       },
       {
-        name: 'list',
+        name: 'float',
         type: 'Float',
         scale: 1,
         precision: 1,
+        nonNull: true,
+      },
+      {
+        kind: 'enum',
+        name: 'list',
+        type: 'SomeEnum',
         nonNull: true,
         list: true,
         args: [{ name: 'magic', type: 'Boolean' }],
@@ -100,9 +105,59 @@ export const rawModels: RawModels = [
       },
     ],
   },
+  {
+    kind: 'entity',
+    root: true,
+    name: 'Reaction',
+    queriable: true,
+    listQueriable: true,
+    creatable: true,
+    updatable: true,
+    deletable: true,
+    fields: [
+      {
+        name: 'parent',
+        kind: 'relation',
+        reverse: 'childReactions',
+        type: 'Reaction',
+      },
+      {
+        name: 'content',
+        type: 'String',
+        creatable: true,
+        updatable: true,
+      },
+    ],
+  },
+  {
+    kind: 'entity',
+    parent: 'Reaction',
+    name: 'Review',
+    fields: [
+      {
+        name: 'rating',
+        type: 'Float',
+        comparable: true,
+        creatable: true,
+        updatable: true,
+      },
+    ],
+  },
+  {
+    kind: 'entity',
+    parent: 'Reaction',
+    name: 'Question',
+    fields: [],
+  },
+  {
+    kind: 'entity',
+    parent: 'Reaction',
+    name: 'Answer',
+    fields: [],
+  },
 ];
 
-export const models = getModels(rawModels);
+export const models = new Models(modelDefinitions);
 
 const permissionsConfig: PermissionsConfig = {
   ADMIN: true,

@@ -1,0 +1,675 @@
+[
+  {
+    "name": "SomeEnum",
+    "kind": "enum",
+    "values": [
+      "A",
+      "B",
+      "C"
+    ]
+  },
+  {
+    "name": "Role",
+    "kind": "enum",
+    "values": [
+      "ADMIN",
+      "USER"
+    ]
+  },
+  {
+    "name": "SomeRawObject",
+    "kind": "object",
+    "fields": [
+      {
+        "name": "field",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "kind": "entity",
+    "name": "User",
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true
+      },
+      {
+        "name": "username",
+        "type": "String"
+      },
+      {
+        "name": "role",
+        "kind": "enum",
+        "type": "Role"
+      }
+    ]
+  },
+  {
+    "kind": "entity",
+    "name": "AnotherObject",
+    "listQueriable": true,
+    "deletable": true,
+    "displayField": "name",
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true
+      },
+      {
+        "type": "String",
+        "name": "name",
+        "orderable": true
+      },
+      {
+        "kind": "relation",
+        "type": "AnotherObject",
+        "name": "myself",
+        "toOne": true,
+        "reverse": "self",
+        "foreignKey": "myselfId"
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedAnotherObjects",
+        "generated": true,
+        "foreignKey": "deletedById"
+      }
+    ]
+  },
+  {
+    "kind": "entity",
+    "name": "SomeObject",
+    "plural": "ManyObjects",
+    "description": "An object",
+    "queriable": true,
+    "listQueriable": true,
+    "creatable": true,
+    "updatable": true,
+    "deletable": true,
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true
+      },
+      {
+        "name": "field",
+        "searchable": true,
+        "type": "String"
+      },
+      {
+        "name": "another",
+        "kind": "relation",
+        "type": "AnotherObject",
+        "filterable": true,
+        "updatable": true,
+        "nonNull": true,
+        "foreignKey": "anotherId"
+      },
+      {
+        "name": "float",
+        "type": "Float",
+        "scale": 1,
+        "precision": 1,
+        "nonNull": true
+      },
+      {
+        "kind": "enum",
+        "name": "list",
+        "type": "SomeEnum",
+        "nonNull": true,
+        "list": true,
+        "args": [
+          {
+            "name": "magic",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "name": "xyz",
+        "type": "Int",
+        "description": "yay",
+        "nonNull": true,
+        "creatable": true,
+        "updatable": true,
+        "orderable": true
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "createdBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "createdManyObjects",
+        "generated": true,
+        "foreignKey": "createdById"
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "updatedBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "updatedManyObjects",
+        "generated": true,
+        "foreignKey": "updatedById"
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedManyObjects",
+        "generated": true,
+        "foreignKey": "deletedById"
+      }
+    ]
+  },
+  {
+    "kind": "entity",
+    "root": true,
+    "name": "Reaction",
+    "queriable": true,
+    "listQueriable": true,
+    "creatable": true,
+    "updatable": true,
+    "deletable": true,
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true
+      },
+      {
+        "name": "type",
+        "kind": "enum",
+        "type": "ReactionType",
+        "nonNull": true,
+        "generated": true
+      },
+      {
+        "name": "parent",
+        "kind": "relation",
+        "reverse": "childReactions",
+        "type": "Reaction",
+        "foreignKey": "parentId"
+      },
+      {
+        "name": "content",
+        "type": "String",
+        "creatable": true,
+        "updatable": true
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "createdBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "createdReactions",
+        "generated": true,
+        "foreignKey": "createdById"
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "updatedBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "updatedReactions",
+        "generated": true,
+        "foreignKey": "updatedById"
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedReactions",
+        "generated": true,
+        "foreignKey": "deletedById"
+      }
+    ]
+  },
+  {
+    "kind": "entity",
+    "parent": "Reaction",
+    "name": "Review",
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "type",
+        "kind": "enum",
+        "type": "ReactionType",
+        "nonNull": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "parent",
+        "kind": "relation",
+        "reverse": "childReviews",
+        "type": "Reaction",
+        "foreignKey": "parentId",
+        "inherited": true
+      },
+      {
+        "name": "content",
+        "type": "String",
+        "creatable": true,
+        "updatable": true,
+        "inherited": true
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "createdBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "createdReviews",
+        "generated": true,
+        "foreignKey": "createdById",
+        "inherited": true
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "updatedBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "updatedReviews",
+        "generated": true,
+        "foreignKey": "updatedById",
+        "inherited": true
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedReviews",
+        "generated": true,
+        "foreignKey": "deletedById",
+        "inherited": true
+      },
+      {
+        "name": "rating",
+        "type": "Float",
+        "comparable": true,
+        "creatable": true,
+        "updatable": true
+      }
+    ],
+    "queriable": true,
+    "listQueriable": true,
+    "creatable": true,
+    "updatable": true,
+    "deletable": true
+  },
+  {
+    "kind": "entity",
+    "parent": "Reaction",
+    "name": "Question",
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "type",
+        "kind": "enum",
+        "type": "ReactionType",
+        "nonNull": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "parent",
+        "kind": "relation",
+        "reverse": "childQuestions",
+        "type": "Reaction",
+        "foreignKey": "parentId",
+        "inherited": true
+      },
+      {
+        "name": "content",
+        "type": "String",
+        "creatable": true,
+        "updatable": true,
+        "inherited": true
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "createdBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "createdQuestions",
+        "generated": true,
+        "foreignKey": "createdById",
+        "inherited": true
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "updatedBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "updatedQuestions",
+        "generated": true,
+        "foreignKey": "updatedById",
+        "inherited": true
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedQuestions",
+        "generated": true,
+        "foreignKey": "deletedById",
+        "inherited": true
+      }
+    ],
+    "queriable": true,
+    "listQueriable": true,
+    "creatable": true,
+    "updatable": true,
+    "deletable": true
+  },
+  {
+    "kind": "entity",
+    "parent": "Reaction",
+    "name": "Answer",
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true,
+        "primary": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "type",
+        "kind": "enum",
+        "type": "ReactionType",
+        "nonNull": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "parent",
+        "kind": "relation",
+        "reverse": "childAnswers",
+        "type": "Reaction",
+        "foreignKey": "parentId",
+        "inherited": true
+      },
+      {
+        "name": "content",
+        "type": "String",
+        "creatable": true,
+        "updatable": true,
+        "inherited": true
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "createdBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "createdAnswers",
+        "generated": true,
+        "foreignKey": "createdById",
+        "inherited": true
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime",
+        "nonNull": true,
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "updatedBy",
+        "kind": "relation",
+        "type": "User",
+        "nonNull": true,
+        "reverse": "updatedAnswers",
+        "generated": true,
+        "foreignKey": "updatedById",
+        "inherited": true
+      },
+      {
+        "name": "deleted",
+        "type": "Boolean",
+        "nonNull": true,
+        "defaultValue": false,
+        "filterable": {
+          "default": false
+        },
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedAt",
+        "type": "DateTime",
+        "orderable": true,
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deletedBy",
+        "kind": "relation",
+        "type": "User",
+        "reverse": "deletedAnswers",
+        "generated": true,
+        "foreignKey": "deletedById",
+        "inherited": true
+      }
+    ],
+    "queriable": true,
+    "listQueriable": true,
+    "creatable": true,
+    "updatable": true,
+    "deletable": true
+  },
+  {
+    "kind": "scalar",
+    "name": "DateTime"
+  },
+  {
+    "kind": "scalar",
+    "name": "Upload"
+  },
+  {
+    "kind": "raw-enum",
+    "name": "Order",
+    "values": [
+      "ASC",
+      "DESC"
+    ]
+  },
+  {
+    "kind": "enum",
+    "name": "ReactionType",
+    "values": [
+      "Review",
+      "Question",
+      "Answer"
+    ]
+  }
+]

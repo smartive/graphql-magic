@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
-import { Model } from '../models/models';
-import { get, getModelPlural, isRelation, summonByName } from '../models/utils';
+import { EntityModel } from '../models/models';
+import { get, isRelation } from '../models/utils';
 import { AliasGenerator, hash, ors } from '../resolvers/utils';
 import { BasicValue } from '../values';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
@@ -86,11 +86,14 @@ export const applyPermissions = (
  */
 export const getEntityToMutate = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
-  model: Model,
+  model: EntityModel,
   where: Record<string, BasicValue>,
   action: 'UPDATE' | 'DELETE' | 'RESTORE'
 ) => {
-  const query = ctx.knex(model.name).where(where).first();
+  const query = ctx
+    .knex(model.parent || model.name)
+    .where(where)
+    .first();
   let entity = await query.clone();
 
   if (!entity) {
@@ -113,6 +116,11 @@ export const getEntityToMutate = async (
     throw new PermissionError(action, `this ${model.name}`, 'no available permissions applied');
   }
 
+  if (model.parent) {
+    const subEntity = await ctx.knex(model.name).where({ id: entity.id }).first();
+    Object.assign(entity, subEntity);
+  }
+
   return entity;
 };
 
@@ -121,7 +129,7 @@ export const getEntityToMutate = async (
  */
 export const checkCanWrite = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
-  model: Model,
+  model: EntityModel,
   data: Record<string, BasicValue>,
   action: 'CREATE' | 'UPDATE'
 ) => {
@@ -131,7 +139,7 @@ export const checkCanWrite = async (
     return;
   }
   if (permissionStack === false) {
-    throw new PermissionError(action, getModelPlural(model), 'no applicable permissions');
+    throw new PermissionError(action, model.plural, 'no applicable permissions');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- using `select(1 as any)` to instantiate an "empty" query builder
@@ -202,11 +210,11 @@ const permissionLinkQuery = (
     subQuery.where({ [`${alias}.id`]: ctx.user.id });
   }
   if (where) {
-    applyWhere(summonByName(ctx.models, type), subQuery, alias, where, aliases);
+    applyWhere(ctx.models.getModel(type, 'entity'), subQuery, alias, where, aliases);
   }
 
   for (const { type, foreignKey, reverse, where } of links) {
-    const model = summonByName(ctx.models, type);
+    const model = ctx.models.getModel(type, 'entity');
     const subAlias = aliases.getShort();
     if (reverse) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
@@ -226,7 +234,7 @@ const permissionLinkQuery = (
   subQuery.whereRaw(`"${alias}".id = ?`, id);
 };
 
-const applyWhere = (model: Model, query: Knex.QueryBuilder, alias: string, where: any, aliases: AliasGenerator) => {
+const applyWhere = (model: EntityModel, query: Knex.QueryBuilder, alias: string, where: any, aliases: AliasGenerator) => {
   for (const [key, value] of Object.entries(where)) {
     const relation = model.relationsByName[key];
 
@@ -234,11 +242,11 @@ const applyWhere = (model: Model, query: Knex.QueryBuilder, alias: string, where
       const subAlias = aliases.getShort();
       // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
       query.leftJoin(
-        `${relation.model.name} as ${subAlias}`,
+        `${relation.targetModel.name} as ${subAlias}`,
         `${alias}.${relation.field.foreignKey || `${relation.field.name}Id`}`,
         `${subAlias}.id`
       );
-      applyWhere(relation.model, query, subAlias, value, aliases);
+      applyWhere(relation.targetModel, query, subAlias, value, aliases);
     } else if (Array.isArray(value)) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
       query.whereIn(`${alias}.${key}`, value);

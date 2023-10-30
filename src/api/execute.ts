@@ -12,7 +12,7 @@ export const execute = async ({
   additionalResolvers?: IResolvers<any, any>;
   body: any;
 } & Omit<Context, 'document'>) => {
-  const document = generate(ctx.rawModels);
+  const document = generate(ctx.models);
 
   const generatedResolvers = getResolvers(ctx.models);
 

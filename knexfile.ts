@@ -1,18 +1,3 @@
-export const EMPTY_MODELS = `
-import { RawModels, Models } from '@smartive/graphql-magic';
-
-const rawModels: RawModels = [
-  {
-    kind: 'entity',
-    name: 'User',
-    fields: []
-  },
-]
-
-export const models = new Models(rawModels);
-`;
-
-export const KNEXFILE = `
 import { DateTime } from 'luxon';
 import { types } from 'pg';
 
@@ -44,4 +29,3 @@ const config = {
 } as const;
 
 export default config;
-`;

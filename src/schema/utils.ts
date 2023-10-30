@@ -77,10 +77,11 @@ export const object = (nme: string, fds: Field[], interfaces?: string[], dvs?: D
   directives: directives(dvs),
 });
 
-export const iface = (nme: string, fds: Field[], dvs?: Directive[]): InterfaceTypeDefinitionNode => ({
+export const iface = (nme: string, fds: Field[], interfaces?: string[], dvs?: Directive[]): InterfaceTypeDefinitionNode => ({
   name: name(nme),
   fields: fields(fds),
   kind: 'InterfaceTypeDefinition',
+  interfaces: interfaces && interfaces.map((i) => namedType(i)),
   directives: directives(dvs),
 });
 

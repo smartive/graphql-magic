@@ -3,21 +3,14 @@ import { Knex } from 'knex';
 import cloneDeep from 'lodash/cloneDeep';
 import flatMap from 'lodash/flatMap';
 import { Context, FullContext } from '../context';
-import { NotFoundError, PermissionError } from '../errors';
+import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
 import { applyFilters } from './filters';
-import {
-  FieldResolverNode,
-  ResolverNode,
-  getFragmentSpreads,
-  getInlineFragments,
-  getJoins,
-  getRootFieldNode,
-  getSimpleFields,
-} from './node';
-import { AliasGenerator, Entry, ID_ALIAS, Joins, addJoin, applyJoins, getNameOrAlias, hydrate, isListType } from './utils';
+import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
+import { applySelects } from './selects';
+import { AliasGenerator, Entry, ID_ALIAS, Joins, applyJoins, getColumn, getNameOrAlias, hydrate, isListType } from './utils';
 
 export const queryResolver = (_parent: any, _args: any, ctx: Context, info: GraphQLResolveInfo) =>
   resolve({ ...ctx, info, aliases: new AliasGenerator() });
@@ -36,18 +29,15 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   const { query, verifiedPermissionStacks } = await buildQuery(node);
 
   if (ctx.info.fieldName === 'me') {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    query.where({ [`${node.shortTableAlias}.id`]: node.ctx.user.id });
-  }
-
-  if (!node.isList) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    query.limit(1);
+    void query.where({ [getColumn(node, 'id')]: node.ctx.user.id });
   }
 
   if (id) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    query.where({ id });
+    void query.where({ [getColumn(node, 'id')]: id });
+  }
+
+  if (!node.isList) {
+    void query.limit(1);
   }
 
   const raw = await query;
@@ -74,22 +64,22 @@ const buildQuery = async (
   node: FieldResolverNode,
   parentVerifiedPermissionStacks?: VerifiedPermissionStacks
 ): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks }> => {
-  const { tableAlias, shortTableAlias, tableName, model, ctx } = node;
-  const query = ctx.knex.fromRaw(`"${tableName}" as "${shortTableAlias}"`);
+  const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
 
-  const joins: Joins = {};
+  const joins: Joins = [];
   applyFilters(node, query, joins);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 
   const tables = [
-    [model.name, tableAlias] as const,
-    ...Object.keys(joins).map((tableName) => tableName.split(':') as [string, string]),
+    [node.rootModel.name, node.rootTableAlias] satisfies [string, string],
+    ...joins.map(({ table2Name, table2Alias }) => [table2Name, table2Alias] satisfies [string, string]),
   ];
+
   const verifiedPermissionStacks: VerifiedPermissionStacks = {};
   for (const [table, alias] of tables) {
     const verifiedPermissionStack = applyPermissions(
-      ctx,
+      node.ctx,
       table,
       node.ctx.aliases.getShort(alias),
       query,
@@ -103,52 +93,6 @@ const buildQuery = async (
   }
 
   return { query, verifiedPermissionStacks };
-};
-
-const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
-  // Simple field selects
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-  query.select(
-    ...[
-      { field: 'id', alias: ID_ALIAS },
-      ...getSimpleFields(node)
-        .filter((n) => {
-          const field = node.model.fields.find(({ name }) => name === n.name.value);
-
-          if (!field || field.kind === 'relation' || field.kind === 'custom') {
-            return false;
-          }
-
-          if (typeof field.queriable === 'object' && !field.queriable.roles?.includes(node.ctx.user.role)) {
-            throw new PermissionError(
-              'READ',
-              `${node.model.name}'s field "${field.name}"`,
-              'field permission not available'
-            );
-          }
-
-          return true;
-        })
-        .map((n) => ({ field: n.name.value, alias: getNameOrAlias(n) })),
-    ].map(
-      ({ field, alias }: { field: string; alias: string }) =>
-        `${node.shortTableAlias}.${field} as ${node.shortTableAlias}__${alias}`
-    )
-  );
-
-  for (const subNode of getInlineFragments(node)) {
-    applySelects(subNode, query, joins);
-  }
-
-  for (const subNode of getFragmentSpreads(node)) {
-    applySelects(subNode, query, joins);
-  }
-
-  for (const subNode of getJoins(node, false)) {
-    addJoin(joins, node.tableAlias, subNode.tableName, subNode.tableAlias, get(subNode, 'foreignKey'), 'id');
-
-    applySelects(subNode, query, joins);
-  }
 };
 
 const applySubQueries = async (
@@ -176,11 +120,13 @@ const applySubQueries = async (
     entries.forEach((entry) => (entry[fieldName] = isList ? [] : null));
     const foreignKey = get(subNode, 'foreignKey');
     const { query, verifiedPermissionStacks } = await buildQuery(subNode, parentVerifiedPermissionStacks);
+    const shortTableAlias = subNode.ctx.aliases.getShort(subNode.tableAlias);
+    const shortResultAlias = subNode.ctx.aliases.getShort(subNode.resultAlias);
     const queries = ids.map((id) =>
       query
         .clone()
-        .select(`${subNode.shortTableAlias}.${foreignKey} as ${subNode.shortTableAlias}__${foreignKey}`)
-        .where({ [`${subNode.shortTableAlias}.${foreignKey}`]: id })
+        .select(`${shortTableAlias}.${foreignKey} as ${shortResultAlias}__${foreignKey}`)
+        .where({ [`${shortTableAlias}.${foreignKey}`]: id })
     );
 
     // TODO: make unionAll faster then promise.all...
