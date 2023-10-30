@@ -118,7 +118,7 @@ const applySubQueries = async (
     const fieldName = getNameOrAlias(subNode.field);
     const isList = isListType(subNode.fieldDefinition.type);
     entries.forEach((entry) => (entry[fieldName] = isList ? [] : null));
-    const foreignKey = get(subNode, 'foreignKey');
+    const foreignKey = subNode.foreignKey;
     const { query, verifiedPermissionStacks } = await buildQuery(subNode, parentVerifiedPermissionStacks);
     const shortTableAlias = subNode.ctx.aliases.getShort(subNode.tableAlias);
     const shortResultAlias = subNode.ctx.aliases.getShort(subNode.resultAlias);

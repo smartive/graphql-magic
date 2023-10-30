@@ -8,7 +8,7 @@ import type {
 } from 'graphql';
 
 import { FullContext } from '../context';
-import { EntityModel } from '../models/models';
+import { EntityModel, Relation } from '../models/models';
 import { get, isObjectModel, summonByKey } from '../models/utils';
 import {
   getFragmentTypeName,
@@ -43,20 +43,12 @@ export type ResolverNode = {
 export type FieldResolverNode = ResolverNode & {
   field: FieldNode;
   fieldDefinition: FieldDefinitionNode;
-  foreignKey?: string;
   isList: boolean;
 };
 
-export type WhereNode = {
-  ctx: FullContext;
-
-  rootModel: EntityModel;
-  rootTableAlias: string;
-
-  model: EntityModel;
-  tableAlias: string;
-
-  foreignKey?: string;
+export type RelationResolverNode = FieldResolverNode & {
+  relation: Relation;
+  foreignKey: string;
 };
 
 export const getResolverNode = ({
@@ -178,7 +170,7 @@ export const getFragmentSpreads = (node: ResolverNode) =>
   );
 
 export const getJoins = (node: ResolverNode, toMany: boolean) => {
-  const nodes: FieldResolverNode[] = [];
+  const nodes: RelationResolverNode[] = [];
   for (const subNode of node.selectionSet.filter(isFieldNode).filter(({ selectionSet }) => selectionSet)) {
     const ctx = node.ctx;
     const baseTypeDefinition = node.typeDefinition;
@@ -194,19 +186,9 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
 
     const baseModel = ctx.models.getModel(baseTypeDefinition.name.value, 'entity');
 
-    let foreignKey: string | undefined;
-    if (toMany) {
-      const reverseRelation = baseModel.reverseRelationsByName[fieldName];
-      if (!reverseRelation) {
-        continue;
-      }
-      foreignKey = reverseRelation.field.foreignKey;
-    } else {
-      const modelField = baseModel.fieldsByName[fieldName];
-      if (modelField?.kind !== 'relation') {
-        continue;
-      }
-      foreignKey = modelField.foreignKey;
+    const relation = (toMany ? baseModel.reverseRelationsByName : baseModel.relationsByName)[fieldName];
+    if (!relation) {
+      continue;
     }
 
     const tableAlias = node.tableAlias + '__' + fieldNameOrAlias;
@@ -230,7 +212,8 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       selectionSet: get(subNode.selectionSet, 'selections'),
       field: subNode,
       fieldDefinition,
-      foreignKey,
+      relation,
+      foreignKey: relation.field.foreignKey,
       isList: isListType(fieldDefinition.type),
     });
   }

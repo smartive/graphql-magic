@@ -35,7 +35,6 @@ export const getUpdateEntityQuery = (
 }`;
 
 export const getEditEntityRelationsQuery = (
-  models: Models,
   model: EntityModel,
   action: 'create' | 'update' | 'filter',
   fields?: string[],

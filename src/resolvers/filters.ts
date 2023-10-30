@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
+import { EntityModel, FullContext } from '..';
 import { ForbiddenError, UserInputError } from '../errors';
-import { get, it } from '../models/utils';
 import { OrderBy, Where, normalizeArguments } from './arguments';
-import { FieldResolverNode, WhereNode } from './node';
+import { FieldResolverNode } from './node';
 import { Joins, Ops, addJoin, apply, getColumn, ors } from './utils';
 
 export const SPECIAL_FILTERS: Record<string, string> = {
@@ -10,6 +10,16 @@ export const SPECIAL_FILTERS: Record<string, string> = {
   GTE: '?? >= ?',
   LT: '?? < ?',
   LTE: '?? <= ?',
+};
+
+export type WhereNode = {
+  ctx: FullContext;
+
+  rootModel: EntityModel;
+  rootTableAlias: string;
+
+  model: EntityModel;
+  tableAlias: string;
 };
 
 export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
@@ -84,10 +94,10 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
       continue;
     }
 
-    const field = it(node.model.fieldsByName[key]);
+    const field = node.model.getField(key);
 
     if (field.kind === 'relation') {
-      const relation = get(node.model.relationsByName, field.name);
+      const relation = node.model.getRelation(field.name);
       const targetModel = relation.targetModel;
       const rootModel = targetModel.parentModel || targetModel;
       const rootTableAlias = `${node.model.name}__W__${key}`;
@@ -100,10 +110,8 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
 
         model: targetModel,
         tableAlias,
-
-        foreignKey: relation.field.foreignKey,
       };
-      addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, get(subNode, 'foreignKey'), 'id');
+      addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
       applyWhere(subNode, value as Where, ops, joins);
       continue;
     }

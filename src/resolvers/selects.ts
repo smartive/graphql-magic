@@ -11,7 +11,7 @@ import {
   getNameOrAlias,
   getSimpleFields,
 } from '.';
-import { PermissionError, UserInputError, get } from '..';
+import { PermissionError, UserInputError } from '..';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   // Simple field selects
@@ -39,7 +39,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
           return true;
         })
         .map((fieldNode) => {
-          const field = get(node.model.fieldsByName, fieldNode.name.value);
+          const field = node.model.getField(fieldNode.name.value);
           if (node.model.parent && !field.inherited) {
             addJoin(joins, node.rootTableAlias, node.model.name, node.tableAlias, 'id', 'id');
           }
@@ -70,7 +70,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
   }
 
   for (const subNode of getJoins(node, false)) {
-    addJoin(joins, node.tableAlias, subNode.rootModel.name, subNode.rootTableAlias, get(subNode, 'foreignKey'), 'id');
+    addJoin(joins, node.tableAlias, subNode.rootModel.name, subNode.rootTableAlias, subNode.foreignKey, 'id');
 
     applySelects(subNode, query, joins);
   }

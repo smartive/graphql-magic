@@ -348,6 +348,10 @@ export class EntityModel extends Model {
     }
   }
 
+  public getField(name: string) {
+    return get(this.fieldsByName, name);
+  }
+
   public get relations() {
     if (!this._relations) {
       this._relations = this.fields
@@ -365,6 +369,10 @@ export class EntityModel extends Model {
       }
     }
     return this._relationsByName;
+  }
+
+  public getRelation(name: string) {
+    return get(this.relationsByName, name);
   }
 
   public get reverseRelations() {
@@ -386,6 +394,10 @@ export class EntityModel extends Model {
       }
     }
     return this._reverseRelationsByName;
+  }
+
+  public getReverseRelation(name: string) {
+    return get(this.reverseRelationsByName, name);
   }
 
   public get manyToManyRelations() {
@@ -421,6 +433,10 @@ export class EntityModel extends Model {
       }
     }
     return this._manyToManyRelationsByName;
+  }
+
+  public getManyToManyRelation(name: string) {
+    return get(this.manyToManyRelationsByName, name);
   }
 
   public get parentModel() {
