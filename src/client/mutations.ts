@@ -1,12 +1,12 @@
 import upperCase from 'lodash/upperCase';
-import { isEntityModel } from '..';
-import { RawModels } from '../models/models';
+import { isRootModel, not } from '..';
+import { Models } from '../models/models';
 
 const constantCase = (str: string) => upperCase(str).replace(/ /g, '_');
 
-export const generateMutations = (models: RawModels) => {
+export const generateMutations = (models: Models, gqmModule = '@smartive/graphql-magic') => {
   const parts: string[] = [];
-  for (const { name, creatable, updatable, deletable } of models.filter(isEntityModel)) {
+  for (const { name, creatable, updatable, deletable } of models.entities.filter(not(isRootModel))) {
     if (creatable) {
       parts.push(
         `export const CREATE_${constantCase(
@@ -29,8 +29,14 @@ export const generateMutations = (models: RawModels) => {
           name
         )} = gql\`\n  mutation Delete${name}Mutation($id: ID!) {\n    delete${name}(where: { id: $id })\n  }\n\`;`
       );
+
+      parts.push(
+        `export const RESTORE_${constantCase(
+          name
+        )} = gql\`\n  mutation Restore${name}Mutation($id: ID!) {\n    restore${name}(where: { id: $id })\n  }\n\`;`
+      );
     }
   }
 
-  return `import { gql } from "@smartive/graphql-magic";\n\n${parts.join('\n\n')}`;
+  return `import { gql } from "${gqmModule}";\n\n${parts.join('\n\n')}`;
 };

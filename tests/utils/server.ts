@@ -3,11 +3,11 @@ import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
 import { RequestListener, createServer } from 'http';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
+import { up } from '../../migrations/20230912185644_setup';
 import { execute } from '../../src';
 import { getKnex } from './database/knex';
-import { setupSchema } from './database/schema';
 import { ADMIN_ID, setupSeed } from './database/seed';
-import { models, permissions, rawModels } from './models';
+import { models, permissions } from './models';
 
 const MIN_PORT = 49152;
 const MAX_PORT = 65535;
@@ -30,7 +30,8 @@ export const withServer = async (
       await new Promise<void>((res, rej) => server.listen(port, res).once('error', rej));
       break;
     } catch (e) {
-      console.error(e);
+      console.warn(`Wait did we really get a port collision? Craaaaazy.`);
+      console.warn(e);
     }
   }
 
@@ -42,7 +43,7 @@ export const withServer = async (
   const knex = getKnex(dbName);
 
   try {
-    await setupSchema(knex);
+    await up(knex);
     await setupSeed(knex);
 
     handler = async (req, res) => {
@@ -63,7 +64,6 @@ export const withServer = async (
         locale: 'en',
         locales: ['en'],
         user,
-        rawModels,
         models,
         permissions,
         now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),

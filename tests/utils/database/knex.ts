@@ -1,19 +1,11 @@
 import knex from 'knex';
+import knexfile from '../../../knexfile';
 
-export const getKnex = (database = 'postgres') =>
+export const getKnex = (database?: string) =>
   knex({
-    client: 'postgresql',
+    ...knexfile,
     connection: {
-      host: 'localhost',
-      database,
-      user: 'postgres',
-      password: 'password',
-    },
-    migrations: {
-      tableName: 'knex_migrations',
-    },
-    pool: {
-      min: 0,
-      max: 30,
+      ...knexfile.connection,
+      ...(database && { database }),
     },
   });

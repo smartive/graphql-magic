@@ -30,6 +30,9 @@ const DEFAULTS = {
       ensureDirectoryExists(path);
     },
   },
+  gqlModule: {
+    defaultValue: '@smartive/graphql-magic',
+  },
 };
 
 type Settings = {
@@ -45,8 +48,10 @@ const initSetting = async (name: string) => {
 
 const initSettings = async () => {
   const settings: Settings = {} as Settings;
-  for (const name of Object.keys(DEFAULTS)) {
-    settings[name] = await initSetting(name);
+  for (const [name, config] of Object.entries(DEFAULTS)) {
+    if ('queston' in config) {
+      settings[name] = await initSetting(name);
+    }
   }
   saveSettings(settings);
 };
@@ -65,8 +70,12 @@ export const getSettings = async (): Promise<Settings> => {
 export const getSetting = async (name: keyof Settings): Promise<string> => {
   const settings = await getSettings();
   if (!(name in settings)) {
-    settings[name] = await initSetting(name);
-    saveSettings(settings);
+    if ('question' in DEFAULTS[name]) {
+      settings[name] = await initSetting(name);
+      saveSettings(settings);
+    } else {
+      return DEFAULTS[name].defaultValue;
+    }
   }
   return settings[name];
 };

@@ -11,12 +11,15 @@ import type {
 } from 'graphql';
 import { Kind } from 'graphql';
 import { Knex } from 'knex';
+import { isEqual } from 'lodash';
+import { EntityField } from '..';
 import { UserInputError } from '../errors';
 import { get, it } from '../models/utils';
 import { Value } from '../values';
-import { FieldResolverNode } from './node';
+import { FieldResolverNode, ResolverNode } from './node';
 
 export const ID_ALIAS = 'ID';
+export const TYPE_ALIAS = 'TYPE';
 
 export type VariableValues = {
   [variableName: string]: Value;
@@ -66,17 +69,15 @@ export function hydrate<T extends Entry>(
   node: FieldResolverNode,
   raw: { [key: string]: undefined | null | string | Date | number }[]
 ): T[] {
-  const tableAlias = node.tableAlias;
+  const resultAlias = node.resultAlias;
   const res = raw.map((entry) => {
     const res: any = {};
     outer: for (const [column, value] of Object.entries(entry)) {
       let current = res;
-      const shortParts = column.split('__');
-      const fieldName = shortParts.pop();
-      const columnWithoutField = shortParts.join('__');
+      const [, columnWithoutField, fieldName] = column.match(/^(.*\w)__(\w+)$/);
       const longColumn = node.ctx.aliases.getLong(columnWithoutField);
-      const longColumnWithoutRoot = longColumn.replace(new RegExp(`^${tableAlias}(__)?`), '');
-      const allParts = [tableAlias, ...(longColumnWithoutRoot ? longColumnWithoutRoot.split('__') : []), fieldName];
+      const longColumnWithoutRoot = longColumn.replace(new RegExp(`^${resultAlias}(__)?`), '');
+      const allParts = [resultAlias, ...(longColumnWithoutRoot ? longColumnWithoutRoot.split('__') : []), fieldName];
       for (let i = 0; i < allParts.length - 1; i++) {
         const part = allParts[i];
 
@@ -91,7 +92,7 @@ export function hydrate<T extends Entry>(
       }
       current[it(fieldName)] = value;
     }
-    return res[tableAlias];
+    return res[resultAlias];
   });
 
   return res;
@@ -102,16 +103,12 @@ export const ors = (query: Knex.QueryBuilder, [first, ...rest]: ((query: Knex.Qu
     return query;
   }
   return query.where((subQuery) => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    subQuery.where((subSubQuery) => {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-      first(subSubQuery);
+    void subQuery.where((subSubQuery) => {
+      void first(subSubQuery);
     });
     for (const cb of rest) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-      subQuery.orWhere((subSubQuery) => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-        cb(subSubQuery);
+      void subQuery.orWhere((subSubQuery) => {
+        void cb(subSubQuery);
       });
     }
   });
@@ -131,15 +128,18 @@ export type Ops<T> = ((target: T) => T)[];
 
 export const apply = <T>(target: T, ops: ((target: T) => T)[]) => ops.reduce((target, op) => op(target), target);
 
-export type Joins = Record<`${string}:${string}`, { table1Alias: string; column1: string; column2: string }>;
+type Join = { table1Alias: string; column1: string; table2Name: string; table2Alias: string; column2: string };
+export type Joins = Join[];
 
 export const applyJoins = (aliases: AliasGenerator, query: Knex.QueryBuilder, joins: Joins) => {
-  for (const [tableName, { table1Alias, column1, column2 }] of Object.entries(joins)) {
-    const [table, alias] = tableName.split(':');
+  for (const { table1Alias, table2Name, table2Alias, column1, column2 } of joins) {
     const table1ShortAlias = aliases.getShort(table1Alias);
-    const table2ShortAlias = aliases.getShort(alias);
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-    query.leftJoin(`${table} as ${table2ShortAlias}`, `${table1ShortAlias}.${column1}`, `${table2ShortAlias}.${column2}`);
+    const table2ShortAlias = aliases.getShort(table2Alias);
+    void query.leftJoin(
+      `${table2Name} as ${table2ShortAlias}`,
+      `${table1ShortAlias}.${column1}`,
+      `${table2ShortAlias}.${column2}`
+    );
   }
 };
 
@@ -149,12 +149,20 @@ export const applyJoins = (aliases: AliasGenerator, query: Knex.QueryBuilder, jo
 export const addJoin = (
   joins: Joins,
   table1Alias: string,
-  table2: string,
-  alias2: string,
+  table2Name: string,
+  table2Alias: string,
   column1: string,
   column2: string
 ) => {
-  joins[`${table2}:${alias2}`] ||= { table1Alias, column1, column2 };
+  const join = { table1Alias, table2Name, table2Alias, column1, column2 };
+  const existingJoin = joins.find((j) => j.table2Alias === join.table2Alias);
+  if (existingJoin) {
+    if (!isEqual(existingJoin, join)) {
+      throw new Error(`Join collision: ${existingJoin}, ${join}`);
+    }
+  } else {
+    joins.push(join);
+  }
 };
 
 export class AliasGenerator {
@@ -186,3 +194,11 @@ export class AliasGenerator {
 }
 
 export const hash = (s: any) => createHash('md5').update(JSON.stringify(s)).digest('hex');
+
+export const getColumnName = (field: EntityField) =>
+  field.kind === 'relation' ? field.foreignKey || `${field.name}Id` : field.name;
+
+export const getColumn = (node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>, key: string) => {
+  const field = node.model.fields.find((field) => getColumnName(field) === key);
+  return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${key}`;
+};

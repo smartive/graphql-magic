@@ -8,8 +8,8 @@ import type {
 } from 'graphql';
 
 import { FullContext } from '../context';
-import { Model } from '../models/models';
-import { get, isObjectModel, summonByKey, summonByName } from '../models/utils';
+import { EntityModel, Relation } from '../models/models';
+import { get, isObjectModel, summonByKey } from '../models/utils';
 import {
   getFragmentTypeName,
   getNameOrAlias,
@@ -24,15 +24,18 @@ import {
 export type ResolverNode = {
   ctx: FullContext;
 
-  tableName: string;
+  rootModel: EntityModel;
+  rootTableAlias: string;
+
+  model: EntityModel;
   tableAlias: string;
-  shortTableAlias: string;
+
+  resultAlias: string;
 
   baseTypeDefinition: ObjectTypeDefinitionNode;
-  baseModel?: Model;
+  baseModel?: EntityModel;
 
   typeDefinition: ObjectTypeDefinitionNode;
-  model: Model;
 
   selectionSet: readonly SelectionNode[];
 };
@@ -40,24 +43,20 @@ export type ResolverNode = {
 export type FieldResolverNode = ResolverNode & {
   field: FieldNode;
   fieldDefinition: FieldDefinitionNode;
-  foreignKey?: string;
   isList: boolean;
 };
 
-export type WhereNode = {
-  ctx: FullContext;
-  tableName: string;
-  tableAlias: string;
-  shortTableAlias: string;
-  model: Model;
-
-  foreignKey?: string;
+export type RelationResolverNode = FieldResolverNode & {
+  relation: Relation;
+  foreignKey: string;
 };
 
 export const getResolverNode = ({
   ctx,
   node,
   tableAlias,
+  rootTableAlias,
+  resultAlias,
   baseTypeDefinition,
   typeName,
 }: {
@@ -65,18 +64,30 @@ export const getResolverNode = ({
   node: FieldNode | InlineFragmentNode | FragmentDefinitionNode;
   baseTypeDefinition: ObjectTypeDefinitionNode;
   tableAlias: string;
+  rootTableAlias: string;
+  resultAlias: string;
   typeName: string;
-}): ResolverNode => ({
-  ctx,
-  tableName: typeName,
-  tableAlias,
-  shortTableAlias: ctx.aliases.getShort(tableAlias),
-  baseTypeDefinition,
-  baseModel: ctx.models.find((model) => model.name === baseTypeDefinition.name.value),
-  typeDefinition: getType(ctx.info.schema, typeName),
-  model: summonByName(ctx.models, typeName),
-  selectionSet: get(node.selectionSet, 'selections'),
-});
+}): ResolverNode => {
+  const model = ctx.models.getModel(typeName, 'entity');
+  const rootModel = model.parent ? ctx.models.getModel(model.parent, 'entity') : model;
+
+  return {
+    ctx,
+
+    rootModel,
+    rootTableAlias,
+
+    model,
+    tableAlias,
+
+    resultAlias,
+
+    baseTypeDefinition,
+    baseModel: ctx.models.entities.find((model) => model.name === baseTypeDefinition.name.value),
+    typeDefinition: getType(ctx.info.schema, typeName),
+    selectionSet: get(node.selectionSet, 'selections'),
+  };
+};
 
 export const getRootFieldNode = ({
   ctx,
@@ -91,15 +102,22 @@ export const getRootFieldNode = ({
   const fieldDefinition = summonByKey(baseTypeDefinition.fields || [], 'name.value', fieldName);
 
   const typeName = getTypeName(fieldDefinition.type);
+  const model = ctx.models.getModel(typeName, 'entity');
+  const rootModel = model.parent ? ctx.models.getModel(model.parent, 'entity') : model;
 
   return {
     ctx,
-    tableName: typeName,
-    tableAlias: typeName,
-    shortTableAlias: ctx.aliases.getShort(typeName),
+
+    rootModel,
+    rootTableAlias: rootModel.name,
+
+    model,
+    tableAlias: model.name,
+
+    resultAlias: rootModel.name,
+
     baseTypeDefinition,
     typeDefinition: getType(ctx.info.schema, typeName),
-    model: summonByName(ctx.models, typeName),
     selectionSet: get(node.selectionSet, 'selections'),
     field: node,
     fieldDefinition,
@@ -122,7 +140,13 @@ export const getInlineFragments = (node: ResolverNode) =>
     getResolverNode({
       ctx: node.ctx,
       node: subNode,
+
+      rootTableAlias: node.rootTableAlias,
+
       tableAlias: node.tableAlias + '__' + getFragmentTypeName(subNode),
+
+      resultAlias: node.resultAlias,
+
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: getFragmentTypeName(subNode),
     })
@@ -133,14 +157,20 @@ export const getFragmentSpreads = (node: ResolverNode) =>
     getResolverNode({
       ctx: node.ctx,
       node: node.ctx.info.fragments[subNode.name.value],
+
+      rootTableAlias: node.rootTableAlias,
+
       tableAlias: node.tableAlias,
+
+      resultAlias: node.resultAlias,
+
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: node.model.name,
     })
   );
 
 export const getJoins = (node: ResolverNode, toMany: boolean) => {
-  const nodes: FieldResolverNode[] = [];
+  const nodes: RelationResolverNode[] = [];
   for (const subNode of node.selectionSet.filter(isFieldNode).filter(({ selectionSet }) => selectionSet)) {
     const ctx = node.ctx;
     const baseTypeDefinition = node.typeDefinition;
@@ -150,42 +180,40 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
 
     const typeName = getTypeName(fieldDefinition.type);
 
-    if (isObjectModel(summonByName(ctx.rawModels, typeName))) {
+    if (isObjectModel(ctx.models.getModel(typeName))) {
       continue;
     }
 
-    const baseModel = summonByName(ctx.models, baseTypeDefinition.name.value);
+    const baseModel = ctx.models.getModel(baseTypeDefinition.name.value, 'entity');
 
-    let foreignKey: string | undefined;
-    if (toMany) {
-      const reverseRelation = baseModel.reverseRelationsByName[fieldName];
-      if (!reverseRelation) {
-        continue;
-      }
-      foreignKey = reverseRelation.foreignKey;
-    } else {
-      const modelField = baseModel.fieldsByName[fieldName];
-      if (modelField?.kind !== 'relation') {
-        continue;
-      }
-      foreignKey = modelField.foreignKey;
+    const relation = (toMany ? baseModel.reverseRelationsByName : baseModel.relationsByName)[fieldName];
+    if (!relation) {
+      continue;
     }
 
     const tableAlias = node.tableAlias + '__' + fieldNameOrAlias;
+    const model = ctx.models.getModel(typeName, 'entity');
+    const rootModel = model;
 
     nodes.push({
       ctx,
-      tableName: typeName,
+
+      rootModel,
+      rootTableAlias: tableAlias,
+
+      model,
       tableAlias,
-      shortTableAlias: ctx.aliases.getShort(tableAlias),
+
+      resultAlias: tableAlias,
+
       baseTypeDefinition,
       baseModel,
       typeDefinition: getType(ctx.info.schema, typeName),
-      model: summonByName(ctx.models, typeName),
       selectionSet: get(subNode.selectionSet, 'selections'),
       field: subNode,
       fieldDefinition,
-      foreignKey,
+      relation,
+      foreignKey: relation.field.foreignKey,
       isList: isListType(fieldDefinition.type),
     });
   }

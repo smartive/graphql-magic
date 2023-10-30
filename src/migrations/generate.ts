@@ -4,8 +4,18 @@ import { SchemaInspector } from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
 import { SchemaInspector as SchemaInspectorType } from 'knex-schema-inspector/dist/types/schema-inspector';
 import lowerFirst from 'lodash/lowerFirst';
-import { EnumModel, Model, ModelField, Models, RawModels } from '../models/models';
-import { get, getModels, isEnumModel, summonByName, typeToField } from '../models/utils';
+import { EntityField, EntityModel, EnumModel, Models } from '../models/models';
+import {
+  and,
+  get,
+  isInherited,
+  isUpdatableField,
+  isUpdatableModel,
+  modelNeedsTable,
+  not,
+  summonByName,
+  typeToField,
+} from '../models/utils';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];
@@ -19,15 +29,13 @@ export class MigrationGenerator {
   private columns: Record<string, Column[]> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
-  private models: Models;
 
-  constructor(knex: Knex, private rawModels: RawModels) {
+  constructor(knex: Knex, private models: Models) {
     this.schema = SchemaInspector(knex);
-    this.models = getModels(rawModels);
   }
 
   public async generate() {
-    const { writer, schema, rawModels, models } = this;
+    const { writer, schema, models } = this;
     const enums = (await schema.knex('pg_type').where({ typtype: 'e' }).select('typname')).map(({ typname }) => typname);
     const tables = await schema.tables();
     for (const table of tables) {
@@ -38,12 +46,12 @@ export class MigrationGenerator {
     const down: Callbacks = [];
 
     this.createEnums(
-      rawModels.filter(isEnumModel).filter((enm) => !enums.includes(lowerFirst(enm.name))),
+      this.models.enums.filter((enm) => !enums.includes(lowerFirst(enm.name))),
       up,
       down
     );
 
-    for (const model of models) {
+    for (const model of models.entities) {
       if (model.deleted) {
         up.push(() => {
           this.dropTable(model.name);
@@ -58,7 +66,7 @@ export class MigrationGenerator {
         });
 
         // TODO: also add revision table if it's deletable
-        if (model.updatable) {
+        if (isUpdatableModel(model)) {
           up.push(() => {
             this.dropTable(`${model.name}Revision`);
           });
@@ -72,27 +80,23 @@ export class MigrationGenerator {
       if (model.oldName) {
         // Rename table
         up.push(() => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- checked above
-          this.renameTable(model.oldName!, model.name);
+          this.renameTable(model.oldName, model.name);
         });
         down.push(() => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- checked above
-          this.renameTable(model.name, model.oldName!);
+          this.renameTable(model.name, model.oldName);
         });
         tables[tables.indexOf(model.oldName)] = model.name;
         this.columns[model.name] = this.columns[model.oldName];
         delete this.columns[model.oldName];
 
-        if (model.updatable) {
+        if (isUpdatableModel(model)) {
           up.push(() => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- checked above
-            this.renameTable(`${model.oldName!}Revision`, `${model.name}Revision`);
+            this.renameTable(`${model.oldName}Revision`, `${model.name}Revision`);
             this.alterTable(`${model.name}Revision`, () => {
               this.renameColumn(`${typeToField(get(model, 'oldName'))}Id`, `${typeToField(model.name)}Id`);
             });
           });
           down.push(() => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- checked above
             this.renameTable(`${model.name}Revision`, `${model.oldName}Revision`);
             this.alterTable(`${model.oldName}Revision`, () => {
               this.renameColumn(`${typeToField(model.name)}Id`, `${typeToField(get(model, 'oldName'))}Id`);
@@ -104,125 +108,138 @@ export class MigrationGenerator {
         }
       }
 
-      if (!tables.includes(model.name)) {
-        // Create missing table
-        up.push(() => {
-          this.createTable(model.name, () => {
-            for (const field of model.fields) {
-              this.column(field);
-            }
-          });
-        });
-
-        down.push(() => {
-          this.dropTable(model.name);
-        });
-      } else {
-        // Rename fields
-        this.renameFields(
-          model,
-          model.fields.filter(({ oldName }) => oldName),
-          up,
-          down
-        );
-
-        // Add missing fields
-        this.createFields(
-          model,
-          model.fields.filter(
-            ({ name, ...field }) =>
-              field.kind !== 'custom' &&
-              !this.columns[model.name].some(
-                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-              )
-          ),
-          up,
-          down
-        );
-
-        // Update fields
-        const existingFields = model.fields.filter(({ name, kind, nonNull }) => {
-          const col = this.columns[model.name].find((col) => col.name === (kind === 'relation' ? `${name}Id` : name));
-          if (!col) {
-            return false;
-          }
-          return !nonNull && !col.is_nullable;
-        });
-        this.updateFields(model, existingFields, up, down);
-      }
-
-      if (model.updatable) {
-        if (!tables.includes(`${model.name}Revision`)) {
+      if (modelNeedsTable(model)) {
+        if (!tables.includes(model.name)) {
+          // Create missing table
           up.push(() => {
-            this.createRevisionTable(model);
-          });
-
-          if (tables.includes(model.name)) {
-            up.push(() => {
-              // Populate empty revisions tables
-              writer
-                .block(() => {
-                  writer.writeLine(`const data = await knex('${model.name}');`);
-
-                  writer.write(`if (data.length)`).block(() => {
-                    writer
-                      .write(`await knex.batchInsert('${model.name}Revision', data.map((row) => (`)
-                      .inlineBlock(() => {
-                        writer.writeLine(`id: uuid(),`);
-                        writer.writeLine(`${typeToField(model.name)}Id: row.id,`);
-                        this.nowUsed = true;
-                        writer.writeLine(`createdAt: row.updatedAt || row.createdAt || now,`);
-                        writer.writeLine(`createdById: row.updatedById || row.createdById,`);
-                        if (model.deletable) {
-                          writer.writeLine(`deleted: row.deleted,`);
-                        }
-
-                        for (const { name, kind } of model.fields.filter(({ updatable }) => updatable)) {
-                          const col = kind === 'relation' ? `${name}Id` : name;
-
-                          writer.writeLine(`${col}: row.${col},`);
-                        }
-                      })
-                      .write(')));')
-                      .newLine();
-                  });
-                })
-                .blankLine();
+            this.createTable(model.name, () => {
+              if (model.parent) {
+                this.column({
+                  ...model.fieldsByName.id,
+                  kind: 'relation',
+                  type: model.parent,
+                  foreignKey: 'id',
+                });
+              }
+              for (const field of model.fields.filter(not(isInherited))) {
+                this.column(field);
+              }
             });
-          }
+          });
 
           down.push(() => {
-            this.dropTable(`${model.name}Revision`);
+            this.dropTable(model.name);
           });
         } else {
-          const revisionTable = `${model.name}Revision`;
-          const missingRevisionFields = model.fields.filter(
-            ({ name, updatable, ...field }) =>
-              field.kind !== 'custom' &&
-              updatable &&
-              !this.columns[revisionTable].some(
-                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-              )
+          // Rename fields
+          this.renameFields(
+            model,
+            model.fields.filter(not(isInherited)).filter(({ oldName }) => oldName),
+            up,
+            down
           );
 
-          this.createRevisionFields(model, missingRevisionFields, up, down);
-
-          const revisionFieldsToRemove = model.fields.filter(
-            ({ name, updatable, generated, ...field }) =>
-              !generated &&
-              field.kind !== 'custom' &&
-              !updatable &&
-              !(field.kind === 'relation' && field.foreignKey === 'id') &&
-              this.columns[revisionTable].some(
-                (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-              )
+          // Add missing fields
+          this.createFields(
+            model,
+            model.fields
+              .filter(not(isInherited))
+              .filter(
+                ({ name, ...field }) =>
+                  field.kind !== 'custom' &&
+                  !this.columns[model.name].some(
+                    (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                  )
+              ),
+            up,
+            down
           );
-          this.createRevisionFields(model, revisionFieldsToRemove, down, up);
+
+          // Update fields
+          const existingFields = model.fields.filter(({ name, kind, nonNull }) => {
+            const col = this.columns[model.name].find((col) => col.name === (kind === 'relation' ? `${name}Id` : name));
+            if (!col) {
+              return false;
+            }
+            return !nonNull && !col.is_nullable;
+          });
+          this.updateFields(model, existingFields, up, down);
+        }
+
+        if (isUpdatableModel(model)) {
+          if (!tables.includes(`${model.name}Revision`)) {
+            up.push(() => {
+              this.createRevisionTable(model);
+            });
+
+            if (tables.includes(model.name)) {
+              up.push(() => {
+                // Populate empty revisions tables
+                writer
+                  .block(() => {
+                    writer.writeLine(`const data = await knex('${model.name}');`);
+
+                    writer.write(`if (data.length)`).block(() => {
+                      writer
+                        .write(`await knex.batchInsert('${model.name}Revision', data.map((row) => (`)
+                        .inlineBlock(() => {
+                          writer.writeLine(`id: uuid(),`);
+                          writer.writeLine(`${typeToField(model.name)}Id: row.id,`);
+                          this.nowUsed = true;
+                          writer.writeLine(`createdAt: row.updatedAt || row.createdAt || now,`);
+                          writer.writeLine(`createdById: row.updatedById || row.createdById,`);
+                          if (model.deletable) {
+                            writer.writeLine(`deleted: row.deleted,`);
+                          }
+
+                          for (const { name, kind } of model.fields.filter(isUpdatableField)) {
+                            const col = kind === 'relation' ? `${name}Id` : name;
+
+                            writer.writeLine(`${col}: row.${col},`);
+                          }
+                        })
+                        .write(')));')
+                        .newLine();
+                    });
+                  })
+                  .blankLine();
+              });
+            }
+
+            down.push(() => {
+              this.dropTable(`${model.name}Revision`);
+            });
+          } else {
+            const revisionTable = `${model.name}Revision`;
+            const missingRevisionFields = model.fields
+              .filter(isUpdatableField)
+              .filter(
+                ({ name, ...field }) =>
+                  field.kind !== 'custom' &&
+                  !this.columns[revisionTable].some(
+                    (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                  )
+              );
+
+            this.createRevisionFields(model, missingRevisionFields, up, down);
+
+            const revisionFieldsToRemove = model.fields.filter(
+              ({ name, updatable, generated, ...field }) =>
+                !generated &&
+                field.kind !== 'custom' &&
+                !updatable &&
+                !(field.kind === 'relation' && field.foreignKey === 'id') &&
+                this.columns[revisionTable].some(
+                  (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                )
+            );
+            this.createRevisionFields(model, revisionFieldsToRemove, down, up);
+          }
         }
       }
     }
 
-    for (const model of getModels(rawModels)) {
+    for (const model of models.entities) {
       if (tables.includes(model.name)) {
         this.createFields(
           model,
@@ -231,10 +248,10 @@ export class MigrationGenerator {
           up
         );
 
-        if (model.updatable) {
+        if (isUpdatableModel(model)) {
           this.createRevisionFields(
             model,
-            model.fields.filter(({ deleted, updatable }) => updatable && deleted),
+            model.fields.filter(isUpdatableField).filter(({ deleted }) => deleted),
             down,
             up
           );
@@ -243,7 +260,7 @@ export class MigrationGenerator {
     }
 
     this.createEnums(
-      rawModels.filter(isEnumModel).filter((enm) => enm.deleted),
+      this.models.enums.filter((enm) => enm.deleted),
       down,
       up
     );
@@ -267,7 +284,7 @@ export class MigrationGenerator {
     return writer.toString();
   }
 
-  private renameFields(model: Model, fields: ModelField[], up: Callbacks, down: Callbacks) {
+  private renameFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
     if (!fields.length) {
       return;
     }
@@ -301,7 +318,7 @@ export class MigrationGenerator {
     }
   }
 
-  private createFields(model: Model, fields: ModelField[], up: Callbacks, down: Callbacks) {
+  private createFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
     if (!fields.length) {
       return;
     }
@@ -350,7 +367,7 @@ export class MigrationGenerator {
     });
   }
 
-  private updateFields(model: Model, fields: ModelField[], up: Callbacks, down: Callbacks) {
+  private updateFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
     if (!fields.length) {
       return;
     }
@@ -375,8 +392,8 @@ export class MigrationGenerator {
       });
     });
 
-    if (model.updatable) {
-      const updatableFields = fields.filter(({ updatable }) => updatable);
+    if (isUpdatableModel(model)) {
+      const updatableFields = fields.filter(isUpdatableField);
       if (!updatableFields.length) {
         return;
       }
@@ -403,28 +420,28 @@ export class MigrationGenerator {
     }
   }
 
-  private createRevisionTable(model: Model) {
+  private createRevisionTable(model: EntityModel) {
     const writer = this.writer;
 
     // Create missing revisions table
     this.createTable(`${model.name}Revision`, () => {
       writer.writeLine(`table.uuid('id').notNullable().primary();`);
-      writer.writeLine(`table.uuid('${typeToField(model.name)}Id').notNullable();`);
-      writer.write(`table.uuid('createdById')`);
-      writer.write('.notNullable()');
-      writer.write(';').newLine();
-      writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
-      if (model.deletable) {
-        writer.writeLine(`table.boolean('deleted').notNullable();`);
+      if (!model.parent) {
+        writer.writeLine(`table.uuid('${typeToField(model.name)}Id').notNullable();`);
+        writer.writeLine(`table.uuid('createdById').notNullable();`);
+        writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
+        if (model.deletable) {
+          writer.writeLine(`table.boolean('deleted').notNullable();`);
+        }
       }
 
-      for (const field of model.fields.filter((field) => field.updatable)) {
+      for (const field of model.fields.filter(and(isUpdatableField, not(isInherited)))) {
         this.column(field, { setUnique: false, setDefault: false });
       }
     });
   }
 
-  private createRevisionFields(model: Model, missingRevisionFields: ModelField[], up: Callbacks, down: Callbacks) {
+  private createRevisionFields(model: EntityModel, missingRevisionFields: EntityField[], up: Callbacks, down: Callbacks) {
     const revisionTable = `${model.name}Revision`;
     if (missingRevisionFields.length) {
       up.push(() => {
@@ -484,7 +501,7 @@ export class MigrationGenerator {
           )
           .newLine()
       );
-      down.push(() => this.writer.writeLine(`await knex.raw('DROP TYPE "${name}"')`));
+      down.push(() => this.writer.writeLine(`await knex.raw('DROP TYPE "${name}"');`));
     }
   }
 
@@ -542,7 +559,7 @@ export class MigrationGenerator {
   }
 
   private column(
-    { name, primary, list, ...field }: ModelField,
+    { name, primary, list, ...field }: EntityField,
     { setUnique = true, setNonNull = true, alter = false, foreign = true, setDefault = true } = {},
     toColumn?: Column
   ) {
@@ -593,7 +610,7 @@ export class MigrationGenerator {
             if (field.double) {
               col(`table.double('${name}')`);
             } else {
-              col(`table.decimal('${name}', ${get(field, 'precision')}, ${get(field, 'scale')})`);
+              col(`table.decimal('${name}', ${field.precision ?? 'undefined'}, ${field.scale ?? 'undefined'})`);
             }
             break;
           case 'String':
@@ -614,14 +631,16 @@ export class MigrationGenerator {
         }
         break;
       case 'relation':
-        col(`table.uuid('${name}Id')`);
+        col(`table.uuid('${field.foreignKey}')`);
         if (foreign && !alter) {
-          this.writer.writeLine(`table.foreign('${name}Id').references('id').inTable('${field.type}');`);
+          this.writer.writeLine(
+            `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('CASCADE');`
+          );
         }
         break;
       case 'enum':
         if (list) {
-          this.writer.write(`table.specificType('${name}', '"${typeToField(field.type)}"[]');`);
+          this.writer.write(`table.specificType('${name}', '"${typeToField(field.type)}"[]')`);
         } else {
           this.writer
             .write(`table.enum('${name}', null as any, `)

@@ -2,20 +2,12 @@
   "extends": ["@smartive/eslint-config"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.jest.json"
+    "project": "./tsconfig.eslint.json"
   },
   "rules": {
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-floating-promises": ["error"],
     "no-constant-binary-expression": "error",
     "no-console": ["error", { "allow": ["info", "warn", "error", "trace", "time", "timeEnd"] }]
-  },
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "parserOptions": {
-        "project": ["./tsconfig.eslint.json"]
-      }
-    }
-  ]
+  }
 }

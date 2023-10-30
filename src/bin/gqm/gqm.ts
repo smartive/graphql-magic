@@ -40,12 +40,13 @@ program
   .command('generate')
   .description('Generate all the things')
   .action(async () => {
-    const rawModels = await parseModels();
+    const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(rawModels));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(rawModels));
-    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(rawModels));
-    writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(rawModels));
+    const gqlModule = await getSetting('gqlModule');
+    writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models));
+    writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
     await generateGraphqlApiTypes();
     await generateGraphqlClientTypes();
   });
@@ -54,45 +55,44 @@ program
   .command('generate-models')
   .description('Generate models.json')
   .action(async () => {
-    const rawModels = await parseModels();
-    const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/models.json`, JSON.stringify(rawModels, null, 2));
+    await parseModels();
   });
 
 program
   .command('generate-schema')
   .description('Generate schema')
   .action(async () => {
-    const rawModels = await parseModels();
+    const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(rawModels));
+    writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
   });
 
 program
   .command('generate-mutation-queries')
   .description('Generate mutation-queries')
   .action(async () => {
-    const rawModels = await parseModels();
+    const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(rawModels));
+    const gqlModule = await getSetting('gqlModule');
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
   });
 
 program
   .command('generate-db-types')
   .description('Generate DB types')
   .action(async () => {
-    const rawModels = await parseModels();
+    const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/db/index.ts`, generateMutations(rawModels));
+    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models));
   });
 
 program
   .command('generate-knex-types')
   .description('Generate Knex types')
   .action(async () => {
-    const rawModels = await parseModels();
+    const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(rawModels));
+    writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
   });
 
 program

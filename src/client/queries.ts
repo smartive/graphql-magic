@@ -1,23 +1,20 @@
 import upperFirst from 'lodash/upperFirst';
-import { ModelField } from '..';
-import { Model, Models, Relation, ReverseRelation } from '../models/models';
+import { ManyToManyRelation } from '..';
+import { EntityModel, Model, Models, Relation } from '../models/models';
 import {
   actionableRelations,
   and,
-  getModelPlural,
-  getModelPluralField,
   isQueriableBy,
   isRelation,
   isSimpleField,
   isToOneRelation,
   isUpdatableBy,
   not,
-  summonByName,
   typeToField,
 } from '../models/utils';
 
 export const getUpdateEntityQuery = (
-  model: Model,
+  model: EntityModel,
   role: any,
   fields?: string[] | undefined,
   additionalFields = ''
@@ -38,8 +35,7 @@ export const getUpdateEntityQuery = (
 }`;
 
 export const getEditEntityRelationsQuery = (
-  models: Models,
-  model: Model,
+  model: EntityModel,
   action: 'create' | 'update' | 'filter',
   fields?: string[],
   ignoreFields?: string[],
@@ -53,21 +49,19 @@ export const getEditEntityRelationsQuery = (
     !!relations.length &&
     `query ${upperFirst(action)}${model.name}Relations {
       ${relations
-        .map(({ name, type }) => {
-          const model = summonByName(models, type);
-
+        .map((relation) => {
           let filters = '';
-          if (model.displayField) {
-            const displayField = model.fieldsByName[model.displayField];
+          if (relation.targetModel.displayField) {
+            const displayField = relation.targetModel.fieldsByName[relation.targetModel.displayField];
             if (displayField.orderable) {
-              filters = `(orderBy: [{ ${model.displayField}: ASC }])`;
+              filters = `(orderBy: [{ ${relation.targetModel.displayField}: ASC }])`;
             }
           }
 
-          return `${name}: ${getModelPluralField(model)}${filters} {
+          return `${relation.name}: ${relation.targetModel.pluralField}${filters} {
             id
-            display: ${model.displayField || 'id'}
-            ${additionalFields[name] || ''}
+            display: ${relation.targetModel.displayField || 'id'}
+            ${additionalFields[relation.name] || ''}
           }`;
         })
         .join(' ')}
@@ -75,48 +69,20 @@ export const getEditEntityRelationsQuery = (
   );
 };
 
-export const getManyToManyRelations = (model: Model, fields?: string[], ignoreFields?: string[]) => {
-  const manyToManyRelations: [ReverseRelation, Relation][] = [];
-  for (const field of model.reverseRelations) {
-    if ((fields && !fields.includes(field.name)) || (ignoreFields && ignoreFields.includes(field.name))) {
-      continue;
-    }
-
-    const relation = field.model.relations.find(
-      (relation) => !relation.field.generated && relation.field.name !== field.field.name
-    );
-    if (!relation) {
-      continue;
-    }
-
-    const inapplicableFields = field.model.fields.filter(
-      (otherField) => !otherField.generated && ![field.field.name, relation.field.name].includes(otherField.name)
-    );
-    if (inapplicableFields.length) {
-      continue;
-    }
-
-    manyToManyRelations.push([field, relation]);
-  }
-  return manyToManyRelations;
-};
-
-export const getManyToManyRelation = (model: Model, name: string) => getManyToManyRelations(model, [name])[0];
-
 export const getManyToManyRelationsQuery = (
   model: Model,
   action: 'create' | 'update',
-  manyToManyRelations: [ReverseRelation, Relation][]
+  manyToManyRelations: ManyToManyRelation[]
 ) =>
   !!manyToManyRelations.length &&
   (action === 'update'
     ? `query Update${model.name}ManyToManyRelations($id: ID!) {
             ${typeToField(model.name)}(where: { id: $id }) {
               ${manyToManyRelations
-                .map(([reverseRelation, { field }]) => {
-                  return `${reverseRelation.name} {
+                .map((relation) => {
+                  return `${relation.name} {
                     id
-                    ${field.name} {
+                    ${relation.relationToTarget.name} {
                       id
                     }
                   }`;
@@ -124,20 +90,20 @@ export const getManyToManyRelationsQuery = (
                 .join(' ')}
             }
             ${manyToManyRelations
-              .map(([reverseRelation, { model }]) => {
-                return `${reverseRelation.name}: ${getModelPluralField(model)} {
+              .map((relation) => {
+                return `${relation.name}: ${relation.targetModel.pluralField} {
                   id
-                  ${model.displayField || ''}
+                  ${relation.targetModel.displayField || ''}
                 }`;
               })
               .join(' ')}
           }`
     : `query Create${model.name}ManyToManyRelations {
             ${manyToManyRelations
-              .map(([reverseRelation, { model }]) => {
-                return `${reverseRelation.name}: ${getModelPluralField(model)} {
+              .map((relation) => {
+                return `${relation.name}: ${relation.targetModel.pluralField} {
                   id
-                  ${model.displayField || ''}
+                  ${relation.targetModel.displayField || ''}
                 }`;
               })
               .join(' ')}
@@ -174,28 +140,28 @@ export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'de
         }
         `;
 
-export const displayField = (model: Model) => `
+export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
 
 export const getEntityListQuery = (
-  model: Model,
+  model: EntityModel,
   role: string,
   additionalFields = '',
   root?: {
-    model: Model;
+    model: EntityModel;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     entity: any;
     reverseRelationName: string;
   }
-) => `query ${getModelPlural(model)}List(
+) => `query ${model.plural}List(
   ${root ? '$id: ID!,' : ''}
   $limit: Int!,
   $where: ${model.name}Where!,
   ${model.fields.some(({ searchable }) => searchable) ? '$search: String,' : ''}
 ) {
   ${root ? `root: ${typeToField(root.model.name)}(where: { id: $id }) {` : ''}
-    data: ${root ? root.reverseRelationName : getModelPluralField(model)}(limit: $limit, where: $where, ${
+    data: ${root ? root.reverseRelationName : model.pluralField}(limit: $limit, where: $where, ${
   model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
 }) {
       ${displayField(model)}
@@ -209,12 +175,11 @@ export type VisibleRelationsByRole = Record<string, Record<string, string[]>>;
 
 export const isVisibleRelation = (visibleRelationsByRole: VisibleRelationsByRole, modelName: string, role: string) => {
   const whitelist = visibleRelationsByRole[role]?.[modelName];
-  return ({ name }: ModelField) => (whitelist ? whitelist.includes(name) : true);
+  return (relation: Relation) => (whitelist ? whitelist.includes(relation.name) : true);
 };
 
 export const getEntityQuery = (
-  models: Models,
-  model: Model,
+  model: EntityModel,
   role: string,
   visibleRelationsByRole: VisibleRelationsByRole,
   typesWithSubRelations: string[]
@@ -223,42 +188,40 @@ export const getEntityQuery = (
     ${displayField(model)}
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
     ${queryRelations(
-      models,
-      model.fields.filter(isRelation).filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
+      model.models,
+      model.relations.filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
       role,
       typesWithSubRelations
     )}
     ${queryRelations(
-      models,
-      model.reverseRelations.filter(and(isToOneRelation, isVisibleRelation(visibleRelationsByRole, model.name, role))),
+      model.models,
+      model.reverseRelations.filter(
+        (reverseRelation) =>
+          isToOneRelation(reverseRelation.field) &&
+          isVisibleRelation(visibleRelationsByRole, model.name, role)(reverseRelation)
+      ),
       role,
       typesWithSubRelations
     )}
   }
 }`;
 
-export const getFindEntityQuery = (model: Model, role: string) => `query Find${model.name}($where: ${
+export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}($where: ${
   model.name
 }Where!, $orderBy: [${model.name}OrderBy!]) {
-  data: ${getModelPluralField(model)}(limit: 1, where: $where, orderBy: $orderBy) {
+  data: ${model.pluralField}(limit: 1, where: $where, orderBy: $orderBy) {
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
   }
 }`;
 
-export const queryRelations = (
-  models: Models,
-  relations: { name: string; type: string }[],
-  role: string,
-  typesWithSubRelations: string[]
-) =>
+export const queryRelations = (models: Models, relations: Relation[], role: string, typesWithSubRelations: string[]) =>
   relations
-    .map(({ name, type }): string => {
-      const relatedModel = summonByName(models, type);
-      const subRelations = typesWithSubRelations.includes(type) ? relatedModel.fields.filter(isRelation) : [];
+    .map((relation): string => {
+      const subRelations = typesWithSubRelations.includes(relation.targetModel.name) ? relation.targetModel.relations : [];
 
-      return `${name} {
+      return `${relation.name} {
           id
-          ${displayField(relatedModel)}
+          ${displayField(relation.targetModel)}
           ${subRelations.length > 0 ? queryRelations(models, subRelations, role, typesWithSubRelations) : ''}
         }`;
     })

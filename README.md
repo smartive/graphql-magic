@@ -46,7 +46,7 @@ npm bootstrap
 ```
 
 ```
-npm run lint
+npm test
 ```
 
 ```

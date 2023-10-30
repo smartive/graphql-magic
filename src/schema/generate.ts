@@ -1,120 +1,105 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
-import flatMap from 'lodash/flatMap';
-import { RawModels } from '../models/models';
-import {
-  getModelPluralField,
-  getModels,
-  isEnumModel,
-  isInputModel,
-  isObjectModel,
-  isQueriableField,
-  isRawEnumModel,
-  isRelation,
-  isScalarModel,
-  typeToField,
-} from '../models/utils';
-import { Field, document, enm, input, object, scalar } from './utils';
+import { Models } from '../models/models';
+import { isQueriableField, isRelation, isRootModel, typeToField } from '../models/utils';
+import { Field, document, enm, iface, input, object, scalar } from './utils';
 
-export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
-  const models = getModels(rawModels);
-
+export const generateDefinitions = ({
+  scalars,
+  rawEnums,
+  enums,
+  inputs,
+  interfaces,
+  entities,
+  objects,
+}: Models): DefinitionNode[] => {
   return [
     // Predefined types
-    enm('Order', ['ASC', 'DESC']),
-    scalar('DateTime'),
-    scalar('Upload'),
-
-    ...rawModels.filter(isEnumModel).map((model) => enm(model.name, model.values)),
-    ...rawModels.filter(isRawEnumModel).map((model) => enm(model.name, model.values)),
-    ...rawModels.filter(isScalarModel).map((model) => scalar(model.name)),
-    ...rawModels
-      .filter(isObjectModel)
-      .filter(({ name }) => !['Query', 'Mutation'].includes(name))
-      .map((model) => object(model.name, model.fields)),
-    ...rawModels.filter(isInputModel).map((model) => input(model.name, model.fields)),
-    ...rawModels
-      .filter(isObjectModel)
+    ...rawEnums.map((model) => enm(model.name, model.values)),
+    ...enums.map((model) => enm(model.name, model.values)),
+    ...scalars.map((model) => scalar(model.name)),
+    ...objects.filter(({ name }) => !['Query', 'Mutation'].includes(name)).map((model) => object(model.name, model.fields)),
+    ...interfaces.map(({ name, fields }) => iface(name, fields)),
+    ...inputs.map((model) => input(model.name, model.fields)),
+    ...objects
       .filter((model) =>
-        models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
+        entities.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
       )
       .map((model) => input(`Create${model.name}`, model.fields)),
-    ...rawModels
-      .filter(isObjectModel)
+    ...objects
       .filter((model) =>
-        models.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
+        entities.some((m) => m.updatable && m.fields.some((f) => f.updatable && f.kind === 'json' && f.type === model.name))
       )
       .map((model) => input(`Update${model.name}`, model.fields)),
 
-    ...flatMap(
-      models.map((model) => {
-        const types = [
-          object(
-            model.name,
-            [
-              ...model.fields.filter(isQueriableField).map((field) => ({
-                ...field,
-                type: field.type,
-                args: [...(field.args || [])],
-                directives: field.directives,
-              })),
-              ...model.reverseRelations.map(({ name, field, model }) => ({
-                name,
-                type: model.name,
-                list: !field.toOne,
-                nonNull: !field.toOne,
-                args: [
-                  { name: 'where', type: `${model.name}Where` },
-                  ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
-                  ...(model.fields.some(({ orderable }) => orderable)
-                    ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
-                    : []),
-                  { name: 'limit', type: 'Int' },
-                  { name: 'offset', type: 'Int' },
-                ],
-              })),
-            ],
-            model.interfaces
-          ),
-          input(`${model.name}Where`, [
-            ...model.fields
-              .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
-              .map((field) => ({
-                name: field.name,
-                type: field.type,
-                list: true,
-                default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
-              })),
-            ...flatMap(
-              model.fields.filter(({ comparable }) => comparable),
-              (field) => [
-                { name: `${field.name}_GT`, type: field.type },
-                { name: `${field.name}_GTE`, type: field.type },
-                { name: `${field.name}_LT`, type: field.type },
-                { name: `${field.name}_LTE`, type: field.type },
-              ]
-            ),
-            ...model.fields
-              .filter(isRelation)
-              .filter(({ filterable }) => filterable)
-              .map(({ name, type }) => ({
-                name,
-                type: `${type}Where`,
-              })),
-          ]),
-          input(
-            `${model.name}WhereUnique`,
-            model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type }))
-          ),
-          ...(model.fields.some(({ orderable }) => orderable)
-            ? [
-                input(
-                  `${model.name}OrderBy`,
-                  model.fields.filter(({ orderable }) => orderable).map(({ name }) => ({ name, type: 'Order' }))
-                ),
-              ]
-            : []),
-        ];
+    ...entities.flatMap((model) => {
+      const types: DefinitionNode[] = [
+        (isRootModel(model) ? iface : object)(
+          model.name,
+          [
+            ...model.fields.filter(isQueriableField).map((field) => ({
+              ...field,
+              type: field.type,
+              args: [...(field.args || [])],
+              directives: field.directives,
+            })),
+            ...model.reverseRelations.map(({ name, field, targetModel }) => ({
+              name,
+              type: targetModel.name,
+              list: !field.toOne,
+              nonNull: !field.toOne,
+              args: [
+                { name: 'where', type: `${targetModel.name}Where` },
+                ...(targetModel.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
+                ...(targetModel.fields.some(({ orderable }) => orderable)
+                  ? [{ name: 'orderBy', type: `${targetModel.name}OrderBy`, list: true }]
+                  : []),
+                { name: 'limit', type: 'Int' },
+                { name: 'offset', type: 'Int' },
+              ],
+            })),
+          ],
+          [...(model.parent ? [model.parent] : []), ...(model.interfaces || [])]
+        ),
+        input(`${model.name}Where`, [
+          ...model.fields
+            .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
+            .map((field) => ({
+              name: field.name,
+              type: field.type,
+              list: true,
+              default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
+            })),
+          ...model.fields
+            .filter(({ comparable }) => comparable)
+            .flatMap((field) => [
+              { name: `${field.name}_GT`, type: field.type },
+              { name: `${field.name}_GTE`, type: field.type },
+              { name: `${field.name}_LT`, type: field.type },
+              { name: `${field.name}_LTE`, type: field.type },
+            ]),
+          ...model.fields
+            .filter(isRelation)
+            .filter(({ filterable }) => filterable)
+            .map(({ name, type }) => ({
+              name,
+              type: `${type}Where`,
+            })),
+        ]),
+        input(
+          `${model.name}WhereUnique`,
+          model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type }))
+        ),
+        ...(model.fields.some(({ orderable }) => orderable)
+          ? [
+              input(
+                `${model.name}OrderBy`,
+                model.fields.filter(({ orderable }) => orderable).map(({ name }) => ({ name, type: 'Order' }))
+              ),
+            ]
+          : []),
+      ];
 
+      if (!isRootModel(model)) {
         if (model.creatable) {
           types.push(
             input(
@@ -153,16 +138,16 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             )
           );
         }
-        return types;
-      })
-    ),
+      }
 
+      return types;
+    }),
     object('Query', [
       {
         name: 'me',
         type: 'User',
       },
-      ...models
+      ...entities
         .filter(({ queriable }) => queriable)
         .map(({ name }) => ({
           name: typeToField(name),
@@ -176,10 +161,10 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             },
           ],
         })),
-      ...models
+      ...entities
         .filter(({ listQueriable }) => listQueriable)
         .map((model) => ({
-          name: getModelPluralField(model),
+          name: model.pluralField,
           type: model.name,
           list: true,
           nonNull: true,
@@ -193,17 +178,14 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
             { name: 'offset', type: 'Int' },
           ],
         })),
-      ...rawModels
-        .filter(isObjectModel)
-        .filter((model) => model.name === 'Query')
-        .flatMap((model) => model.fields),
+      ...objects.filter((model) => model.name === 'Query').flatMap((model) => model.fields),
     ]),
 
     object('Mutation', [
-      ...flatMap(
-        models.map((model): Field[] => {
-          const mutations: Field[] = [];
+      ...entities.flatMap((model): Field[] => {
+        const mutations: Field[] = [];
 
+        if (!isRootModel(model)) {
           if (model.creatable) {
             mutations.push({
               name: `create${model.name}`,
@@ -269,19 +251,16 @@ export const generateDefinitions = (rawModels: RawModels): DefinitionNode[] => {
               ],
             });
           }
+        }
 
-          return mutations;
-        })
-      ),
-      ...rawModels
-        .filter(isObjectModel)
-        .filter((model) => model.name === 'Mutation')
-        .flatMap((model) => model.fields),
+        return mutations;
+      }),
+      ...objects.filter((model) => model.name === 'Mutation').flatMap((model) => model.fields),
     ]),
   ];
 };
 
-export const generate = (rawModels: RawModels) => document(generateDefinitions(rawModels));
+export const generate = (models: Models) => document(generateDefinitions(models));
 
 export const printSchema = (schema: GraphQLSchema): string =>
   [
@@ -297,4 +276,4 @@ export const printSchema = (schema: GraphQLSchema): string =>
 
 export const printSchemaFromDocument = (document: DocumentNode) => printSchema(buildASTSchema(document));
 
-export const printSchemaFromModels = (models: RawModels) => printSchema(buildASTSchema(generate(models)));
+export const printSchemaFromModels = (models: Models) => printSchema(buildASTSchema(generate(models)));

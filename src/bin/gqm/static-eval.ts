@@ -11,6 +11,7 @@ import {
   TemplateExpression,
   TemplateTail,
 } from 'ts-morph';
+import { Models } from '../../models/models';
 import { Visitor, visit } from './visitor';
 
 export const staticEval = (node: Node | undefined, context: Dictionary<unknown>) =>
@@ -54,6 +55,8 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
         return process;
       case 'Symbol':
         return Symbol;
+      case 'Models':
+        return Models;
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {
@@ -204,4 +207,6 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   },
   [SyntaxKind.NoSubstitutionTemplateLiteral]: (node) => node.getLiteralValue(),
   [SyntaxKind.NullKeyword]: () => null,
+  [SyntaxKind.NewExpression]: (node, context) =>
+    new (staticEval(node.getExpression(), context))(...node.getArguments().map((arg) => staticEval(arg, context))),
 };

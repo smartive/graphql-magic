@@ -1,0 +1,6 @@
+{
+  "modelsPath": "tests/utils/models.ts",
+  "generatedFolderPath": "tests/generated",
+  "graphqlQueriesPath": "tests",
+  "gqlModule": "../../../src"
+}

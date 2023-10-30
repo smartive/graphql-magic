@@ -3,7 +3,8 @@ import { DateTime } from 'luxon';
 import { execute } from '../../src';
 import { gql } from '../../src/client/gql';
 import { getResolvers } from '../../src/resolvers';
-import { models, permissions, rawModels } from '../utils/models';
+import { ADMIN_ID } from '../utils/database/seed';
+import { models, permissions } from '../utils/models';
 
 const test = async (operationName: string, query: string, variables: object, responses: unknown[]) => {
   const knexInstance = knex({
@@ -21,18 +22,17 @@ const test = async (operationName: string, query: string, variables: object, res
     query.response(responses[step - 1]);
   });
 
-  const user = await knexInstance('User').where({ id: 1 }).first();
+  const user = await knexInstance('User').where({ id: ADMIN_ID }).first();
   const result = await execute({
     req: null as any,
     knex: knexInstance,
     locale: 'en',
     locales: ['en'],
     user,
-    rawModels,
     models,
     permissions,
     now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),
-    body: { operationName, query, variables }
+    body: { operationName, query, variables },
   });
 
   expect(result).toMatchSnapshot();
@@ -47,9 +47,9 @@ describe('resolvers', () => {
 
   it('resolve lists, many-to-one and one-to-many queries', async () => {
     await test(
-      'SomeQuery',
+      'AnotherQuery',
       gql`
-        query SomeQuery {
+        query AnotherQuery {
           manyObjects(where: { another: { id: "bar" } }, orderBy: [{ xyz: DESC }]) {
             id
             field
@@ -89,9 +89,9 @@ describe('resolvers', () => {
 
   it('resolve single query', async () => {
     await test(
-      'SomeQuery',
+      'YetAnotherQuery',
       gql`
-        query SomeQuery {
+        query YetAnotherQuery {
           someObject(where: { id: "foo" }) {
             id
             field

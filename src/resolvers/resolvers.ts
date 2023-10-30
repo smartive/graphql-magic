@@ -1,5 +1,5 @@
 import { Models } from '../models/models';
-import { getModelPluralField, merge, typeToField } from '../models/utils';
+import { isRootModel, merge, not, typeToField } from '../models/utils';
 import { mutationResolver } from './mutations';
 import { queryResolver } from './resolver';
 
@@ -8,33 +8,44 @@ export const getResolvers = (models: Models) => ({
     {
       me: queryResolver,
     },
-    ...models
+    ...models.entities
       .filter(({ queriable }) => queriable)
       .map((model) => ({
         [typeToField(model.name)]: queryResolver,
       })),
-    ...models
+    ...models.entities
       .filter(({ listQueriable }) => listQueriable)
       .map((model) => ({
-        [getModelPluralField(model)]: queryResolver,
+        [model.pluralField]: queryResolver,
       })),
   ]),
   Mutation: merge<unknown>([
-    ...models
+    ...models.entities
+      .filter(not(isRootModel))
       .filter(({ creatable }) => creatable)
       .map((model) => ({
         [`create${model.name}`]: mutationResolver,
       })),
-    ...models
+    ...models.entities
+      .filter(not(isRootModel))
       .filter(({ updatable }) => updatable)
       .map((model) => ({
         [`update${model.name}`]: mutationResolver,
       })),
-    ...models
+    ...models.entities
+      .filter(not(isRootModel))
       .filter(({ deletable }) => deletable)
       .map((model) => ({
         [`delete${model.name}`]: mutationResolver,
         [`restore${model.name}`]: mutationResolver,
       })),
   ]),
+  ...Object.assign(
+    {},
+    ...models.entities.filter(isRootModel).map((model) => ({
+      [model.name]: {
+        __resolveType: ({ TYPE }) => TYPE,
+      },
+    }))
+  ),
 });
