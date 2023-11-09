@@ -30,6 +30,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
 
           if (typeof field.queriable === 'object' && !field.queriable.roles?.includes(node.ctx.user.role)) {
             throw new PermissionError(
+              node.ctx.user.role,
               'READ',
               `${node.model.name}'s field "${field.name}"`,
               'field permission not available'

@@ -113,7 +113,7 @@ export const getEntityToMutate = async (
         .map(([key, value]) => `${key}: ${value}`)
         .join(', ')}`
     );
-    throw new PermissionError(action, `this ${model.name}`, 'no available permissions applied');
+    throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no available permissions applied');
   }
 
   if (model.parent) {
@@ -139,7 +139,7 @@ export const checkCanWrite = async (
     return;
   }
   if (permissionStack === false) {
-    throw new PermissionError(action, model.plural, 'no applicable permissions');
+    throw new PermissionError(ctx.user.role, action, model.plural, 'no applicable permissions');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- using `select(1 as any)` to instantiate an "empty" query builder
@@ -157,7 +157,12 @@ export const checkCanWrite = async (
 
     const fieldPermissions = field[action === 'CREATE' ? 'creatable' : 'updatable'];
     if (fieldPermissions && typeof fieldPermissions === 'object' && !fieldPermissions.roles?.includes(ctx.user.role)) {
-      throw new PermissionError(action, `this ${model.name}'s ${field.name}`, 'field permission not available');
+      throw new PermissionError(
+        ctx.user.role,
+        action,
+        `this ${model.name}'s ${field.name}`,
+        'field permission not available'
+      );
     }
 
     linked = true;
@@ -172,7 +177,12 @@ export const checkCanWrite = async (
     }
 
     if (fieldPermissionStack === false || !fieldPermissionStack.length) {
-      throw new PermissionError(action, `this ${model.name}'s ${field.name}`, 'no applicable permissions on data to link');
+      throw new PermissionError(
+        ctx.user.role,
+        action,
+        `this ${model.name}'s ${field.name}`,
+        'no applicable permissions on data to link'
+      );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
@@ -187,10 +197,10 @@ export const checkCanWrite = async (
   if (linked) {
     const canMutate = await query;
     if (!canMutate) {
-      throw new PermissionError(action, `this ${model.name}`, 'no linkable entities');
+      throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no linkable entities');
     }
   } else if (action === 'CREATE') {
-    throw new PermissionError(action, `this ${model.name}`, 'no linkable entities');
+    throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no linkable entities');
   }
 };
 
