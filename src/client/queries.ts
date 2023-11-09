@@ -183,7 +183,7 @@ export const getEntityQuery = (
   role: string,
   visibleRelationsByRole: VisibleRelationsByRole,
   typesWithSubRelations: string[]
-) => `query Admin${model.name} ($id: ID!) {
+) => `query Get${model.name}Entity ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     ${displayField(model)}
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
