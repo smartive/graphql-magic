@@ -76,6 +76,7 @@ const modelDefinitions: ModelDefinitions = [
         kind: 'relation',
         type: 'AnotherObject',
         filterable: true,
+        reverseFilterable: true,
         updatable: true,
         nonNull: true,
       },
@@ -85,6 +86,7 @@ const modelDefinitions: ModelDefinitions = [
         scale: 1,
         precision: 1,
         nonNull: true,
+        filterable: true,
       },
       {
         kind: 'enum',

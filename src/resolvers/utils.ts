@@ -126,6 +126,8 @@ export const getNameOrAlias = (node: FieldNode) => {
 
 export type Ops<T> = ((target: T) => T)[];
 
+export type QueryBuilderOps = Ops<Knex.QueryBuilder>;
+
 export const apply = <T>(target: T, ops: ((target: T) => T)[]) => ops.reduce((target, op) => op(target), target);
 
 type Join = { table1Alias: string; column1: string; table2Name: string; table2Alias: string; column2: string };

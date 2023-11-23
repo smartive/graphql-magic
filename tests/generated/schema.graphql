@@ -17,6 +17,7 @@ input AnotherObjectOrderBy {
 input AnotherObjectWhere {
   id: [ID!]
   deleted: [Boolean!]
+  manyObjects_SOME: SomeObjectWhere
 }
 
 input AnotherObjectWhereUnique {
@@ -262,6 +263,7 @@ input SomeObjectOrderBy {
 
 input SomeObjectWhere {
   id: [ID!]
+  float: [Float!]
   deleted: [Boolean!]
   another: AnotherObjectWhere
 }

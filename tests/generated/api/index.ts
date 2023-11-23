@@ -56,6 +56,7 @@ export type AnotherObjectOrderBy = {
 export type AnotherObjectWhere = {
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
 };
 
 export type AnotherObjectWhereUnique = {
@@ -612,6 +613,7 @@ export type SomeObjectOrderBy = {
 export type SomeObjectWhere = {
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 

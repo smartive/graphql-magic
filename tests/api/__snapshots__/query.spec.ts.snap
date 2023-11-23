@@ -14,8 +14,82 @@ exports[`query can be executed 1`] = `
         ],
       },
       "field": null,
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+      "xyz": 2,
+    },
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+        "manyObjects": [
+          {
+            "field": null,
+            "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+          },
+        ],
+      },
+      "field": null,
       "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
       "xyz": 1,
+    },
+  ],
+}
+`;
+
+exports[`query processes reverseFilters correctly 1`] = `
+{
+  "all": [
+    {
+      "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+        {
+          "float": 0,
+        },
+      ],
+    },
+    {
+      "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+      ],
+    },
+  ],
+  "withFloat0": [
+    {
+      "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+        {
+          "float": 0,
+        },
+      ],
+    },
+  ],
+  "withFloat0_5": [
+    {
+      "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+        {
+          "float": 0,
+        },
+      ],
+    },
+    {
+      "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+      ],
     },
   ],
 }

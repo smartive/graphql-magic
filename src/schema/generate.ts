@@ -1,6 +1,6 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import { Models } from '../models/models';
-import { isQueriableField, isRelation, isRootModel, typeToField } from '../models/utils';
+import { isQueriableField, isRootModel, typeToField } from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar } from './utils';
 
 export const generateDefinitions = ({
@@ -77,12 +77,17 @@ export const generateDefinitions = ({
               { name: `${field.name}_LT`, type: field.type },
               { name: `${field.name}_LTE`, type: field.type },
             ]),
-          ...model.fields
-            .filter(isRelation)
-            .filter(({ filterable }) => filterable)
-            .map(({ name, type }) => ({
+          ...model.relations
+            .filter(({ field: { filterable } }) => filterable)
+            .map(({ name, targetModel }) => ({
               name,
-              type: `${type}Where`,
+              type: `${targetModel.name}Where`,
+            })),
+          ...model.reverseRelations
+            .filter(({ field: { reverseFilterable } }) => reverseFilterable)
+            .map((relation) => ({
+              name: `${relation.name}_SOME`,
+              type: `${relation.targetModel.name}Where`,
             })),
         ]),
         input(
