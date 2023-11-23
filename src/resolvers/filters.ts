@@ -3,19 +3,19 @@ import { EntityModel, FullContext } from '..';
 import { ForbiddenError, UserInputError } from '../errors';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode } from './node';
-import { Joins, Ops, addJoin, apply, getColumn, ors } from './utils';
+import { Joins, QueryBuilderOps, addJoin, apply, applyJoins, getColumn, ors } from './utils';
 
 export const SPECIAL_FILTERS: Record<string, string> = {
   GT: '?? > ?',
   GTE: '?? >= ?',
   LT: '?? < ?',
   LTE: '?? <= ?',
+  SOME: 'SOME',
 };
 
 export type WhereNode = {
   ctx: FullContext;
 
-  rootModel: EntityModel;
   rootTableAlias: string;
 
   model: EntityModel;
@@ -69,7 +69,7 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   }
 
   if (where) {
-    const ops: Ops<Knex.QueryBuilder> = [];
+    const ops: QueryBuilderOps = [];
     applyWhere(node, where, ops, joins);
     void apply(query, ops);
   }
@@ -79,13 +79,48 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   }
 };
 
-const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, joins: Joins) => {
+const applyWhere = (node: WhereNode, where: Where, ops: QueryBuilderOps, joins: Joins) => {
+  const aliases = node.ctx.aliases;
+
   for (const key of Object.keys(where)) {
     const value = where[key];
 
     const specialFilter = key.match(/^(\w+)_(\w+)$/);
     if (specialFilter) {
       const [, actualKey, filter] = specialFilter;
+
+      if (filter === 'SOME') {
+        const reverseRelation = node.model.getReverseRelation(actualKey);
+        const rootTableAlias = `${node.tableAlias}__W__${key}`;
+        const targetModel = reverseRelation.targetModel;
+        const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.tableAlias}__WS_${key}`;
+
+        const subWhereNode: WhereNode = {
+          ctx: node.ctx,
+          rootTableAlias,
+          model: targetModel,
+          tableAlias,
+        };
+        const subOps: QueryBuilderOps = [];
+        const subJoins: Joins = [];
+        applyWhere(subWhereNode, value as Where, subOps, subJoins);
+
+        // TODO: make this work with subtypes
+        ops.push((query) =>
+          query.whereExists((subQuery) => {
+            void subQuery
+              .from(`${targetModel.name} as ${aliases.getShort(tableAlias)}`)
+              .whereRaw(`?? = ??`, [
+                `${aliases.getShort(tableAlias)}.${reverseRelation.field.foreignKey}`,
+                `${aliases.getShort(node.tableAlias)}.id`,
+              ]);
+            void apply(subQuery, subOps);
+            applyJoins(aliases, subQuery, subJoins);
+          })
+        );
+        continue;
+      }
+
       if (!SPECIAL_FILTERS[filter]) {
         // Should not happen
         throw new Error(`Invalid filter ${key}.`);
@@ -99,15 +134,11 @@ const applyWhere = (node: WhereNode, where: Where, ops: Ops<Knex.QueryBuilder>, 
     if (field.kind === 'relation') {
       const relation = node.model.getRelation(field.name);
       const targetModel = relation.targetModel;
-      const rootModel = targetModel.parentModel || targetModel;
       const rootTableAlias = `${node.model.name}__W__${key}`;
-      const tableAlias = targetModel === rootModel ? rootTableAlias : `${node.model.name}__WS__${key}`;
+      const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.model.name}__WS__${key}`;
       const subNode: WhereNode = {
         ctx: node.ctx,
-
-        rootModel,
         rootTableAlias,
-
         model: targetModel,
         tableAlias,
       };

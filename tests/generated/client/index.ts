@@ -53,6 +53,7 @@ export type AnotherObjectOrderBy = {
 export type AnotherObjectWhere = {
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
 };
 
 export type AnotherObjectWhereUnique = {
@@ -609,6 +610,7 @@ export type SomeObjectOrderBy = {
 export type SomeObjectWhere = {
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -851,6 +853,11 @@ export type SomeQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, xyz: number, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } }> };
 
+export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ReverseFiltersQueryQuery = { first: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, second: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
+
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -981,16 +988,6 @@ export type RestoreAnswerMutationMutationVariables = Exact<{
 
 export type RestoreAnswerMutationMutation = { restoreAnswer: string };
 
-export type AnotherQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AnotherQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } }> };
-
-export type YetAnotherQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type YetAnotherQueryQuery = { someObject: { __typename: 'SomeObject', id: string, field: string | null } };
-
 type DiscriminateUnion<T, U> = T extends U ? T : never;
 
 export namespace DeleteAnotherObject {
@@ -1048,6 +1045,15 @@ export namespace SomeQuery {
   export type manyObjects = NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>;
   export type another = (NonNullable<NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>['another']>);
   export type _manyObjects = NonNullable<(NonNullable<(NonNullable<NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>['another']>)['manyObjects']>)[number]>;
+}
+
+export namespace ReverseFiltersQuery {
+  export type Variables = ReverseFiltersQueryQueryVariables;
+  export type query = ReverseFiltersQueryQuery;
+  export type first = NonNullable<(NonNullable<ReverseFiltersQueryQuery['first']>)[number]>;
+  export type manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['first']>)[number]>['manyObjects']>)[number]>;
+  export type second = NonNullable<(NonNullable<ReverseFiltersQueryQuery['second']>)[number]>;
+  export type _manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['second']>)[number]>['manyObjects']>)[number]>;
 }
 
 export namespace DeleteAnotherObjectMutation {
@@ -1146,18 +1152,4 @@ export namespace DeleteAnswerMutation {
 export namespace RestoreAnswerMutation {
   export type Variables = RestoreAnswerMutationMutationVariables;
   export type mutation = RestoreAnswerMutationMutation;
-}
-
-export namespace AnotherQuery {
-  export type Variables = AnotherQueryQueryVariables;
-  export type query = AnotherQueryQuery;
-  export type manyObjects = NonNullable<(NonNullable<AnotherQueryQuery['manyObjects']>)[number]>;
-  export type another = (NonNullable<NonNullable<(NonNullable<AnotherQueryQuery['manyObjects']>)[number]>['another']>);
-  export type _manyObjects = NonNullable<(NonNullable<(NonNullable<NonNullable<(NonNullable<AnotherQueryQuery['manyObjects']>)[number]>['another']>)['manyObjects']>)[number]>;
-}
-
-export namespace YetAnotherQuery {
-  export type Variables = YetAnotherQueryQueryVariables;
-  export type query = YetAnotherQueryQuery;
-  export type someObject = (NonNullable<YetAnotherQueryQuery['someObject']>);
 }

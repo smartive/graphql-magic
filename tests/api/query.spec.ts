@@ -25,4 +25,33 @@ describe('query', () => {
       ).toMatchSnapshot();
     });
   });
+
+  it('processes reverseFilters correctly', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query ReverseFiltersQuery {
+            all: anotherObjects {
+              id
+              manyObjects {
+                float
+              }
+            }
+            withFloat0: anotherObjects(where: { manyObjects_SOME: { float: 0 } }) {
+              id
+              manyObjects {
+                float
+              }
+            }
+            withFloat0_5: anotherObjects(where: { manyObjects_SOME: { float: 0.5 } }) {
+              id
+              manyObjects {
+                float
+              }
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
 });
