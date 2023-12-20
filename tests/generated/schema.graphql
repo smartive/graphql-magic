@@ -18,6 +18,7 @@ input AnotherObjectWhere {
   id: [ID!]
   deleted: [Boolean!]
   manyObjects_SOME: SomeObjectWhere
+  manyObjects_NONE: SomeObjectWhere
 }
 
 input AnotherObjectWhereUnique {

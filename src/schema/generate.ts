@@ -85,10 +85,16 @@ export const generateDefinitions = ({
             })),
           ...model.reverseRelations
             .filter(({ field: { reverseFilterable } }) => reverseFilterable)
-            .map((relation) => ({
-              name: `${relation.name}_SOME`,
-              type: `${relation.targetModel.name}Where`,
-            })),
+            .flatMap((relation) => [
+              {
+                name: `${relation.name}_SOME`,
+                type: `${relation.targetModel.name}Where`,
+              },
+              {
+                name: `${relation.name}_NONE`,
+                type: `${relation.targetModel.name}Where`,
+              },
+            ]),
         ]),
         input(
           `${model.name}WhereUnique`,
