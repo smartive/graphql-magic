@@ -56,6 +56,7 @@ export type AnotherObjectOrderBy = {
 export type AnotherObjectWhere = {
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
   manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
 };
 

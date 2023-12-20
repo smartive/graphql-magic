@@ -10,7 +10,6 @@ export const SPECIAL_FILTERS: Record<string, string> = {
   GTE: '?? >= ?',
   LT: '?? < ?',
   LTE: '?? <= ?',
-  SOME: 'SOME',
 };
 
 export type WhereNode = {
@@ -89,7 +88,7 @@ const applyWhere = (node: WhereNode, where: Where, ops: QueryBuilderOps, joins: 
     if (specialFilter) {
       const [, actualKey, filter] = specialFilter;
 
-      if (filter === 'SOME') {
+      if (filter === 'SOME' || filter === 'NONE') {
         const reverseRelation = node.model.getReverseRelation(actualKey);
         const rootTableAlias = `${node.tableAlias}__W__${key}`;
         const targetModel = reverseRelation.targetModel;
@@ -107,7 +106,7 @@ const applyWhere = (node: WhereNode, where: Where, ops: QueryBuilderOps, joins: 
 
         // TODO: make this work with subtypes
         ops.push((query) =>
-          query.whereExists((subQuery) => {
+          query[filter === 'SOME' ? 'whereExists' : 'whereNotExists']((subQuery) => {
             void subQuery
               .from(`${targetModel.name} as ${aliases.getShort(tableAlias)}`)
               .whereRaw(`?? = ??`, [

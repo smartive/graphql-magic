@@ -49,6 +49,24 @@ describe('query', () => {
                 float
               }
             }
+            noneFloat0: anotherObjects(where: { manyObjects_NONE: { float: 0 } }) {
+              id
+              manyObjects {
+                float
+              }
+            }
+            noneFloat0_5: anotherObjects(where: { manyObjects_NONE: { float: 0.5 } }) {
+              id
+              manyObjects {
+                float
+              }
+            }
+            noneFloat2: anotherObjects(where: { manyObjects_NONE: { float: 2 } }) {
+              id
+              manyObjects {
+                float
+              }
+            }
           }
         `)
       ).toMatchSnapshot();

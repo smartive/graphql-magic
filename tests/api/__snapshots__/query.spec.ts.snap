@@ -58,6 +58,38 @@ exports[`query processes reverseFilters correctly 1`] = `
       ],
     },
   ],
+  "noneFloat0": [
+    {
+      "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+      ],
+    },
+  ],
+  "noneFloat0_5": [],
+  "noneFloat2": [
+    {
+      "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+        {
+          "float": 0,
+        },
+      ],
+    },
+    {
+      "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      "manyObjects": [
+        {
+          "float": 0.5,
+        },
+      ],
+    },
+  ],
   "withFloat0": [
     {
       "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
