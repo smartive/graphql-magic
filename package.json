@@ -72,7 +72,7 @@
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "29.5.11",
     "@types/lodash": "4.14.202",
-    "@types/luxon": "3.3.8",
+    "@types/luxon": "3.4.0",
     "@types/pg": "8.10.9",
     "@types/uuid": "9.0.7",
     "create-ts-index": "1.14.0",
