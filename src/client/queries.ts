@@ -147,6 +147,8 @@ ${model.displayField ? `display: ${model.displayField}` : ''}
 export const getEntityListQuery = (
   model: EntityModel,
   role: string,
+  visibleRelationsByRole: VisibleRelationsByRole,
+  typesWithSubRelations: string[],
   additionalFields = '',
   root?: {
     model: EntityModel;
@@ -167,6 +169,13 @@ export const getEntityListQuery = (
       ${displayField(model)}
       ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
       ${additionalFields}
+      ${queryRelations(
+        model.models,
+        model.relations.filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
+        role,
+        typesWithSubRelations
+      )}
+      ${additionalFields}
     }
   ${root ? '}' : ''}
 }`;
@@ -182,7 +191,8 @@ export const getEntityQuery = (
   model: EntityModel,
   role: string,
   visibleRelationsByRole: VisibleRelationsByRole,
-  typesWithSubRelations: string[]
+  typesWithSubRelations: string[],
+  additionalFields = ''
 ) => `query Get${model.name}Entity ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     ${displayField(model)}
@@ -203,6 +213,7 @@ export const getEntityQuery = (
       role,
       typesWithSubRelations
     )}
+    ${additionalFields}
   }
 }`;
 
