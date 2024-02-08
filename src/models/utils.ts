@@ -104,11 +104,15 @@ export const isUpdatableBy = (role: string) => (field: EntityField) =>
 export const isCreatableBy = (role: string) => (field: EntityField) =>
   field.creatable && (field.creatable === true || !field.creatable.roles || field.creatable.roles.includes(role));
 
-export const actionableRelations = (model: EntityModel, action: 'create' | 'update' | 'filter') =>
-  model.relations.filter(
-    (relation) =>
-      relation.field[`${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable']
-  );
+export const getActionableRelations = (model: EntityModel, action: 'create' | 'update' | 'filter') =>
+  model.relations
+    .filter(
+      (relation) =>
+        relation.field[
+          `${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable'
+        ]
+    )
+    .map(({ name }) => name);
 
 export const summonByName = <T extends { name: string }>(array: T[], value: string) => summonByKey(array, 'name', value);
 
