@@ -1,9 +1,8 @@
-import upperFirst from 'lodash/upperFirst';
 import { ManyToManyRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
 import {
-  actionableRelations,
   and,
+  getActionableRelations,
   isQueriableBy,
   isRelation,
   isSimpleField,
@@ -27,41 +26,55 @@ export const getUpdateEntityQuery = (
       .filter(isUpdatableBy(role))
       .map(({ name }) => name)
       .join(' ')}
-    ${actionableRelations(model, 'update')
-      .filter(({ name }) => !fields || fields.includes(name))
-      .map(({ name }) => `${name} { id }`)}
+    ${getActionableRelations(model, 'update')
+      .filter((name) => !fields || fields.includes(name))
+      .map((name) => `${name} { id }`)}
     ${additionalFields}
   }
 }`;
 
-export const getEditEntityRelationsQuery = (
-  model: EntityModel,
-  action: 'create' | 'update' | 'filter',
-  fields?: string[],
-  ignoreFields?: string[],
-  additionalFields: Record<string, string> = {}
-) => {
-  const relations = actionableRelations(model, action).filter(
-    ({ name }) => (!fields || fields.includes(name)) && (!ignoreFields || !ignoreFields.includes(name))
-  );
+export type RelationConstraints = Record<string, (source: any) => any>;
+
+export const fieldIsSearchable = (model: EntityModel, fieldName: string) => {
+  const relation = model.getRelation(fieldName);
+  const targetModel = relation.targetModel;
+  const displayField = targetModel.getField(targetModel.displayField || 'id');
+  return displayField.searchable;
+};
+
+export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames: string[]) => {
+  const relations = relationNames.map((name) => model.getRelation(name));
 
   return (
     !!relations.length &&
-    `query ${upperFirst(action)}${model.name}Relations {
+    `query Select${model.name}Relations(${relations
+      .map(
+        (relation) =>
+          `$${relation.name}Where: ${relation.targetModel.name}Where, $${relation.name}Limit: Int${
+            fieldIsSearchable(model, relation.name) ? `, $${relation.name}Search: String` : ''
+          }`
+      )
+      .join(', ')}) {
       ${relations
         .map((relation) => {
           let filters = '';
+
           if (relation.targetModel.displayField) {
             const displayField = relation.targetModel.fieldsByName[relation.targetModel.displayField];
-            if (displayField.orderable) {
-              filters = `(orderBy: [{ ${relation.targetModel.displayField}: ASC }])`;
+            if ('orderable' in displayField && displayField.orderable) {
+              filters += `, orderBy: [{ ${relation.targetModel.displayField}: ASC }]`;
             }
           }
 
-          return `${relation.name}: ${relation.targetModel.pluralField}${filters} {
+          if (fieldIsSearchable(model, relation.name)) {
+            filters += `, search: $${relation.name}Search`;
+          }
+
+          return `${relation.name}: ${relation.targetModel.pluralField}(where: $${relation.name}Where, limit: $${
+            relation.name
+          }Limit${filters}) {
             id
             display: ${relation.targetModel.displayField || 'id'}
-            ${additionalFields[relation.name] || ''}
           }`;
         })
         .join(' ')}
@@ -160,11 +173,11 @@ export const getEntityListQuery = (
   ${root ? '$id: ID!,' : ''}
   $limit: Int!,
   $where: ${model.name}Where!,
-  ${model.fields.some(({ searchable }) => searchable) ? '$search: String,' : ''}
+  ${model.relations.some(({ field: { searchable } }) => searchable) ? '$search: String,' : ''}
 ) {
   ${root ? `root: ${typeToField(root.model.name)}(where: { id: $id }) {` : ''}
     data: ${root ? root.reverseRelationName : model.pluralField}(limit: $limit, where: $where, ${
-  model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
+  model.relations.some(({ field: { searchable } }) => searchable) ? ', search: $search' : ''
 }) {
       ${displayField(model)}
       ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
