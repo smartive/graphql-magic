@@ -1,10 +1,11 @@
-import { getEditEntityRelationsQuery } from '../../src';
+import { getActionableRelations, getSelectEntityRelationsQuery } from '../../src';
 import { models } from '../utils/models';
 
 describe('queries', () => {
   describe('getEntityRelationsQuery', () => {
     it('applies filters', () => {
-      expect(getEditEntityRelationsQuery(models.getModel('SomeObject', 'entity'), 'update')).toMatchSnapshot();
+      const model = models.getModel('SomeObject', 'entity');
+      expect(getSelectEntityRelationsQuery(model, getActionableRelations(model, 'update'))).toMatchSnapshot();
     });
   });
 });

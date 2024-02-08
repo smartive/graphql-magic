@@ -72,7 +72,7 @@ export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames:
 
           return `${relation.name}: ${relation.targetModel.pluralField}(where: $${relation.name}Where, limit: $${
             relation.name
-          }Limit, ${filters}) {
+          }Limit${filters}) {
             id
             display: ${relation.targetModel.displayField || 'id'}
           }`;
