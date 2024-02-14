@@ -173,11 +173,11 @@ export const getEntityListQuery = (
   ${root ? '$id: ID!,' : ''}
   $limit: Int!,
   $where: ${model.name}Where!,
-  ${model.relations.some(({ field: { searchable } }) => searchable) ? '$search: String,' : ''}
+  ${model.fields.some(({ searchable }) => searchable) ? '$search: String,' : ''}
 ) {
   ${root ? `root: ${typeToField(root.model.name)}(where: { id: $id }) {` : ''}
     data: ${root ? root.reverseRelationName : model.pluralField}(limit: $limit, where: $where, ${
-  model.relations.some(({ field: { searchable } }) => searchable) ? ', search: $search' : ''
+  model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
 }) {
       ${displayField(model)}
       ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
