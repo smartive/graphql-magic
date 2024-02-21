@@ -1,4 +1,4 @@
-import { ManyToManyRelation } from '..';
+import { ManyToManyRelation, ReverseRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
 import {
   and,
@@ -160,73 +160,52 @@ ${model.displayField ? `display: ${model.displayField}` : ''}
 export const getEntityListQuery = (
   model: EntityModel,
   role: string,
-  visibleRelationsByRole: VisibleRelationsByRole,
-  typesWithSubRelations: string[],
-  additionalFields = '',
-  root?: {
-    model: EntityModel;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    entity: any;
-    reverseRelationName: string;
-  }
+  relations?: string[],
+  fragment = '',
+  reverseRelation?: ReverseRelation
 ) => `query ${model.plural}List(
-  ${root ? '$id: ID!,' : ''}
+  ${reverseRelation ? '$id: ID!,' : ''}
   $limit: Int!,
   $where: ${model.name}Where!,
   ${model.fields.some(({ searchable }) => searchable) ? '$search: String,' : ''}
 ) {
-  ${root ? `root: ${typeToField(root.model.name)}(where: { id: $id }) {` : ''}
-    data: ${root ? root.reverseRelationName : model.pluralField}(limit: $limit, where: $where, ${
+  ${reverseRelation ? `root: ${typeToField(reverseRelation.sourceModel.name)}(where: { id: $id }) {` : ''}
+    data: ${reverseRelation ? reverseRelation.name : model.pluralField}(limit: $limit, where: $where, ${
   model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
 }) {
       ${displayField(model)}
       ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-      ${additionalFields}
+      ${fragment}
       ${queryRelations(
         model.models,
-        model.relations.filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
-        role,
-        typesWithSubRelations
+        model.relations.filter((relation) => !relations || relations.includes(relation.name))
       )}
-      ${additionalFields}
+      ${fragment}
     }
-  ${root ? '}' : ''}
+  ${reverseRelation ? '}' : ''}
 }`;
-
-export type VisibleRelationsByRole = Record<string, Record<string, string[]>>;
-
-export const isVisibleRelation = (visibleRelationsByRole: VisibleRelationsByRole, modelName: string, role: string) => {
-  const whitelist = visibleRelationsByRole[role]?.[modelName];
-  return (relation: Relation) => (whitelist ? whitelist.includes(relation.name) : true);
-};
 
 export const getEntityQuery = (
   model: EntityModel,
   role: string,
-  visibleRelationsByRole: VisibleRelationsByRole,
-  typesWithSubRelations: string[],
-  additionalFields = ''
+  relations?: string[],
+  typesWithSubRelations?: string[],
+  fragment = ''
 ) => `query Get${model.name}Entity ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     ${displayField(model)}
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
     ${queryRelations(
       model.models,
-      model.relations.filter(isVisibleRelation(visibleRelationsByRole, model.name, role)),
-      role,
-      typesWithSubRelations
+      model.relations.filter((relation) => !relations || relations.includes(relation.name))
     )}
     ${queryRelations(
       model.models,
       model.reverseRelations.filter(
-        (reverseRelation) =>
-          isToOneRelation(reverseRelation.field) &&
-          isVisibleRelation(visibleRelationsByRole, model.name, role)(reverseRelation)
-      ),
-      role,
-      typesWithSubRelations
+        (reverseRelation) => isToOneRelation(reverseRelation.field) && relations.includes(reverseRelation.name)
+      )
     )}
-    ${additionalFields}
+    ${fragment}
   }
 }`;
 
@@ -238,15 +217,12 @@ export const getFindEntityQuery = (model: EntityModel, role: string) => `query F
   }
 }`;
 
-export const queryRelations = (models: Models, relations: Relation[], role: string, typesWithSubRelations: string[]) =>
+export const queryRelations = (models: Models, relations: Relation[]) =>
   relations
-    .map((relation): string => {
-      const subRelations = typesWithSubRelations.includes(relation.targetModel.name) ? relation.targetModel.relations : [];
-
-      return `${relation.name} {
+    .map(
+      (relation): string => `${relation.name} {
           id
           ${displayField(relation.targetModel)}
-          ${subRelations.length > 0 ? queryRelations(models, subRelations, role, typesWithSubRelations) : ''}
-        }`;
-    })
+        }`
+    )
     .join('\n');
