@@ -198,7 +198,8 @@ export const getEntityQuery = (model: EntityModel, role: string, relations?: str
     ${queryRelations(
       model.models,
       model.reverseRelations.filter(
-        (reverseRelation) => isToOneRelation(reverseRelation.field) && relations.includes(reverseRelation.name)
+        (reverseRelation) =>
+          isToOneRelation(reverseRelation.field) && (!relations || relations.includes(reverseRelation.name))
       )
     )}
     ${fragment}
