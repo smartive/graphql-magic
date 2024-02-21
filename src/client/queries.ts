@@ -185,13 +185,9 @@ export const getEntityListQuery = (
   ${reverseRelation ? '}' : ''}
 }`;
 
-export const getEntityQuery = (
-  model: EntityModel,
-  role: string,
-  relations?: string[],
-  typesWithSubRelations?: string[],
-  fragment = ''
-) => `query Get${model.name}Entity ($id: ID!) {
+export const getEntityQuery = (model: EntityModel, role: string, relations?: string[], fragment = '') => `query Get${
+  model.name
+}Entity ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     ${displayField(model)}
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
