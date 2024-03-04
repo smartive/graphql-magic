@@ -14,7 +14,7 @@ import {
 
 export const getUpdateEntityQuery = (
   model: EntityModel,
-  role: any,
+  role: string,
   fields?: string[] | undefined,
   additionalFields = ''
 ) => `query Update${model.name}Fields ($id: ID!) {
@@ -28,7 +28,7 @@ export const getUpdateEntityQuery = (
       .join(' ')}
     ${getActionableRelations(model, 'update')
       .filter((name) => !fields || fields.includes(name))
-      .map((name) => `${name} { id }`)}
+      .map((name) => `${name} { id, display: ${model.getRelation(name).targetModel.displayField || 'id'} }`)}
     ${additionalFields}
   }
 }`;
