@@ -61,7 +61,7 @@
     "luxon": "^3.3.0",
     "pg": "^8.11.3",
     "simple-git": "^3.21.0",
-    "ts-morph": "^19.0.0",
+    "ts-morph": "^22.0.0",
     "uuid": "^9.0.0"
   },
   "peerDependencies": {
