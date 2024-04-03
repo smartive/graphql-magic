@@ -1,5 +1,5 @@
 import { generate } from '@graphql-codegen/cli';
-import { getSetting } from './settings';
+import { ensureDirectoryExists, getSetting } from './settings';
 
 export const generateGraphqlApiTypes = async () => {
   const generatedFolderPath = await getSetting('generatedFolderPath');
@@ -23,6 +23,7 @@ export const generateGraphqlApiTypes = async () => {
 export const generateGraphqlClientTypes = async () => {
   const generatedFolderPath = await getSetting('generatedFolderPath');
   const graphqlQueriesPath = await getSetting('graphqlQueriesPath');
+  ensureDirectoryExists(graphqlQueriesPath);
   await generate({
     schema: `${generatedFolderPath}/schema.graphql`,
     documents: [graphqlQueriesPath, `${generatedFolderPath}/client/mutations.ts`],
@@ -43,6 +44,7 @@ export const generateGraphqlClientTypes = async () => {
       scalars: {
         DateTime: 'string',
       },
+      ignoreNoDocuments: true,
     },
   });
 };

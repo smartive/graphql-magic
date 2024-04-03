@@ -32,7 +32,7 @@ const create = async (model: EntityModel, { data: input }: { data: any }, ctx: F
   const normalizedInput = { ...input };
   normalizedInput.id = uuid();
   normalizedInput.createdAt = ctx.now;
-  normalizedInput.createdById = ctx.user.id;
+  normalizedInput.createdById = ctx.user?.id;
   if (model.parent) {
     normalizedInput.type = model.name;
   }
@@ -165,7 +165,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
     toDelete[currentModel.name][entity.id as string] = (entity[currentModel.displayField || 'id'] || entity.id) as string;
 
     if (!dryRun) {
-      const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user.id };
+      const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user?.id };
       const data = { prev: entity, input: {}, normalizedInput, next: { ...entity, ...normalizedInput } };
       if (ctx.mutationHook) {
         beforeHooks.push(async () => {
@@ -319,7 +319,7 @@ const createRevision = async (model: EntityModel, data: Entity, ctx: Context) =>
       id: revisionId,
       [`${typeToField(model.parent || model.name)}Id`]: data.id,
       createdAt: ctx.now,
-      createdById: ctx.user.id,
+      createdById: ctx.user?.id,
     };
 
     if (model.deletable) {
@@ -354,7 +354,7 @@ const createRevision = async (model: EntityModel, data: Entity, ctx: Context) =>
 const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
   if (model.updatable) {
     data.updatedAt = ctx.now;
-    data.updatedById = ctx.user.id;
+    data.updatedById = ctx.user?.id;
   }
 
   for (const key of Object.keys(data)) {

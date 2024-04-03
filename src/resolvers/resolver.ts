@@ -29,6 +29,10 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   const { query, verifiedPermissionStacks } = await buildQuery(node);
 
   if (ctx.info.fieldName === 'me') {
+    if (!node.ctx.user.id) {
+      return undefined;
+    }
+
     void query.where({ [getColumn(node, 'id')]: node.ctx.user.id });
   }
 
