@@ -17,7 +17,7 @@ npx create-next-app@latest magic-blog --ts --app --tailwind --eslint --src
 cd magic-blog
 ```
 
-Replace `app/globals.css`:
+Replace `src/app/globals.css`:
 
 ```
 @tailwind base;
@@ -69,7 +69,7 @@ label span {
 }
 ```
 
-Replace `app/page.tsx`:
+Replace `src/app/page.tsx`:
 
 ```
 export default async function Home() {
@@ -140,7 +140,7 @@ Generate the first migration:
 npx gqm generate-migration
 ```
 
-Enter "setup" as migration name. Or you could first create a `feat/setup` git branch, then it would use that name automatically.
+Enter a migration name, e.g. "setup".
 
 
 Run the migration
@@ -277,7 +277,7 @@ export default async function Home() {
 
 ### Content!
 
-Let's create a blog by adding new models in `src/config/models.ts`:
+Let's make a blog out of this app by adding new models in `src/config/models.ts`:
 
 ```
   {
@@ -333,7 +333,6 @@ Generate and run the new migrations and generate the new models:
 ```
 npx gqm generate-migration
 npx env-cmd knex migrate:up
-npx gqm generate
 ```
 
 Create a new query `src/graphql/client/queries/get-posts.ts`:
@@ -360,6 +359,12 @@ export const GET_POSTS = gql`
     }
   }
 `;
+```
+
+Generate the new types:
+
+```
+npx gqm generate
 ```
 
 Now add all the logic to create and display posts and comments to `src/app/page.tsx`
