@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { readLine } from './readline';
-import { EMPTY_MODELS, GET_ME, GITIGNORE, KNEXFILE } from './templates';
+import { EMPTY_MODELS, EXECUTE, GET_ME, GITIGNORE, KNEXFILE } from './templates';
 
 const SETTINGS_PATH = '.gqmrc.json';
 
@@ -42,10 +42,11 @@ const DEFAULTS = {
     },
   },
   graphqlQueriesPath: {
-    question: 'Where to look for graphql queries?',
-    defaultValue: 'src/graphql/client/queries',
+    question: 'Where to put graphql code?',
+    defaultValue: 'src/graphql',
     init: (path: string) => {
-      ensureFileExists(`${path}/get-me.ts`, GET_ME);
+      ensureFileExists(`${path}/client/queries/get-me.ts`, GET_ME);
+      ensureFileExists(`${path}/execute.ts`, EXECUTE);
     },
   },
   gqlModule: {
@@ -126,7 +127,7 @@ export const ensureFileExists = (filePath: string, content: string) => {
 };
 
 export const ensureFileContains = (filePath: string, content: string, fallback?: string) => {
-  ensureFileExists(filePath, content);
+  ensureFileExists(filePath, '');
   const fileContent = readFileSync(filePath, 'utf-8');
   if (!fileContent.includes(content)) {
     writeFileSync(filePath, fileContent + (fallback ?? content));

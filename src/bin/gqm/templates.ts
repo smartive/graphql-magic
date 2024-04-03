@@ -4,13 +4,6 @@ ${path}/**/*
 ${path}/**/.gitkeep
 `;
 
-export const DOTENV = `
-DATABASE_HOST=localhost
-DATABASE_NAME=postgres
-DATABASE_USER=postgres
-DATABASE_PASSWORD=password
-`;
-
 export const EMPTY_MODELS = `import { ModelDefinitions, Models } from '@smartive/graphql-magic';
 
 const modelDefinitions: ModelDefinitions = [
@@ -70,7 +63,6 @@ export const GET_ME = gql\`
 
 export const EXECUTE = `
 import knexConfig from "@/knexfile";
-import { getSession } from "@auth0/nextjs-auth0";
 import { Context, User, execute } from "@smartive/graphql-magic";
 import { randomUUID } from "crypto";
 import { knex } from 'knex';
@@ -84,8 +76,6 @@ export const executeGraphql = async <T, V = undefined>(
     variables?: V;
     options?: { email?: string };
 }): Promise<{ data: T }> => {
-  const session = await getSession();
-
   const db = knex(knexConfig);
   let user: User | undefined;
   // TODO: get user
@@ -98,7 +88,7 @@ export const executeGraphql = async <T, V = undefined>(
     locales: ['en'],
     user,
     models: models,
-    permissions: { ADMIN: true, UNAUTHENTICATED: true }, // TODO: fine-grained permissions
+    permissions: { ADMIN: true, UNAUTHENTICATED: true },
     now: DateTime.local(),
   });
   await db.destroy();
