@@ -12,7 +12,7 @@ export const generateDefinitions = ({
   entities,
   objects,
 }: Models): DefinitionNode[] => {
-  return [
+  const definitions = [
     // Predefined types
     ...rawEnums.map((model) => enm(model.name, model.values)),
     ...enums.map((model) => enm(model.name, model.values)),
@@ -191,84 +191,90 @@ export const generateDefinitions = ({
         })),
       ...objects.filter((model) => model.name === 'Query').flatMap((model) => model.fields),
     ]),
+  ];
 
-    object('Mutation', [
-      ...entities.flatMap((model): Field[] => {
-        const mutations: Field[] = [];
+  const mutations = [
+    ...entities.flatMap((model): Field[] => {
+      const mutations: Field[] = [];
 
-        if (!isRootModel(model)) {
-          if (model.creatable) {
-            mutations.push({
-              name: `create${model.name}`,
-              type: model.name,
-              nonNull: true,
-              args: [
-                {
-                  name: 'data',
-                  type: `Create${model.name}`,
-                  nonNull: true,
-                },
-              ],
-            });
-          }
-
-          if (model.updatable) {
-            mutations.push({
-              name: `update${model.name}`,
-              type: model.name,
-              nonNull: true,
-              args: [
-                {
-                  name: 'where',
-                  type: `${model.name}WhereUnique`,
-                  nonNull: true,
-                },
-                {
-                  name: 'data',
-                  type: `Update${model.name}`,
-                  nonNull: true,
-                },
-              ],
-            });
-          }
-
-          if (model.deletable) {
-            mutations.push({
-              name: `delete${model.name}`,
-              type: 'ID',
-              nonNull: true,
-              args: [
-                {
-                  name: 'where',
-                  type: `${model.name}WhereUnique`,
-                  nonNull: true,
-                },
-                {
-                  name: 'dryRun',
-                  type: 'Boolean',
-                },
-              ],
-            });
-            mutations.push({
-              name: `restore${model.name}`,
-              type: 'ID',
-              nonNull: true,
-              args: [
-                {
-                  name: 'where',
-                  type: `${model.name}WhereUnique`,
-                  nonNull: true,
-                },
-              ],
-            });
-          }
+      if (!isRootModel(model)) {
+        if (model.creatable) {
+          mutations.push({
+            name: `create${model.name}`,
+            type: model.name,
+            nonNull: true,
+            args: [
+              {
+                name: 'data',
+                type: `Create${model.name}`,
+                nonNull: true,
+              },
+            ],
+          });
         }
 
-        return mutations;
-      }),
-      ...objects.filter((model) => model.name === 'Mutation').flatMap((model) => model.fields),
-    ]),
+        if (model.updatable) {
+          mutations.push({
+            name: `update${model.name}`,
+            type: model.name,
+            nonNull: true,
+            args: [
+              {
+                name: 'where',
+                type: `${model.name}WhereUnique`,
+                nonNull: true,
+              },
+              {
+                name: 'data',
+                type: `Update${model.name}`,
+                nonNull: true,
+              },
+            ],
+          });
+        }
+
+        if (model.deletable) {
+          mutations.push({
+            name: `delete${model.name}`,
+            type: 'ID',
+            nonNull: true,
+            args: [
+              {
+                name: 'where',
+                type: `${model.name}WhereUnique`,
+                nonNull: true,
+              },
+              {
+                name: 'dryRun',
+                type: 'Boolean',
+              },
+            ],
+          });
+          mutations.push({
+            name: `restore${model.name}`,
+            type: 'ID',
+            nonNull: true,
+            args: [
+              {
+                name: 'where',
+                type: `${model.name}WhereUnique`,
+                nonNull: true,
+              },
+            ],
+          });
+        }
+      }
+
+      return mutations;
+    }),
+    ...objects.filter((model) => model.name === 'Mutation').flatMap((model) => model.fields),
   ];
+
+  if (mutations.length) {
+    definitions.push(object('Mutation', mutations));
+  }
+
+  return definitions;
 };
 
 export const generate = (models: Models) => document(generateDefinitions(models));

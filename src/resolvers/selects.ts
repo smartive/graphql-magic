@@ -11,7 +11,7 @@ import {
   getNameOrAlias,
   getSimpleFields,
 } from '.';
-import { PermissionError, UserInputError } from '..';
+import { PermissionError, UserInputError, getRole } from '..';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   // Simple field selects
@@ -28,9 +28,10 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
             return false;
           }
 
-          if (typeof field.queriable === 'object' && !field.queriable.roles?.includes(node.ctx.user.role)) {
+          const role = getRole(node.ctx);
+          if (typeof field.queriable === 'object' && !field.queriable.roles?.includes(role)) {
             throw new PermissionError(
-              node.ctx.user.role,
+              role,
               'READ',
               `${node.model.name}'s field "${field.name}"`,
               'field permission not available'

@@ -11,7 +11,3 @@ services:
       TZ: 'Europe/Zurich'
     ports:
       - '5432:5432'
-    networks:
-      default:
-        aliases:
-          - postgres.local

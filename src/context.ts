@@ -17,7 +17,7 @@ export type Context = {
   document: DocumentNode;
   locale: string;
   locales: string[];
-  user: User;
+  user?: User;
   models: Models;
   permissions: Permissions;
   mutationHook?: MutationHook;

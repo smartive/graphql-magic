@@ -1,11 +1,28 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { readLine } from './readline';
-import { EMPTY_MODELS } from './templates';
+import { EMPTY_MODELS, GET_ME, GITIGNORE, KNEXFILE } from './templates';
 
 const SETTINGS_PATH = '.gqmrc.json';
 
+const DEFAULT_ENV = {
+  DATABASE_HOST: 'localhost',
+  DATABASE_NAME: 'postgres',
+  DATABASE_USER: 'postgres',
+  DATABASE_PASSWORD: 'password',
+};
+
 const DEFAULTS = {
+  knexfilePath: {
+    question: 'What is the knexfile path?',
+    defaultValue: 'knexfile.ts',
+    init: (path: string) => {
+      for (const [name, value] of Object.entries(DEFAULT_ENV)) {
+        ensureFileContains('.env', `${name}=`, `${name}=${value}\n`);
+      }
+      ensureFileExists(path, KNEXFILE);
+    },
+  },
   modelsPath: {
     question: 'What is the models path?',
     defaultValue: 'src/config/models.ts',
@@ -17,6 +34,7 @@ const DEFAULTS = {
     question: 'What is the path for generated stuff?',
     defaultValue: 'src/generated',
     init: (path: string) => {
+      ensureFileContains('.gitignore', GITIGNORE(path));
       ensureFileExists(`${path}/.gitkeep`, '');
       ensureFileExists(`${path}/db/.gitkeep`, '');
       ensureFileExists(`${path}/api/.gitkeep`, '');
@@ -27,7 +45,7 @@ const DEFAULTS = {
     question: 'Where to look for graphql queries?',
     defaultValue: 'src/graphql/client/queries',
     init: (path: string) => {
-      ensureDirectoryExists(path);
+      ensureFileExists(`${path}/get-me.ts`, GET_ME);
     },
   },
   gqlModule: {
@@ -80,7 +98,7 @@ export const getSetting = async (name: keyof Settings): Promise<string> => {
   return settings[name];
 };
 
-const ensureDirectoryExists = (dir: string) => {
+export const ensureDirectoryExists = (dir: string) => {
   if (existsSync(dir)) {
     return true;
   }
@@ -104,6 +122,14 @@ export const ensureFileExists = (filePath: string, content: string) => {
     console.info(`Creating ${filePath}`);
     ensureDirectoryExists(dirname(filePath));
     writeFileSync(filePath, content);
+  }
+};
+
+export const ensureFileContains = (filePath: string, content: string, fallback?: string) => {
+  ensureFileExists(filePath, content);
+  const fileContent = readFileSync(filePath, 'utf-8');
+  if (!fileContent.includes(content)) {
+    writeFileSync(filePath, fileContent + (fallback ?? content));
   }
 };
 

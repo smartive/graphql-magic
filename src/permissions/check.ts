@@ -7,12 +7,14 @@ import { AliasGenerator, hash, ors } from '../resolvers/utils';
 import { BasicValue } from '../values';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
+export const getRole = (ctx: Pick<FullContext, 'user'>) => ctx.user?.role ?? 'UNAUTHENTICATED';
+
 export const getPermissionStack = (
   ctx: Pick<FullContext, 'permissions' | 'user'>,
   type: string,
   action: PermissionAction
 ): boolean | PermissionStack => {
-  const rolePermissions = ctx.permissions[ctx.user.role];
+  const rolePermissions = ctx.permissions[getRole(ctx)];
   if (typeof rolePermissions === 'boolean' || rolePermissions === undefined) {
     return !!rolePermissions;
   }
@@ -45,7 +47,7 @@ export const applyPermissions = (
   }
 
   if (permissionStack === false) {
-    console.error(`No applicable permissions exist for ${ctx.user.role} ${type} ${action}.`);
+    console.error(`No applicable permissions exist for ${getRole(ctx)} ${type} ${action}.`);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
     query.where(false);
     return permissionStack;
@@ -113,7 +115,7 @@ export const getEntityToMutate = async (
         .map(([key, value]) => `${key}: ${value}`)
         .join(', ')}`
     );
-    throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no available permissions applied');
+    throw new PermissionError(getRole(ctx), action, `this ${model.name}`, 'no available permissions applied');
   }
 
   if (model.parent) {
@@ -139,7 +141,7 @@ export const checkCanWrite = async (
     return;
   }
   if (permissionStack === false) {
-    throw new PermissionError(ctx.user.role, action, model.plural, 'no applicable permissions');
+    throw new PermissionError(getRole(ctx), action, model.plural, 'no applicable permissions');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- using `select(1 as any)` to instantiate an "empty" query builder
@@ -156,13 +158,9 @@ export const checkCanWrite = async (
     }
 
     const fieldPermissions = field[action === 'CREATE' ? 'creatable' : 'updatable'];
-    if (fieldPermissions && typeof fieldPermissions === 'object' && !fieldPermissions.roles?.includes(ctx.user.role)) {
-      throw new PermissionError(
-        ctx.user.role,
-        action,
-        `this ${model.name}'s ${field.name}`,
-        'field permission not available'
-      );
+    const role = getRole(ctx);
+    if (fieldPermissions && typeof fieldPermissions === 'object' && !fieldPermissions.roles?.includes(role)) {
+      throw new PermissionError(role, action, `this ${model.name}'s ${field.name}`, 'field permission not available');
     }
 
     linked = true;
@@ -178,7 +176,7 @@ export const checkCanWrite = async (
 
     if (fieldPermissionStack === false || !fieldPermissionStack.length) {
       throw new PermissionError(
-        ctx.user.role,
+        role,
         action,
         `this ${model.name}'s ${field.name}`,
         'no applicable permissions on data to link'
@@ -194,13 +192,14 @@ export const checkCanWrite = async (
     );
   }
 
+  const role = getRole(ctx);
   if (linked) {
     const canMutate = await query;
     if (!canMutate) {
-      throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no linkable entities');
+      throw new PermissionError(role, action, `this ${model.name}`, 'no linkable entities');
     }
   } else if (action === 'CREATE') {
-    throw new PermissionError(ctx.user.role, action, `this ${model.name}`, 'no linkable entities');
+    throw new PermissionError(role, action, `this ${model.name}`, 'no linkable entities');
   }
 };
 
@@ -213,12 +212,21 @@ const permissionLinkQuery = (
   const aliases = new AliasGenerator();
   let alias = aliases.getShort();
   const { type, me, where } = links[0];
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
-  subQuery.from(`${type} as ${alias}`);
+
   if (me) {
+    if (!ctx.user) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
+      subQuery.where(false);
+      return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
     subQuery.where({ [`${alias}.id`]: ctx.user.id });
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
+  subQuery.from(`${type} as ${alias}`);
+
   if (where) {
     applyWhere(ctx.models.getModel(type, 'entity'), subQuery, alias, where, aliases);
   }

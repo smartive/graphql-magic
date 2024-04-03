@@ -1,7 +1,19 @@
-export const EMPTY_MODELS = `
-import { RawModels, Models } from '@smartive/graphql-magic';
+export const GITIGNORE = (path: string) => `
+# graphql-magic
+${path}/**/*
+${path}/**/.gitkeep
+`;
 
-const rawModels: RawModels = [
+export const DOTENV = `
+DATABASE_HOST=localhost
+DATABASE_NAME=postgres
+DATABASE_USER=postgres
+DATABASE_PASSWORD=password
+`;
+
+export const EMPTY_MODELS = `import { ModelDefinitions, Models } from '@smartive/graphql-magic';
+
+const modelDefinitions: ModelDefinitions = [
   {
     kind: 'entity',
     name: 'User',
@@ -9,11 +21,10 @@ const rawModels: RawModels = [
   },
 ]
 
-export const models = new Models(rawModels);
+export const models = new Models(modelDefinitions);
 `;
 
-export const KNEXFILE = `
-import { DateTime } from 'luxon';
+export const KNEXFILE = `import { DateTime } from 'luxon';
 import { types } from 'pg';
 
 const dateOids = { date: 1082, timestamptz: 1184, timestamp: 1114 };
@@ -26,7 +37,7 @@ for (const oid of Object.values(numberOids)) {
   types.setTypeParser(oid, Number);
 }
 
-const config = {
+const knexConfig = {
   client: 'postgresql',
   connection: {
     host: process.env.DATABASE_HOST,
@@ -43,5 +54,56 @@ const config = {
   },
 } as const;
 
-export default config;
+export default knexConfig;
+`;
+
+export const GET_ME = `import { gql } from '@smartive/graphql-magic';
+
+export const GET_ME = gql\`
+  query GetMe {
+    me {
+      id
+    }
+  }
+\`;
+`;
+
+export const EXECUTE = `
+import knexConfig from "@/knexfile";
+import { getSession } from "@auth0/nextjs-auth0";
+import { Context, User, execute } from "@smartive/graphql-magic";
+import { randomUUID } from "crypto";
+import { knex } from 'knex';
+import { DateTime } from "luxon";
+import { models } from "../config/models";
+
+export const executeGraphql = async <T, V = undefined>(
+  body: {
+    query: string;
+    operationName?: string;
+    variables?: V;
+    options?: { email?: string };
+}): Promise<{ data: T }> => {
+  const session = await getSession();
+
+  const db = knex(knexConfig);
+  let user: User | undefined;
+  // TODO: get user
+
+  const result = await execute({
+    req: null as unknown as Context['req'],
+    body,
+    knex: db as unknown as Context['knex'],
+    locale: 'en',
+    locales: ['en'],
+    user,
+    models: models,
+    permissions: { ADMIN: true, UNAUTHENTICATED: true }, // TODO: fine-grained permissions
+    now: DateTime.local(),
+  });
+  await db.destroy();
+
+  // https://github.com/vercel/next.js/issues/47447#issuecomment-1500371732
+  return JSON.parse(JSON.stringify(result)) as { data: T };
+}
 `;

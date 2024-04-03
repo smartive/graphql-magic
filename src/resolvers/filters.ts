@@ -38,7 +38,7 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
       normalizedArguments.where.deleted &&
       (!Array.isArray(normalizedArguments.where.deleted) || normalizedArguments.where.deleted.some((v) => v))
     ) {
-      if (node.ctx.user.role !== 'ADMIN') {
+      if (node.ctx.user?.role !== 'ADMIN') {
         throw new ForbiddenError('You cannot access deleted entries.');
       }
     } else {
