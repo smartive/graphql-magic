@@ -1,7 +1,3 @@
----
-sidebar_position: 1
----
-
 # Tutorial
 
 Let's create a blog with `graphql-magic`!
@@ -19,7 +15,7 @@ cd magic-blog
 
 Replace `src/app/globals.css`:
 
-```
+```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -71,7 +67,7 @@ label span {
 
 Replace `src/app/page.tsx`:
 
-```
+```tsx
 export default async function Home() {
     return <main>
       <nav>
@@ -83,7 +79,7 @@ export default async function Home() {
 
 Start the website:
 
-```
+```bash
 npm run dev
 ```
 
@@ -91,7 +87,7 @@ npm run dev
 
 Add this setting to `next.config.mjs`:
 
-```
+```ts
 const nextConfig = {
     experimental: {
         serverComponentsExternalPackages: ['knex'],
@@ -101,13 +97,13 @@ const nextConfig = {
 
 Install `@smartive/graphql-magic`:
 
-```
+```bash
 npm install @smartive/graphql-magic
 ```
 
 Run the gqm cli:
 
-```
+```bash
 npx gqm generate
 ```
 
@@ -116,7 +112,7 @@ npx gqm generate
 Let's boot a local database instance.
 Create the following `docker-compose.yml`:
 
-```
+```yml
 version: '3.4'
 services:
   postgres:
@@ -136,7 +132,7 @@ Then start it with `docker-compose up`.
 
 Generate the first migration:
 
-```
+```bash
 npx gqm generate-migration
 ```
 
@@ -145,8 +141,8 @@ Enter a migration name, e.g. "setup".
 
 Run the migration
 
-```
-npx env-cmd knex migrate:up
+```bash
+npx env-cmd knex migrate:latest
 ```
 
 ### Auth setup
@@ -156,7 +152,7 @@ For example, follow [this tutorial](https://auth0.com/docs/quickstart/webapp/nex
 
 Assuming you used auth0, here's a bare-bones version of what `src/app/page.tsx` could look like:
 
-```
+```tsx
 import { getSession } from '@auth0/nextjs-auth0';
 
 export default async function Page() {
@@ -179,7 +175,7 @@ Now, we need to ensure that the user is stored in the database.
 
 First extend the user model in `src/config/models.ts` with the following fields:
 
-```
+```tsx
     fields: [
       {
         name: 'authId',
@@ -196,25 +192,25 @@ First extend the user model in `src/config/models.ts` with the following fields:
 
 The models have changed, generate the new types:
 
-```
+```bash
 npx gqm generate
 ```
 
 Generate the new migration:
 
-```
+```bash
 npx gqm generate-migration
 ```
 
 Edit the generated migration, then run it
 
-```
-npx env-cmd knex migrate:up
+```bash
+npx env-cmd knex migrate:latest
 ```
 
 Now let's implement the `// TODO: get user` part in the `src/graphql/execute.ts` file
 
-```
+```ts
   const session = await getSession();
   if (session) {
     let dbUser = await db('User').where({ authId: session.user.sid }).first();
@@ -235,7 +231,7 @@ Now let's implement the `// TODO: get user` part in the `src/graphql/execute.ts`
 
 Extend `src/graphql/client/queries/get-me.ts` to also fetch the user's username:
 
-```
+```ts
 import { gql } from '@smartive/graphql-magic';
 
 export const GET_ME = gql`
@@ -250,13 +246,13 @@ export const GET_ME = gql`
 
 Generate the new types:
 
-```
+```bash
 npx gqm generate
 ```
 
 Now, let's modify `src/app/page.tsx` so that it fetches the user from the database:
 
-```
+```tsx
 import { GetMeQuery } from "@/generated/client";
 import { GET_ME } from "@/graphql/client/queries/get-me";
 import { executeGraphql } from "@/graphql/execute";
@@ -279,7 +275,7 @@ export default async function Home() {
 
 Let's make a blog out of this app by adding new models in `src/config/models.ts`:
 
-```
+```ts
   {
     kind: 'entity',
     name: 'Post',
@@ -330,14 +326,14 @@ Let's make a blog out of this app by adding new models in `src/config/models.ts`
 
 Generate and run the new migrations and generate the new models:
 
-```
+```bash
 npx gqm generate-migration
-npx env-cmd knex migrate:up
+npx env-cmd knex migrate:latest
 ```
 
 Create a new query `src/graphql/client/queries/get-posts.ts`:
 
-```
+```ts
 import { gql } from '@smartive/graphql-magic';
 
 export const GET_POSTS = gql`
@@ -363,14 +359,14 @@ export const GET_POSTS = gql`
 
 Generate the new types:
 
-```
+```bash
 npx gqm generate
 ```
 
 Now add all the logic to create and display posts and comments to `src/app/page.tsx`
 
 
-```
+```tsx
 import { CreateCommentMutationMutation, CreateCommentMutationMutationVariables, CreatePostMutationMutation, CreatePostMutationMutationVariables, GetMeQuery, GetPostsQuery } from "@/generated/client";
 import { CREATE_COMMENT, CREATE_POST } from "@/generated/client/mutations";
 import { GET_ME } from "@/graphql/client/queries/get-me";
