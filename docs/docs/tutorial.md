@@ -345,8 +345,9 @@ export const GET_POSTS = gql`
 ```
 {me &&       <CreatePost/>  }
       <Posts/>
-      ```
+```
 
+```
 async function CreatePost() {
   async function createPost(formData: FormData) {
     'use server'
@@ -377,7 +378,9 @@ async function CreatePost() {
     </div>
   </form>
 }
+```
 
+```
 async function Posts() {
   const { data: { posts } } = await executeGraphql<GetPostsQuery>({ query: GET_POSTS })
 
@@ -397,7 +400,9 @@ async function Posts() {
     </div>)}
   </div>
 }
+```
 
+```
 function CreateComment({ postId }: { postId: string }) {
   async function createComment(formData: FormData) {
     'use server'
@@ -423,3 +428,4 @@ function CreateComment({ postId }: { postId: string }) {
     </div>
   </form>
 }
+```
