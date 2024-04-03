@@ -10,58 +10,84 @@ Let's create a blog with `graphql-magic`!
 
 ### Code base
 
-First create a next.js website:
+First create a `next.js` website:
 
 ```
 npx create-next-app@latest magic-blog --ts --app --tailwind --eslint --src
 cd magic-blog
 ```
 
-For some styling install `preline` and dependencies:
-
-```
-npm i preline @tailwindcss/forms
-```
-
-Add `@tailwindcss/forms` to `tailwind.config.ts`:
-
-```
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
-```
-
 Replace `app/globals.css`:
 
 ```
-TODO
-```
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-Replace `app/layout.tsx`:
+main {
+    @apply w-96 mx-auto
+}
 
-```
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html>
-        <body>{children}</body>
-    </html>
-  );
+nav {
+    @apply flex items-center
+}
+
+h1, h2, h3, h4 {
+    @apply font-bold
+}
+
+h1 {
+    @apply text-4xl mb-4 flex-grow
+}
+
+h2 {
+    @apply text-3xl mb-3
+}
+
+h3 {
+    @apply text-2xl mb-2
+}
+
+h4 {
+    @apply text-xl mb-1
+}
+
+a {
+    @apply text-blue-500
+}
+
+article, form {
+    @apply mb-4 p-3 rounded-lg shadow-md border border-gray-100
+}
+
+input, textarea {
+    @apply border border-gray-300 w-full rounded-md p-1
+}
+
+label span {
+    @apply font-bold
 }
 ```
 
 Replace `app/page.tsx`:
 
 ```
-export default function Page() {
-    return <div>
+export default async function Home() {
+    return <main>
+      <nav>
         <h1>Magic Blog</h1>
-    </div>
+      </nav>
+    </main>
 }
 ```
+
+Start the website:
+
+```
+npm run dev
+```
+
+### Install graphql-magic
 
 Add this setting to `next.config.mjs`:
 
@@ -79,28 +105,16 @@ Install `@smartive/graphql-magic`:
 npm install @smartive/graphql-magic
 ```
 
-Temporary:
-
-```
-npm i @graphql-codegen/typescript-compatibility
-```
-
 Run the gqm cli:
 
 ```
 npx gqm generate
 ```
 
-Start the website:
-
-```
-npm run dev
-```
-
 ### Database setup
 
-Adapt the database `.env` variables to connect to a postgresql instance, or create a new one.
-For example, to create a local instance with docker and docker-compose, create the following `docker-compose.yml`:
+Let's boot a local database instance.
+Create the following `docker-compose.yml`:
 
 ```
 version: '3.4'
@@ -148,10 +162,12 @@ import { getSession } from '@auth0/nextjs-auth0';
 export default async function Page() {
   const session = await getSession();
 
-  return <div>
+  return <main>
+    <nav>
       <h1>Welcome to my Blog</h1>
       {session ? <a href="/api/auth/logout">Logout</a> : <a href="/api/auth/login">Login</a>}
-  </div>
+    </nav>
+  </main>
 }
 ```
 
@@ -241,17 +257,21 @@ npx gqm generate
 Now, let's modify `src/app/page.tsx` so that it fetches the user from the database:
 
 ```
-import { GetMeQuery } from "../generated/client";
-import { GET_ME } from "../graphql/client/queries/get-me";
-import { executeGraphql } from "../graphql/execute";
+import { GetMeQuery } from "@/generated/client";
+import { GET_ME } from "@/graphql/client/queries/get-me";
+import { executeGraphql } from "@/graphql/execute";
 
-export default async function Page() {
-  const { data: { me }} = await executeGraphql<GetMeQuery>({ query: GET_ME });
+export default async function Home() {
+  const { data: { me } } = await executeGraphql<GetMeQuery>({ query: GET_ME });
 
-  return <div>
-      <h1>Welcome to my Blog</h1>
-      {me ? <div>Hello {me.username}! <a href="/api/auth/logout">Logout</a></div> : <a href="/api/auth/login">Login</a>}
-  </div>
+  return (
+    <main>
+      <nav>
+        <h1>Blog</h1>
+        {me ? <span>Hello, {me.username}! <a href="/api/auth/logout"> Logout</a></span> : <a href="/api/auth/login">Login</a>}
+      </nav>
+    </main>
+  );
 }
 ```
 
@@ -316,7 +336,7 @@ npx env-cmd knex migrate:up
 npx gqm generate
 ```
 
-new get-posts
+Create a new query `src/graphql/client/queries/get-posts.ts`:
 
 ```
 import { gql } from '@smartive/graphql-magic';
@@ -342,12 +362,53 @@ export const GET_POSTS = gql`
 `;
 ```
 
-```
-{me &&       <CreatePost/>  }
-      <Posts/>
-```
+Now add all the logic to create and display posts and comments to `src/app/page.tsx`
+
 
 ```
+import { CreateCommentMutationMutation, CreateCommentMutationMutationVariables, CreatePostMutationMutation, CreatePostMutationMutationVariables, GetMeQuery, GetPostsQuery } from "@/generated/client";
+import { CREATE_COMMENT, CREATE_POST } from "@/generated/client/mutations";
+import { GET_ME } from "@/graphql/client/queries/get-me";
+import { GET_POSTS } from "@/graphql/client/queries/get-posts";
+import { executeGraphql } from "@/graphql/execute";
+import { revalidatePath } from "next/cache";
+
+export default async function Home() {
+  const { data: { me } } = await executeGraphql<GetMeQuery>({ query: GET_ME });
+
+  return (
+    <main>
+      <nav>
+        <h1>Blog</h1>
+        {me ? <span>Hello, {me.username}! <a href="/api/auth/logout"> Logout</a></span> : <a href="/api/auth/login">Login</a>}
+      </nav>
+      {me && <CreatePost />}
+      <Posts me={me} />
+    </main>
+  );
+}
+
+async function Posts({ me }: { me: GetMeQuery['me'] }) {
+  const { data: { posts } } = await executeGraphql<GetPostsQuery>({ query: GET_POSTS })
+
+  return <div>
+    {posts.map(post => <div key={post.id}>
+      <article>
+        <h2>{post.title}</h2>
+        <div>by {post.createdBy.username}</div>
+        <p>{post.content}</p>
+        <h4>Comments</h4>
+        {post.comments.map(comment => (<div key={comment.id}>
+          <div>{comment.createdBy.username}</div>
+          <p>{comment.content}</p> by {comment.createdBy.username}
+        </div>)
+        )}
+        {me && <CreateComment postId={post.id} />}
+      </article>
+    </div>)}
+  </div>
+}
+
 async function CreatePost() {
   async function createPost(formData: FormData) {
     'use server'
@@ -365,44 +426,20 @@ async function CreatePost() {
 
   return <form action={createPost}>
     <h2>New Post</h2>
-    <div>
+    <label>
       <span>Title</span>
       <input name="title" />
-    </div>
-    <div>
+    </label>
+    <label>
       <span>Content</span>
       <textarea rows={5} name="content" />
-    </div>
+    </label>
     <div>
       <button type="submit">Create</button>
     </div>
   </form>
 }
-```
 
-```
-async function Posts() {
-  const { data: { posts } } = await executeGraphql<GetPostsQuery>({ query: GET_POSTS })
-
-  return <div>
-    {posts.map(post => <div key={post.id}>
-      <article>
-        <h3>{post.title}</h3>
-        <div>{post.createdBy.username}</div>
-        <div>{post.content}</div>
-        {post.comments.map(comment => (<div key={comment.id}>
-          <div>{comment.createdBy.username}</div>
-          <p>{comment.content}</p> by {comment.createdBy.username}
-        </div>)
-        )}
-        <CreateComment postId={post.id} />
-      </article>
-    </div>)}
-  </div>
-}
-```
-
-```
 function CreateComment({ postId }: { postId: string }) {
   async function createComment(formData: FormData) {
     'use server'
@@ -429,3 +466,5 @@ function CreateComment({ postId }: { postId: string }) {
   </form>
 }
 ```
+
+Now you should have a working minimal blog example!
