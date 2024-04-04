@@ -1,10 +1,91 @@
 # Fields
 
-Note that some fields are generated implicitly, such as `id`, `createdAt`/`createdBy` if the model is creatable.
+Models of kind `'entity'`, `'object'`, `'interface'` (see the docs on [models](./models)) have an option called `fields`.
 
-## Fields of fields
+```ts
+const modelDefinitions: ModelDefinitions = [
+  {
+    kind: 'entity',
+    name: 'User',
+    fields: [
+        // Fields
+    ]
+  },
+]
 
-Fields generally have the following fields available for configuration:
+export const models = new Models(modelDefinitions)
+```
+
+## Kinds
+
+Fields can have various kinds, based on the field `kind`:
+
+### Primitive fields
+
+Primitive fields are fields where `kind` is either undefined or set to `'primitive'`. They can have the following `type`:
+
+* `ID`
+* `Boolean`
+* `String` with optional fields `stringType` and `maxLength`
+* `Int` with optional fields `intType`
+* `Float` with optional fields `floatType`, `double`, `precision`, `scale`
+* `Upload`
+
+Examples:
+
+```ts
+{
+    name: 'Person',
+    fields: [
+        {
+            type: 'String',
+            name: 'name',
+        },
+        {
+            type: 'Int',
+            name: 'name',
+        }
+    ]
+}
+```
+
+### Enums
+
+When `kind` is `enum`. Requires as `type` the name of a separately defined model of kind `'enum'`. Has optional field `possibleValues` to allow only a subset of available values in mutations.
+
+### Custom
+
+When `kind` is `custom`. Requires as `type` the name of a separately defined model of kind `'object'`.
+
+If this is an entity field, `graphql-magic` will not try to fetch the result from the database and instead assume the presence of a custom resolver for this field and .
+
+### JSON
+
+This kind is only available in entity fields. When `kind` is `json`, `graphql-magic` assumes that this is a `json` column in the database and returns the data as is. The `type` needs be the name of a separately defined model of kind `object` that describes the structure of the `JSON`.
+
+### Relations
+
+This kind is only available in entity fields. When `kind` is `relation`, the field describes a link to an entity table. The `type` therefore needs to be the name of a model of kind `'entity'`.
+
+## Options
+
+Fields generally have the following options:
+
+### `kind`
+
+Fields can have various kinds, which affect other available options. Available kinds:
+
+* `undefined` or `'primitive'`
+* `'enum'`
+* `'custom'`
+* `'json'`
+* `'relation'`
+
+For more details, see section on [kinds](#kinds) below.
+
+### `type`
+
+This represents the graphql "return type", which can be a primitive or a separate model (depending on the [kind](#kinds)).
 
 ### `description`
 
@@ -244,50 +325,13 @@ If `true` this field will be available in the update mutation for the entity.
 
 Also accepts an object that defines a list of `roles` to restrict creation to specific roles.
 
-## Kinds of fields
+### `toOne`
 
-Primitive fields can have various kinds, based on the field `kind`:
+Only available on relation fields. If `toOne` is `true` this marks a one-to-one relation, meaning that the reverse relation will not point to an array as is the default.
 
-### Primitive fields
+### `reverse`
 
-Primitive fields are fields where `kind` is either undefined or set to `"primitive"`.
-
-Primitive fields can have various types based on the `type` field:
-
-* `ID`
-* `Boolean`
-* `String` with optional fields `stringType` and `maxLength`
-* `Int` with optional fields `intType`
-* `Float` with optional fields `floatType`, `double`, `precision`, `scale`
-* `Upload`
-
-### Enums
-
-When `kind` is `enum`. Requires as `type` the name of a separately defined model of kind `enum`. Has optional field `possibleValues` to allow only a subset of available values in mutations.
-
-### Custom
-
-When `kind` is `custom`. Requires as `type` the name of a separately defined model of kind `object`.
-
-If this is an entity field, `graphql-magic` will not try to fetch the result from the database and instead assume the presence of a custom resolver for this field and .
-
-### JSON
-
-This kind is only available in entity fields. When `kind` is `json`, `graphql-magic` assumes that this is a `json` column in the database and returns the data as is. The `type` needs be the name of a separately defined model of kind `object` that describes the structure of the `JSON`.
-
-### Relations
-
-This kind is only available in entity fields. When `kind` is `relation`, the field describes a link to an entity table. The `type` therefore needs to be the name of a model of kind `entity`.
-
-Relation fields accept the following fields:
-
-### toOne
-
-If `toOne` is `true` this marks a one-to-one relation, meaning that the reverse relation will not point to an array as is the default.
-
-### reverse
-
-`graphql-magic` automatically generates a name for the reverse relation, e.g. for a `Comment` pointing to `Post`:
+Only available on relation fiels. `graphql-magic` automatically generates a name for the reverse relation, e.g. for a `Comment` pointing to `Post`:
 
 ```ts
 {
@@ -304,6 +348,6 @@ If `toOne` is `true` this marks a one-to-one relation, meaning that the reverse 
 
 the reverse relation will automatically be `Post.comments`. With `reverse` this name can be overridden.
 
-### onDelete
+### `onDelete`
 
-can be `"cascade"` (default) or `"set-null"`.
+Only available on relation fields. Can be `"cascade"` (default) or `"set-null"`.

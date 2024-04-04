@@ -31,17 +31,17 @@ The most powerful model kind. Entities are models that are stored in database ta
 }
 ```
 
-These are the entity options
+These are the entity options:
 
-### description
+### `description`
 
-Will appear as graphql description
+Will appear as description in the graphql schema.
 
-### plural
+### `plural`
 
 `graphql-magic` detects natural language plurals of model names with the `inflection` npm package. You can override this here.
 
-### creatable
+### `creatable`
 
 When `creatable` is `true`, the entity can be created using a dedicated graphql `create<ModelName>` mutation.
 
@@ -49,7 +49,7 @@ For this to work, at least one entity field needs to be marked as `creatable`.
 
 `creatable` also accepts an object to override properties of the implicitly generated `createdBy` and `createdAt` fields.
 
-### updatable
+### `updatable`
 
 When `updatable` is `true`, the entity can be created using a dedicated graphql `delete<ModelName>` mutation.
 
@@ -59,7 +59,7 @@ For this to work, at least one entity field needs to be marked as `updatable`.
 
 If a field is updatable, a `<ModelName>Revisions` table is created (containing only the updatable fields) and extended with each update.
 
-### deletable
+### `deletable`
 
 When `deletable` is `true`, the entity can be created using a dedicated graphql `delete<ModelName>` mutation.
 
@@ -67,7 +67,7 @@ This is a soft delete (the `deleted` field is set to `true`), and the entity can
 
 `deletable` also accepts an object to override properties of the implicitly generated `deleted`, `deletedBy` and `deletedAt` fields.
 
-### queriable
+### `queriable`
 
 When `queriable` is `true` a graphql `Query` becomes available to fetch exactly one element by id.
 
@@ -92,7 +92,7 @@ query {
 }
 ```
 
-### listQueriable
+### `listQueriable`
 
 When `listQueriable` is `true` a graphql `Query` becomes available to fetch a list of elements of this model.
 
@@ -117,20 +117,19 @@ query {
 }
 ```
 
-### displayField
+### `displayField`
 
 The name of the field that ought to be used as display value, e.g. a `Post`'s `title`.
 
-### defaultOrderBy
+### `defaultOrderBy`
 
 An array of orders with the same structure as the `orderBy` parameters in graphql queries. The implicit default order by is `[{ createdAt: 'DESC }]`.
 
-### fields
+### `fields`
 
-An array of fields. See [fields](./fields.md)
+An array of fields. See [fields](./fields)
 
-
-## Scalar
+## Scalars
 
 Used for graphql scalars, e.g.
 
@@ -141,7 +140,7 @@ Used for graphql scalars, e.g.
 }
 ```
 
-## Enum
+## Enums
 
 An enum that is available as type in the database:
 
@@ -153,7 +152,7 @@ An enum that is available as type in the database:
 }
 ```
 
-## Raw enum
+## Raw enums
 
 An enum that is *not* available as type in the database:
 
@@ -165,7 +164,7 @@ An enum that is *not* available as type in the database:
 }
 ```
 
-## Interface
+## Interfaces
 
 Types that can be inherited from, e.g.
 
@@ -193,7 +192,7 @@ Types that can be inherited from, e.g.
 }
 ```
 
-## Object
+## Objects
 
 Custom types that *don't* correspond to database tables. To be used e.g. as return types for custom resolvers or JSON fields. These can also be used to extend `Query` or `Mutation` which are themselves of that type. E.g.
 
@@ -237,7 +236,7 @@ query {
 }
 ```
 
-## Input
+## Inputs
 
 A custom input type. To be combined with custom mutations, e.g.
 

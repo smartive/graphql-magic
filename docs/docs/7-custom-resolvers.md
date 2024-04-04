@@ -1,3 +1,0 @@
-# Custom resolvers (TODO)
-
-TODO

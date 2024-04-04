@@ -9,7 +9,7 @@ Let's create a blog with `graphql-magic`!
 First create a `next.js` website:
 
 ```
-npx create-next-app@latest magic-blog --ts --app --tailwind --eslint --src
+npx create-next-app@latest magic-blog --ts --app --tailwind --eslint --src-dir
 cd magic-blog
 ```
 

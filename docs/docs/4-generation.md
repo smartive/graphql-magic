@@ -1,17 +1,10 @@
 # Code generation
 
-Whenever the models have been changed it is necessary generate code use the `graphql-magic` cli.
+`graphql-magic` generates a lot of utility code for you based on the models, in particular typescript types.
 
-This can be done directly with `npx gqm generate`. We recommend to create a `package.json` script and to always generate code after install (or with `npm run generate`):
+This can be done directly with `npx gqm generate`.
 
-```
-"scripts": {
-    "bootstrap": "npm ci && npm run generate",
-    "generate": "gqm generate"
-}
-```
-
-First-time this applies the following changes to the repo:
+During the first run, the tool applies the following changes to the repo:
 
 * Generate `.gqmrc.json` file.
 * Add local database connection variables to `.env` file.
@@ -23,9 +16,19 @@ First-time this applies the following changes to the repo:
 With each application, it generates the following files in the configured "generated" folder:
 
 * `schema.graphql` - the schema of the api, for reference
-* `models.json` - the final models object including generated fields such as "id"... for reference
+* `models.json` - the final models array, including generated fields such as "id","createdBy"... for reference
 * `api/index.ts` - the server-side model typescipt types
 * `client/index.ts` - the client-side typescript types for the provided queries
 * `client/mutations.ts` - standard mutation queries for all models
 * `db/index.ts` - types for data from/to the database
 * `db/knex.ts` - types to extend the `knex` query builder
+
+Whenever the models have been changed, it is necessary regenerate this code.
+It is recommended to create a `package.json` script and to always generate code after install (or with `npm run generate`):
+
+```
+"scripts": {
+    "bootstrap": "npm ci && npm run generate",
+    "generate": "gqm generate"
+}
+```
