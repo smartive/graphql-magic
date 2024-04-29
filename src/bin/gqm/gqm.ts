@@ -12,6 +12,7 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
+import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
@@ -37,9 +38,10 @@ program
     const gqlModule = await getSetting('gqlModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
     writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
-    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models));
+    const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
+    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
-    await generateGraphqlApiTypes();
+    await generateGraphqlApiTypes(dateLibrary);
     await generateGraphqlClientTypes();
   });
 

@@ -18,7 +18,7 @@ module.exports = {
 
 ### Server side
 
-On the server side, and with `next.js` server actions, a graphql api becomes unnecessary, and you can execute query directly using `executeQuery`:
+On the server side, and with `next.js` server actions, a graphql api becomes unnecessary, and you can execute queries directly using `executeGraphql`:
 
 ```tsx
 import { GetMeQuery, GetPostsQuery } from "@/generated/client";

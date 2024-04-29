@@ -58,7 +58,11 @@ export const isInputModel = (model: Model): model is InputModel => model instanc
 
 export const isInterfaceModel = (model: Model): model is InterfaceModel => model instanceof InterfaceModel;
 
+export const isCreatableModel = (model: EntityModel) => model.creatable && model.fields.some(isCreatableField);
+
 export const isUpdatableModel = (model: EntityModel) => model.updatable && model.fields.some(isUpdatableField);
+
+export const isCreatableField = (field: EntityField) => !field.inherited && !!field.creatable;
 
 export const isUpdatableField = (field: EntityField) => !field.inherited && !!field.updatable;
 
@@ -168,4 +172,24 @@ export const retry = async <T>(cb: () => Promise<T>, condition: (e: any) => bool
       throw e;
     }
   }
+};
+
+type Typeof = {
+  string: string;
+  number: number;
+  bigint: bigint;
+  boolean: boolean;
+  symbol: symbol;
+  undefined: undefined;
+  object: object;
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  function: Function;
+};
+
+export const as = <T extends keyof Typeof>(value: unknown, type: T): Typeof[T] => {
+  if (typeof value !== type) {
+    throw new Error(`No string`);
+  }
+
+  return value as Typeof[T];
 };

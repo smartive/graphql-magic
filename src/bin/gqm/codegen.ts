@@ -1,7 +1,8 @@
 import { generate } from '@graphql-codegen/cli';
+import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../../utils/dates';
 import { ensureDirectoryExists, getSetting } from './settings';
 
-export const generateGraphqlApiTypes = async () => {
+export const generateGraphqlApiTypes = async (dateLibrary: DateLibrary) => {
   const generatedFolderPath = await getSetting('generatedFolderPath');
   await generate({
     overwrite: true,
@@ -9,12 +10,12 @@ export const generateGraphqlApiTypes = async () => {
     documents: undefined,
     generates: {
       [`${generatedFolderPath}/api/index.ts`]: {
-        plugins: ['typescript', 'typescript-resolvers', { add: { content: `import { DateTime } from 'luxon';` } }],
+        plugins: ['typescript', 'typescript-resolvers', { add: { content: DATE_CLASS_IMPORT[dateLibrary] } }],
       },
     },
     config: {
       scalars: {
-        DateTime: 'DateTime',
+        DateTime: DATE_CLASS[dateLibrary],
       },
     },
   });

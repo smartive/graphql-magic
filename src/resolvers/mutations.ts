@@ -1,12 +1,12 @@
 import { GraphQLResolveInfo } from 'graphql';
-import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { Context, FullContext } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
-import { Entity, FullEntity } from '../models/mutation-hook';
+import { Entity } from '../models/mutation-hook';
 import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
+import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
 import { AliasGenerator } from './utils';
 
@@ -151,7 +151,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const deleteCascade = async (currentModel: EntityModel, entity: FullEntity) => {
+  const deleteCascade = async (currentModel: EntityModel, entity: Entity) => {
     if (entity.deleted) {
       return;
     }
@@ -266,8 +266,12 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const restoreCascade = async (currentModel: EntityModel, relatedEntity: FullEntity) => {
-    if (!relatedEntity.deleted || !relatedEntity.deletedAt || !relatedEntity.deletedAt.equals(entity.deletedAt)) {
+  const restoreCascade = async (currentModel: EntityModel, relatedEntity: Entity) => {
+    if (
+      !relatedEntity.deleted ||
+      !relatedEntity.deletedAt ||
+      anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone).equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone))
+    ) {
       return;
     }
 
@@ -365,7 +369,7 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
     }
 
     if (isEndOfDay(field) && data[key]) {
-      data[key] = (data[key] as DateTime).endOf('day');
+      data[key] = anyDateToLuxon(data[key], ctx.timeZone);
       continue;
     }
 

@@ -11,7 +11,7 @@ for (const oid of Object.values(numberOids)) {
   types.setTypeParser(oid, Number);
 }
 
-const config = {
+const knexConfig = {
   client: 'postgresql',
   connection: {
     host: process.env.DATABASE_HOST,
@@ -28,4 +28,4 @@ const config = {
   },
 } as const;
 
-export default config;
+export default knexConfig;

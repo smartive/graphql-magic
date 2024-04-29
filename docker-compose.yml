@@ -8,6 +8,5 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_HOST_AUTH_METHOD: trust
-      TZ: 'Europe/Zurich'
     ports:
       - '5432:5432'

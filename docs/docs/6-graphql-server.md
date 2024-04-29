@@ -1,6 +1,6 @@
 # Graphql server
 
-## `executeQuery`
+## `executeGraphql`
 
 `graphql-magic` generates an `execute.ts` file for you, with this structure:
 
@@ -9,7 +9,6 @@ import knexConfig from "@/knexfile";
 import { Context, User, execute } from "@smartive/graphql-magic";
 import { randomUUID } from "crypto";
 import { knex } from 'knex';
-import { DateTime } from "luxon";
 import { models } from "../config/models";
 
 export const executeGraphql = async <T, V = undefined>(
@@ -32,7 +31,6 @@ export const executeGraphql = async <T, V = undefined>(
     user,
     models: models,
     permissions: { ADMIN: true, UNAUTHENTICATED: true },
-    now: DateTime.local(),
   });
   await db.destroy();
 

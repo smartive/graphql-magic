@@ -4,7 +4,6 @@ import { NotFoundError, PermissionError } from '../errors';
 import { EntityModel } from '../models/models';
 import { get, isRelation } from '../models/utils';
 import { AliasGenerator, hash, ors } from '../resolvers/utils';
-import { BasicValue } from '../values';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
 export const getRole = (ctx: Pick<FullContext, 'user'>) => ctx.user?.role ?? 'UNAUTHENTICATED';
@@ -89,7 +88,7 @@ export const applyPermissions = (
 export const getEntityToMutate = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
   model: EntityModel,
-  where: Record<string, BasicValue>,
+  where: Record<string, unknown>,
   action: 'UPDATE' | 'DELETE' | 'RESTORE'
 ) => {
   const query = ctx
@@ -132,7 +131,7 @@ export const getEntityToMutate = async (
 export const checkCanWrite = async (
   ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
   model: EntityModel,
-  data: Record<string, BasicValue>,
+  data: Record<string, unknown>,
   action: 'CREATE' | 'UPDATE'
 ) => {
   const permissionStack = getPermissionStack(ctx, model.name, action);
