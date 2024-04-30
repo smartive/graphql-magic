@@ -73,7 +73,7 @@ const DEFAULTS = {
           break;
         }
         case 'dayjs':
-          ensureFileContains(knexfilePath, 'luxon', KNEXFILE_DAYJS_TYPE_PARSERS);
+          ensureFileContains(knexfilePath, 'dayjs', KNEXFILE_DAYJS_TYPE_PARSERS);
           break;
         default:
           throw new Error('Invalid or unsupported date library.');
