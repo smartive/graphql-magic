@@ -17,13 +17,8 @@ const modelDefinitions: ModelDefinitions = [
 export const models = new Models(modelDefinitions);
 `;
 
-export const KNEXFILE = `import { DateTime } from 'luxon';
+export const KNEXFILE = `
 import { types } from 'pg';
-
-const dateOids = { date: 1082, timestamptz: 1184, timestamp: 1114 };
-for (const oid of Object.values(dateOids)) {
-  types.setTypeParser(oid, (val) => DateTime.fromSQL(val));
-}
 
 const numberOids = { int8: 20, float8: 701, numeric: 1700 };
 for (const oid of Object.values(numberOids)) {
@@ -50,6 +45,24 @@ const knexConfig = {
 export default knexConfig;
 `;
 
+export const KNEXFILE_LUXON_TYPE_PARSERS = (timeZone: string) => `
+import { DateTime } from 'luxon';
+
+const dateOids = { date: 1082, timestamptz: 1184, timestamp: 1114 };
+for (const oid of Object.values(dateOids)) {
+  types.setTypeParser(oid, (val) => DateTime.fromSQL(val, { zone: "${timeZone}" }));
+}
+`;
+
+export const KNEXFILE_DAYJS_TYPE_PARSERS = `
+import { dayjs } from 'dayjs';
+
+const dateOids = { date: 1082, timestamptz: 1184, timestamp: 1114 };
+for (const oid of Object.values(dateOids)) {
+  types.setTypeParser(oid, (val) => dayjs(val));
+}
+`;
+
 export const GET_ME = `import { gql } from '@smartive/graphql-magic';
 
 export const GET_ME = gql\`
@@ -66,7 +79,6 @@ import knexConfig from "@/knexfile";
 import { Context, User, execute } from "@smartive/graphql-magic";
 import { randomUUID } from "crypto";
 import { knex } from 'knex';
-import { DateTime } from "luxon";
 import { models } from "../config/models";
 
 export const executeGraphql = async <T, V = undefined>(
@@ -89,7 +101,6 @@ export const executeGraphql = async <T, V = undefined>(
     user,
     models: models,
     permissions: { ADMIN: true, UNAUTHENTICATED: true },
-    now: DateTime.local(),
   });
   await db.destroy();
 

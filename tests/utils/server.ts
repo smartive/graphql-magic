@@ -2,7 +2,6 @@ import { TypedQueryDocumentNode } from 'graphql';
 import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
 import { RequestListener, createServer } from 'http';
 import { Knex } from 'knex';
-import { DateTime } from 'luxon';
 import { up } from '../../migrations/20230912185644_setup';
 import { execute } from '../../src';
 import { getKnex } from './database/knex';
@@ -44,7 +43,8 @@ export const withServer = async (
 
   try {
     await up(knex);
-    await setupSeed(knex);
+    const now = '2020-01-01T00:00:00.000Z';
+    await setupSeed(knex, now);
 
     handler = async (req, res) => {
       const user = await knex('User').where({ id: ADMIN_ID }).first();
@@ -66,7 +66,7 @@ export const withServer = async (
         user,
         models,
         permissions,
-        now: DateTime.fromISO('2020-01-01T00:00:00.000Z'),
+        now,
         body,
       });
 

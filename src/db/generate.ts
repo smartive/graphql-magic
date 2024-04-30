@@ -1,6 +1,7 @@
 import CodeBlockWriter from 'code-block-writer';
 import { EntityField, get, getColumnName, isCustomField, isInTable, isRootModel, not } from '..';
 import { Models } from '../models/models';
+import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../utils/dates';
 
 const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -9,18 +10,17 @@ const PRIMITIVE_TYPES = {
   Int: 'number',
   Float: 'number',
   String: 'string',
-  DateTime: 'DateTime | string',
 };
 
 const OPTIONAL_SEED_FIELDS = ['createdAt', 'createdById', 'updatedAt', 'updatedById', 'deletedAt', 'deletedById'];
 
-export const generateDBModels = (models: Models) => {
+export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
   const writer: CodeBlockWriter = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });
 
-  writer.write(`import { DateTime } from 'luxon';`).blankLine();
+  writer.write(DATE_CLASS_IMPORT[dateLibrary]).blankLine();
 
   for (const enm of models.enums) {
     writer.write(`export type ${enm.name} = ${enm.values.map((v) => `'${v}'`).join(' | ')};`).blankLine();
@@ -36,7 +36,9 @@ export const generateDBModels = (models: Models) => {
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
         for (const field of fields.filter(not(isCustomField))) {
-          writer.write(`'${getColumnName(field)}': ${getFieldType(field)}${field.nonNull ? '' : ' | null'};`).newLine();
+          writer
+            .write(`'${getColumnName(field)}': ${getFieldType(field, dateLibrary)}${field.nonNull ? '' : ' | null'};`)
+            .newLine();
         }
       })
       .blankLine();
@@ -48,7 +50,9 @@ export const generateDBModels = (models: Models) => {
           writer
             .write(
               `'${getColumnName(field)}'${field.nonNull && field.defaultValue === undefined ? '' : '?'}: ${getFieldType(
-                field
+                field,
+                dateLibrary,
+                true
               )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'};`
             )
             .newLine();
@@ -62,7 +66,7 @@ export const generateDBModels = (models: Models) => {
         for (const field of fields.filter(not(isCustomField)).filter(isInTable)) {
           writer
             .write(
-              `'${getColumnName(field)}'?: ${getFieldType(field)}${field.list ? ' | string' : ''}${
+              `'${getColumnName(field)}'?: ${getFieldType(field, dateLibrary, true)}${field.list ? ' | string' : ''}${
                 field.nonNull ? '' : ' | null'
               };`
             )
@@ -84,7 +88,7 @@ export const generateDBModels = (models: Models) => {
               .write(
                 `'${getColumnName(field)}'${
                   field.nonNull && field.defaultValue === undefined && !OPTIONAL_SEED_FIELDS.includes(fieldName) ? '' : '?'
-                }: ${field.kind === 'enum' ? (field.list ? 'string[]' : 'string') : getFieldType(field)}${
+                }: ${field.kind === 'enum' ? (field.list ? 'string[]' : 'string') : getFieldType(field, dateLibrary, true)}${
                   field.list ? ' | string' : ''
                 }${field.nonNull ? '' : ' | null'};`
               )
@@ -104,7 +108,7 @@ export const generateDBModels = (models: Models) => {
   return writer.toString();
 };
 
-const getFieldType = (field: EntityField) => {
+const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: boolean) => {
   const kind = field.kind;
   switch (kind) {
     case 'json':
@@ -119,6 +123,9 @@ const getFieldType = (field: EntityField) => {
       throw new Error(`Custom fields are not in the db.`);
     case 'primitive':
     case undefined:
+      if (field.type === 'DateTime') {
+        return (input ? `(${DATE_CLASS[dateLibrary]} | string)` : DATE_CLASS[dateLibrary]) + (field.list ? '[]' : '');
+      }
       return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');
     default: {
       const exhaustiveCheck: never = kind;

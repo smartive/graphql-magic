@@ -1,7 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
+import { DateLibrary } from '../../utils/dates';
 import { readLine } from './readline';
-import { EMPTY_MODELS, EXECUTE, GET_ME, GITIGNORE, KNEXFILE } from './templates';
+import {
+  EMPTY_MODELS,
+  EXECUTE,
+  GET_ME,
+  GITIGNORE,
+  KNEXFILE,
+  KNEXFILE_DAYJS_TYPE_PARSERS,
+  KNEXFILE_LUXON_TYPE_PARSERS,
+} from './templates';
 
 const SETTINGS_PATH = '.gqmrc.json';
 
@@ -52,6 +61,32 @@ const DEFAULTS = {
   gqlModule: {
     defaultValue: '@smartive/graphql-magic',
   },
+  dateLibrary: {
+    question: 'Which date library to use (dayjs|luxon)?',
+    defaultValue: 'dayjs',
+    init: async (dateLibrary: DateLibrary) => {
+      const knexfilePath = await getSetting('knexfilePath');
+      switch (dateLibrary) {
+        case 'luxon': {
+          const timeZone = await getSetting('timeZone');
+          ensureFileContains(knexfilePath, 'luxon', KNEXFILE_LUXON_TYPE_PARSERS(timeZone));
+          break;
+        }
+        case 'dayjs':
+          ensureFileContains(knexfilePath, 'dayjs', KNEXFILE_DAYJS_TYPE_PARSERS);
+          break;
+        default:
+          throw new Error('Invalid or unsupported date library.');
+      }
+    },
+  },
+  timeZone: {
+    question: 'Which time zone to use?',
+    defaultValue: 'Europe/Zurich',
+    init: () => {
+      // Do nothing
+    },
+  },
 };
 
 type Settings = {
@@ -61,7 +96,7 @@ type Settings = {
 const initSetting = async (name: string) => {
   const { question, defaultValue, init } = DEFAULTS[name];
   const value = (await readLine(`${question} (${defaultValue})`)) || defaultValue;
-  init(value);
+  await init(value);
   return value;
 };
 

@@ -2,5 +2,7 @@
   "modelsPath": "tests/utils/models.ts",
   "generatedFolderPath": "tests/generated",
   "graphqlQueriesPath": "tests",
-  "gqlModule": "../../../src"
+  "gqlModule": "../../../src",
+  "knexfilePath": "knexfile.ts",
+  "dateLibrary": "luxon"
 }

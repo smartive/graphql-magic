@@ -8,6 +8,7 @@ export * from './models';
 export * from './permissions';
 export * from './resolvers';
 export * from './schema';
+export * from './utils';
 export * from './context';
 export * from './errors';
 export * from './values';

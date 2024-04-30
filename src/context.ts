@@ -1,18 +1,19 @@
 import { DocumentNode, GraphQLResolveInfo } from 'graphql';
 import { IncomingMessage } from 'http';
 import { Knex } from 'knex';
-import { DateTime } from 'luxon';
 import { Models } from './models/models';
 import { Entity, MutationHook } from './models/mutation-hook';
 import { Permissions } from './permissions/generate';
 import { AliasGenerator } from './resolvers/utils';
+import { AnyDateType } from './utils';
 
 // Minimal user structure required by graphql-magic
 export type User = { id: string; role: string };
 
-export type Context = {
+export type Context<DateType extends AnyDateType = AnyDateType> = {
   req: IncomingMessage;
-  now: DateTime;
+  now: DateType;
+  timeZone?: string;
   knex: Knex;
   document: DocumentNode;
   locale: string;
@@ -20,8 +21,11 @@ export type Context = {
   user?: User;
   models: Models;
   permissions: Permissions;
-  mutationHook?: MutationHook;
+  mutationHook?: MutationHook<DateType>;
   handleUploads?: (data: Entity) => Promise<void>;
 };
 
-export type FullContext = Context & { info: GraphQLResolveInfo; aliases: AliasGenerator };
+export type FullContext = Context & {
+  info: GraphQLResolveInfo;
+  aliases: AliasGenerator;
+};

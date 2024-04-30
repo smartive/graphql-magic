@@ -1,3 +1,4 @@
+import { Dayjs } from 'dayjs';
 import {
   ArgumentNode,
   DefinitionNode,
@@ -222,7 +223,13 @@ export const value = (val: Value = null): ValueNode =>
         kind: 'StringValue',
         value: val.toString(),
       }
-    : {
+    : val instanceof Dayjs
+    ? {
+        kind: 'StringValue',
+        value: val.toISOString(),
+      }
+    : typeof val === 'object'
+    ? {
         kind: 'ObjectValue',
         fields: Object.keys(val).map(
           (nme): ObjectFieldNode => ({
@@ -231,4 +238,9 @@ export const value = (val: Value = null): ValueNode =>
             value: value(val[nme]),
           })
         ),
-      };
+      }
+    : doThrow(`Unsupported value ${val}`);
+
+const doThrow = (message: string) => {
+  throw new Error(message);
+};

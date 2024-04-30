@@ -8,6 +8,7 @@ import { EntityField, EntityModel, EnumModel, Models } from '../models/models';
 import {
   and,
   get,
+  isCreatableModel,
   isInherited,
   isUpdatableField,
   isUpdatableModel,
@@ -147,9 +148,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !this.columns[model.name].some(
-                    (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-                  )
+                  !this.getColumn(model.name, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               ),
             up,
             down
@@ -157,7 +156,7 @@ export class MigrationGenerator {
 
           // Update fields
           const existingFields = model.fields.filter(({ name, kind, nonNull }) => {
-            const col = this.columns[model.name].find((col) => col.name === (kind === 'relation' ? `${name}Id` : name));
+            const col = this.getColumn(model.name, kind === 'relation' ? `${name}Id` : name);
             if (!col) {
               return false;
             }
@@ -216,9 +215,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !this.columns[revisionTable].some(
-                    (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-                  )
+                  !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
               );
 
             this.createRevisionFields(model, missingRevisionFields, up, down);
@@ -229,9 +226,7 @@ export class MigrationGenerator {
                 field.kind !== 'custom' &&
                 !updatable &&
                 !(field.kind === 'relation' && field.foreignKey === 'id') &&
-                this.columns[revisionTable].some(
-                  (col) => col.name === (field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
-                )
+                this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
             );
             this.createRevisionFields(model, revisionFieldsToRemove, down, up);
           }
@@ -241,12 +236,31 @@ export class MigrationGenerator {
 
     for (const model of models.entities) {
       if (tables.includes(model.name)) {
-        this.createFields(
-          model,
-          model.fields.filter(({ name, deleted }) => deleted && this.columns[model.name].some((col) => col.name === name)),
-          down,
-          up
-        );
+        const fieldsToDelete = model.fields.filter(({ name, deleted }) => deleted && this.getColumn(model.name, name));
+
+        if (!isCreatableModel(model)) {
+          if (this.getColumn(model.name, 'createdAt')) {
+            fieldsToDelete.push({ name: 'createdAt', type: 'DateTime', nonNull: true });
+          }
+
+          if (this.getColumn(model.name, 'createdBy')) {
+            fieldsToDelete.push({ name: 'createdBy', kind: 'relation', type: 'User', nonNull: true });
+          }
+        }
+
+        if (!isUpdatableModel(model)) {
+          if (this.getColumn(model.name, 'updatedAt')) {
+            fieldsToDelete.push({ name: 'updatedAt', type: 'DateTime', nonNull: true });
+          }
+
+          if (this.getColumn(model.name, 'updatedBy')) {
+            fieldsToDelete.push({ name: 'updatedBy', kind: 'relation', type: 'User', nonNull: true });
+          }
+        }
+
+        if (fieldsToDelete.length) {
+          this.createFields(model, fieldsToDelete, down, up);
+        }
 
         if (isUpdatableModel(model)) {
           this.createRevisionFields(
@@ -663,6 +677,10 @@ export class MigrationGenerator {
         throw new Error(exhaustiveCheck);
       }
     }
+  }
+
+  private getColumn(tableName: string, columnName: string) {
+    return this.columns[tableName].find((col) => col.name === columnName);
   }
 }
 

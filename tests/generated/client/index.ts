@@ -857,7 +857,7 @@ export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id
 export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ReverseFiltersQueryQuery = { all: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
+export type ReverseFiltersQueryQuery = { all: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat2: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
 
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1061,6 +1061,8 @@ export namespace ReverseFiltersQuery {
   export type ___manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0']>)[number]>['manyObjects']>)[number]>;
   export type noneFloat0_5 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>)[number]>;
   export type ____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>)[number]>['manyObjects']>)[number]>;
+  export type noneFloat2 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>;
+  export type _____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>['manyObjects']>)[number]>;
 }
 
 export namespace DeleteAnotherObjectMutation {

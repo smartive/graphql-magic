@@ -95,10 +95,10 @@ const nextConfig = {
 };
 ```
 
-Install `@smartive/graphql-magic`:
+Install `@smartive/graphql-magic` and needed dependencies:
 
 ```bash
-npm install @smartive/graphql-magic
+npm install @smartive/graphql-magic @graphql-codegen/typescript-compatibility
 ```
 
 Run the gqm cli:
@@ -123,7 +123,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_HOST_AUTH_METHOD: trust
-      TZ: 'Europe/Zurich'
     ports:
       - '5432:5432'
 ```
@@ -213,14 +212,14 @@ Now let's implement the `// TODO: get user` part in the `src/graphql/execute.ts`
 ```ts
   const session = await getSession();
   if (session) {
-    let dbUser = await db('User').where({ authId: session.user.sid }).first();
+    let dbUser = await db('User').where({ authId: session.user.sub }).first();
     if (!user) {
       await db('User').insert({
         id: randomUUID(),
-        authId: session.user.sid,
+        authId: session.user.sub,
         username: session.user.nickname
       })
-      dbUser = await db('User').where({ authId: session.user.sid }).first();
+      dbUser = await db('User').where({ authId: session.user.sub }).first();
     }
     user = {
       ...dbUser!,
@@ -322,6 +321,7 @@ Let's make a blog out of this app by adding new models in `src/config/models.ts`
         updatable: true,
       }
     ]
+  }
 ```
 
 Generate and run the new migrations and generate the new models:

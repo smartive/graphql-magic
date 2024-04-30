@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
 import { pick } from 'lodash';
-import { DateTime } from 'luxon';
 import { getColumnName, isInTable, modelNeedsTable } from '../../../src';
 import { SeedData } from '../../generated/db';
 import { models } from '../models';
@@ -78,19 +77,18 @@ export const seed: SeedData = {
   ],
 };
 
-export const setupSeed = async (knex: Knex) => {
-  const now = DateTime.now();
+export const setupSeed = async (knex: Knex, now: string) => {
   for (const [table, entities] of Object.entries(seed)) {
     const model = models.getModel(table, 'entity');
     const mappedEntities = entities.map((entity, i) => ({
       ...entity,
       ...(model.parent && { type: model.name }),
       ...(model.creatable && {
-        createdAt: now.plus({ second: i }),
+        createdAt: addSeconds(now, i),
         createdById: ADMIN_ID,
       }),
       ...(model.updatable && {
-        updatedAt: now.plus({ second: i }),
+        updatedAt: addSeconds(now, i),
         updatedById: ADMIN_ID,
       }),
     }));
@@ -111,4 +109,10 @@ export const setupSeed = async (knex: Knex) => {
       await knex.batchInsert(table, mappedEntities);
     }
   }
+};
+
+const addSeconds = (dateString: string, seconds: number) => {
+  const date = new Date(dateString);
+  date.setSeconds(date.getSeconds() + seconds);
+  return date.toISOString();
 };
