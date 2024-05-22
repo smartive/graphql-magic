@@ -316,7 +316,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
   return entity.id;
 };
 
-export const createRevision = async (model: EntityModel, data: Entity, ctx: Context) => {
+export const createRevision = async (model: EntityModel, data: Entity, ctx: Pick<Context, 'knex' | 'now' | 'user'>) => {
   if (model.updatable) {
     const revisionId = uuid();
     const rootRevisionData: Entity = {
