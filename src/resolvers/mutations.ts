@@ -369,7 +369,7 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
     }
 
     if (isEndOfDay(field) && data[key]) {
-      data[key] = anyDateToLuxon(data[key], ctx.timeZone);
+      data[key] = anyDateToLuxon(data[key], ctx.timeZone).endOf('day');
       continue;
     }
 
