@@ -78,7 +78,7 @@
     "@types/uuid": "9.0.8",
     "create-ts-index": "1.14.0",
     "del-cli": "5.1.0",
-    "esbuild": "0.21.4",
+    "esbuild": "0.21.5",
     "eslint": "8.57.0",
     "graphql-request": "6.1.0",
     "jest": "29.7.0",
