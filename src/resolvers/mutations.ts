@@ -270,7 +270,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     if (
       !relatedEntity.deleted ||
       !relatedEntity.deletedAt ||
-      anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone).equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone))
+      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone).equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone))
     ) {
       return;
     }
