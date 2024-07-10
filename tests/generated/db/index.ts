@@ -44,7 +44,7 @@ export type AnotherObjectInitializer = {
   'name'?: string | null;
   'myselfId'?: string | null;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -53,7 +53,7 @@ export type AnotherObjectMutator = {
   'name'?: string | null;
   'myselfId'?: string | null;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -62,7 +62,7 @@ export type AnotherObjectSeed = {
   'name'?: string | null;
   'myselfId'?: string | null;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -89,12 +89,12 @@ export type SomeObjectInitializer = {
   'float': number;
   'list': SomeEnum[] | string;
   'xyz': number;
-  'createdAt': DateTime;
+  'createdAt': (DateTime | string);
   'createdById': string;
-  'updatedAt': DateTime;
+  'updatedAt': (DateTime | string);
   'updatedById': string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -105,12 +105,12 @@ export type SomeObjectMutator = {
   'float'?: number;
   'list'?: SomeEnum[] | string;
   'xyz'?: number;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -121,12 +121,12 @@ export type SomeObjectSeed = {
   'float': number;
   'list': string[] | string;
   'xyz': number;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -149,12 +149,12 @@ export type ReactionInitializer = {
   'type': ReactionType;
   'parentId'?: string | null;
   'content'?: string | null;
-  'createdAt': DateTime;
+  'createdAt': (DateTime | string);
   'createdById': string;
-  'updatedAt': DateTime;
+  'updatedAt': (DateTime | string);
   'updatedById': string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -163,12 +163,12 @@ export type ReactionMutator = {
   'type'?: ReactionType;
   'parentId'?: string | null;
   'content'?: string | null;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -201,12 +201,12 @@ export type ReviewSeed = {
   'id': string;
   'parentId'?: string | null;
   'content'?: string | null;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
   'rating'?: number | null;
 }
@@ -237,12 +237,12 @@ export type QuestionSeed = {
   'id': string;
   'parentId'?: string | null;
   'content'?: string | null;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
@@ -272,12 +272,12 @@ export type AnswerSeed = {
   'id': string;
   'parentId'?: string | null;
   'content'?: string | null;
-  'createdAt'?: DateTime;
+  'createdAt'?: (DateTime | string);
   'createdById'?: string;
-  'updatedAt'?: DateTime;
+  'updatedAt'?: (DateTime | string);
   'updatedById'?: string;
   'deleted'?: boolean;
-  'deletedAt'?: DateTime | null;
+  'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
 }
 
