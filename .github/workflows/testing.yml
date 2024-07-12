@@ -20,9 +20,6 @@ jobs:
     container: node:${{ matrix.version }}-alpine
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.version }}
       - run: npm ci
       - run: npm run lint
       - run: npm run test:unit
