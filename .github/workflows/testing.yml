@@ -18,12 +18,40 @@ jobs:
     name: test and build package (node ${{ matrix.version }})
     runs-on: ubuntu-latest
     container: node:${{ matrix.version }}-alpine
+
+    services:
+      # Label used to access the service container
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_HOST_AUTH_METHOD: trust
+
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-      - uses: actions/checkout@v3
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:unit
-      - run: npm run build
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Run tests
+        run: npm run test:unit
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: postgres # Must match the service containers name
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
 
   test_all:
     if: ${{ always() }}
