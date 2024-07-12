@@ -46,9 +46,6 @@ jobs:
         run: npm run test
         env:
           DATABASE_HOST: postgres # Must match the service containers label
-          DATABASE_NAME: postgres
-          DATABASE_USER: postgres
-          DATABASE_PASSWORD: password
 
   test_all:
     if: ${{ always() }}
