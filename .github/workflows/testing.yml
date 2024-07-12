@@ -20,15 +20,12 @@ jobs:
     container: node:${{ matrix.version }}-alpine
 
     services:
-      # Label used to access the service container
-      postgres:
+      postgres: # Label used to access the service container
         image: postgres:13-alpine
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_HOST_AUTH_METHOD: trust
-
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -39,7 +36,8 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Install dependencies
         run: npm ci
       - name: Lint
@@ -47,7 +45,7 @@ jobs:
       - name: Run tests
         run: npm run test
         env:
-          DATABASE_HOST: postgres # Must match the service containers name
+          DATABASE_HOST: postgres # Must match the service containers label
           DATABASE_NAME: postgres
           DATABASE_USER: postgres
           DATABASE_PASSWORD: password
