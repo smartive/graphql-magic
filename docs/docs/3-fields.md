@@ -85,11 +85,11 @@ For more details, see section on [kinds](#kinds) below.
 
 ### `type`
 
-This represents the graphql "return type", which can be a primitive or a separate model (depending on the [kind](#kinds)).
+This represents the GraphQL "return type", which can be a primitive or a separate model (depending on the [kind](#kinds)).
 
 ### `description`
 
-Will appear as description in the graphql schema.
+Will appear as description in the GraphQL schema.
 
 ### `list`
 
@@ -97,11 +97,11 @@ If `list` is `true` the result is an array.
 
 ### `nonNull`
 
-Will make the field required both in the graphql schema and in the database.
+Will make the field required both in the GraphQL schema and in the database.
 
 ### `defaultValue`
 
-Will set this as default value in graphql mutations and in the database.
+Will set this as default value in GraphQL mutations and in the database.
 
 ### `args`
 
@@ -309,7 +309,7 @@ Available postfixes are:
 
 ### `queriable`
 
-`true` by default. If explicitly set to `false`, the field won't be queriable via graphql.
+`true` by default. If explicitly set to `false`, the field won't be queriable via GraphQL.
 
 Also accepts an object that defines a list of `roles` to restrict access to specific roles.
 

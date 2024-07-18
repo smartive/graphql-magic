@@ -18,7 +18,7 @@ module.exports = {
 
 ### Server side
 
-On the server side, and with `next.js` server actions, a graphql api becomes unnecessary, and you can execute queries directly using `executeGraphql`:
+On the server side, and with `next.js` server actions, a GraphQL API becomes unnecessary, and you can execute queries directly using `executeGraphql`:
 
 ```tsx
 import { GetMeQuery, GetPostsQuery } from "@/generated/client";
@@ -48,7 +48,7 @@ async function Posts({ me }: { me: GetMeQuery['me'] }) {
 
 ### Client side
 
-On the client, you'd need to set up a graphql endpoint and then query it like any other graphql api, such as with [`@apollo/client`](https://www.apollographql.com/docs/react/get-started).
+On the client, you'd need to set up a GraphQL endpoint and then query it like any other GraphQL API, such as with [`@apollo/client`](https://www.apollographql.com/docs/react/get-started).
 
 ```tsx
 import { GetMeQuery, GetPostsQuery } from "@/generated/client";
@@ -148,4 +148,4 @@ async function CreatePost() {
 }
 ```
 
-Just like with queries, if is necessary to perform mutations on the client, use a graphql client instead of `executeGraphql`.
+Just like with queries, if is necessary to perform mutations on the client, use a GraphQL client instead of `executeGraphql`.

@@ -35,7 +35,7 @@ These are the entity options:
 
 ### `description`
 
-Will appear as description in the graphql schema.
+Will appear as description in the GraphQL schema.
 
 ### `plural`
 
@@ -43,7 +43,7 @@ Will appear as description in the graphql schema.
 
 ### `creatable`
 
-When `creatable` is `true`, the entity can be created using a dedicated graphql `create<ModelName>` mutation.
+When `creatable` is `true`, the entity can be created using a dedicated GraphQL `create<ModelName>` mutation.
 
 For this to work, at least one entity field needs to be marked as `creatable`.
 
@@ -51,7 +51,7 @@ For this to work, at least one entity field needs to be marked as `creatable`.
 
 ### `updatable`
 
-When `updatable` is `true`, the entity can be created using a dedicated graphql `delete<ModelName>` mutation.
+When `updatable` is `true`, the entity can be created using a dedicated GraphQL `delete<ModelName>` mutation.
 
 For this to work, at least one entity field needs to be marked as `updatable`.
 
@@ -61,15 +61,15 @@ If a field is updatable, a `<ModelName>Revisions` table is created (containing o
 
 ### `deletable`
 
-When `deletable` is `true`, the entity can be created using a dedicated graphql `delete<ModelName>` mutation.
+When `deletable` is `true`, the entity can be created using a dedicated GraphQL `delete<ModelName>` mutation.
 
-This is a soft delete (the `deleted` field is set to `true`), and the entity can be restored with the graphql `restore<ModelName>` mutation.
+This is a soft delete (the `deleted` field is set to `true`), and the entity can be restored with the GraphQL `restore<ModelName>` mutation.
 
 `deletable` also accepts an object to override properties of the implicitly generated `deleted`, `deletedBy` and `deletedAt` fields.
 
 ### `queriable`
 
-When `queriable` is `true` a graphql `Query` becomes available to fetch exactly one element by id.
+When `queriable` is `true` a GraphQL `Query` becomes available to fetch exactly one element by id.
 
 For example, with
 
@@ -82,7 +82,7 @@ For example, with
 }
 ```
 
-the following graphql query becomes possible
+the following GraphQL query becomes possible
 
 ```graphql
 query {
@@ -94,7 +94,7 @@ query {
 
 ### `listQueriable`
 
-When `listQueriable` is `true` a graphql `Query` becomes available to fetch a list of elements of this model.
+When `listQueriable` is `true` a GraphQL `Query` becomes available to fetch a list of elements of this model.
 
 For example, with
 
@@ -107,7 +107,7 @@ For example, with
 }
 ```
 
-the following graphql query becomes possible
+the following GraphQL query becomes possible
 
 ```graphql
 query {
@@ -123,7 +123,7 @@ The name of the field that ought to be used as display value, e.g. a `Post`'s `t
 
 ### `defaultOrderBy`
 
-An array of orders with the same structure as the `orderBy` parameters in graphql queries. The implicit default order by is `[{ createdAt: 'DESC }]`.
+An array of orders with the same structure as the `orderBy` parameters in GraphQL queries. The implicit default order by is `[{ createdAt: 'DESC }]`.
 
 ### `fields`
 
@@ -131,7 +131,7 @@ An array of fields. See [fields](./fields)
 
 ## Scalars
 
-Used for graphql scalars, e.g.
+Used for GraphQL scalars, e.g.
 
 ```ts
 {
