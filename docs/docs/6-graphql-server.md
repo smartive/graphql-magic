@@ -39,7 +39,7 @@ export const executeGraphql = async <T, V = undefined>(
 }
 ```
 
-This is where you can set up your graphql server with
+This is where you can set up your GraphQL server with
 
 * user authentication (see the [Tutorial](./tutorial) for an example with auth0)
 * custom resolvers (see [Custom resolvers](#custom-resolvers))
@@ -47,8 +47,8 @@ This is where you can set up your graphql server with
 
 ## Graphql API
 
-If you only need to execute graphql on the server (e.g. on `next.js` server components or server actions), you don't need a graphql endpoint.
-If you need client side querying, use `executeGraphql` to create a graphql endpoint, e.g. in `src/app/api/graphql/route.ts`:
+If you only need to execute GraphQL on the server (e.g. on `next.js` server components or server actions), you don't need a GraphQL endpoint.
+If you need client side querying, use `executeGraphql` to create a GraphQL endpoint, e.g. in `src/app/api/graphql/route.ts`:
 
 ```ts
 export const POST = (req) => {
