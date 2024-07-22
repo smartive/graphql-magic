@@ -55,7 +55,7 @@
     "dayjs": "^1.11.10",
     "dotenv": "^16.3.1",
     "graphql": "^15.8.0",
-    "inflection": "^2.0.1",
+    "inflection": "^3.0.0",
     "knex": "^3.0.1",
     "knex-schema-inspector": "^3.1.0",
     "lodash": "^4.17.21",
