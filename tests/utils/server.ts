@@ -8,31 +8,23 @@ import { getKnex } from './database/knex';
 import { ADMIN_ID, setupSeed } from './database/seed';
 import { models, permissions } from './models';
 
-const MIN_PORT = 49152;
-const MAX_PORT = 65535;
-
 export const withServer = async (
   cb: (
     request: (document: RequestDocument | TypedQueryDocumentNode, ...variablesAndRequestHeaders: any) => Promise<any>,
     knex: Knex
   ) => Promise<void>
 ) => {
-  // eslint-disable-next-line prefer-const
   let handler: RequestListener;
-  let port: number;
   const server = createServer((req, res) => handler(req, res));
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    try {
-      port = Math.floor(Math.random() * (MAX_PORT - MIN_PORT + 1)) + MIN_PORT;
-      await new Promise<void>((res, rej) => server.listen(port, res).once('error', rej));
-      break;
-    } catch (e) {
-      console.warn(`Wait did we really get a port collision? Craaaaazy.`);
-      console.warn(e);
-    }
-  }
+  const port = await new Promise<number>((res, rej) =>
+    server
+      .listen() // Listen on a random free port (assigned by the OS)
+      .once('listening', function () {
+        res(this.address().port);
+      })
+      .once('error', rej)
+  );
 
   const rootKnex = getKnex();
   const dbName = `test_${port}`;
