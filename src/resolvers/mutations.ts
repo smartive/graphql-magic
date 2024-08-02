@@ -1,8 +1,9 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { DateTimeUnit } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { Context, FullContext } from '../context';
-import { ForbiddenError, GraphQLError } from '../errors';
-import { EntityField, EntityModel } from '../models/models';
+import { ForbiddenError, GraphQLError, UserInputError } from '../errors';
+import { EntityModel } from '../models/models';
 import { Entity } from '../models/mutation-hook';
 import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
@@ -368,9 +369,33 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
       continue;
     }
 
-    if (isEndOfDay(field) && data[key]) {
-      data[key] = anyDateToLuxon(data[key], ctx.timeZone).endOf('day');
-      continue;
+    if (isPrimitive(field) && field.type === 'DateTime' && data[key]) {
+      let date = anyDateToLuxon(data[key], ctx.timeZone);
+      const period: DateTimeUnit =
+        field.dateTimeType === 'date'
+          ? 'day'
+          : field.dateTimeType === 'year_and_month'
+          ? 'month'
+          : field.dateTimeType === 'year'
+          ? 'year'
+          : undefined;
+
+      if (period) {
+        if (field.endOfPeriod) {
+          if (!date.equals(date.startOf(period))) {
+            if (date.equals(date.startOf(period))) {
+              date = date.endOf(period);
+            } else {
+              throw new UserInputError(`Date ${data[key]} for ${key} is not at the end (or beginning) of the ${period}.`);
+            }
+          }
+        } else {
+          if (!date.equals(date.startOf('day'))) {
+            throw new UserInputError(`Date ${data[key]} for ${key} is not at the beginning of the ${period}.`);
+          }
+        }
+      }
+      data[key] = date;
     }
 
     if (field.list && field.kind === 'enum' && Array.isArray(data[key])) {
@@ -379,6 +404,3 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
     }
   }
 };
-
-const isEndOfDay = (field?: EntityField) =>
-  isPrimitive(field) && field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date';
