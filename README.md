@@ -7,6 +7,10 @@ See the [docs](https://)
 ## Development
 
 ```
+npm run deps
+```
+
+```
 npm bootstrap
 ```
 

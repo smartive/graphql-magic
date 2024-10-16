@@ -1,5 +1,5 @@
 import { gql } from '../../src';
-import { ANOTHER_ID, SOME_ID } from '../utils/database/seed';
+import { ANOTHER_ID, SOME_ID, SOME_ID_2 } from '../utils/database/seed';
 import { withServer } from '../utils/server';
 
 describe('query', () => {
@@ -66,6 +66,48 @@ describe('query', () => {
               manyObjects {
                 float
               }
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
+
+  it('NOT works', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query NotQuery {
+            manyObjects(where: { NOT: { id: "${SOME_ID}" } }, orderBy: [{ xyz: DESC }]) {
+              id
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
+
+  it('AND works', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query AndQuery {
+            manyObjects(where: { xyz: 2, AND: [{ id: "${SOME_ID_2}" }] }, orderBy: [{ xyz: DESC }]) {
+              id
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
+
+  it('OR works', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query OrQuery {
+            manyObjects(where: { OR: [{ id: "${SOME_ID}" }, { id: "${SOME_ID_2}"}] }, orderBy: [{ xyz: DESC }]) {
+              id
             }
           }
         `)

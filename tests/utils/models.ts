@@ -104,6 +104,7 @@ const modelDefinitions: ModelDefinitions = [
         creatable: true,
         updatable: true,
         orderable: true,
+        filterable: true,
       },
     ],
   },

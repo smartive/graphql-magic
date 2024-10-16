@@ -95,6 +95,20 @@ export const generateDefinitions = ({
                 type: `${relation.targetModel.name}Where`,
               },
             ]),
+          {
+            name: 'NOT',
+            type: `${model.name}Where`,
+          },
+          {
+            name: 'AND',
+            type: `${model.name}Where`,
+            list: true,
+          },
+          {
+            name: 'OR',
+            type: `${model.name}Where`,
+            list: true,
+          },
         ]),
         input(
           `${model.name}WhereUnique`,

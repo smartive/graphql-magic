@@ -51,6 +51,9 @@ export type AnotherObjectOrderBy = {
 };
 
 export type AnotherObjectWhere = {
+  AND?: InputMaybe<Array<AnotherObjectWhere>>;
+  NOT?: InputMaybe<AnotherObjectWhere>;
+  OR?: InputMaybe<Array<AnotherObjectWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
@@ -119,6 +122,9 @@ export type AnswerOrderBy = {
 };
 
 export type AnswerWhere = {
+  AND?: InputMaybe<Array<AnswerWhere>>;
+  NOT?: InputMaybe<AnswerWhere>;
+  OR?: InputMaybe<Array<AnswerWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -418,6 +424,9 @@ export type QuestionOrderBy = {
 };
 
 export type QuestionWhere = {
+  AND?: InputMaybe<Array<QuestionWhere>>;
+  NOT?: InputMaybe<QuestionWhere>;
+  OR?: InputMaybe<Array<QuestionWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -489,6 +498,9 @@ export enum ReactionType {
 }
 
 export type ReactionWhere = {
+  AND?: InputMaybe<Array<ReactionWhere>>;
+  NOT?: InputMaybe<ReactionWhere>;
+  OR?: InputMaybe<Array<ReactionWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -556,6 +568,9 @@ export type ReviewOrderBy = {
 };
 
 export type ReviewWhere = {
+  AND?: InputMaybe<Array<ReviewWhere>>;
+  NOT?: InputMaybe<ReviewWhere>;
+  OR?: InputMaybe<Array<ReviewWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
@@ -609,10 +624,14 @@ export type SomeObjectOrderBy = {
 };
 
 export type SomeObjectWhere = {
+  AND?: InputMaybe<Array<SomeObjectWhere>>;
+  NOT?: InputMaybe<SomeObjectWhere>;
+  OR?: InputMaybe<Array<SomeObjectWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 export type SomeObjectWhereUnique = {
@@ -797,6 +816,9 @@ export type UserupdatedReviewsArgs = {
 };
 
 export type UserWhere = {
+  AND?: InputMaybe<Array<UserWhere>>;
+  NOT?: InputMaybe<UserWhere>;
+  OR?: InputMaybe<Array<UserWhere>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -858,6 +880,21 @@ export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>
 
 
 export type ReverseFiltersQueryQuery = { all: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat2: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
+
+export type NotQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NotQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+
+export type AndQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AndQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+
+export type OrQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OrQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
 
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1063,6 +1100,24 @@ export namespace ReverseFiltersQuery {
   export type ____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>)[number]>['manyObjects']>)[number]>;
   export type noneFloat2 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>;
   export type _____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>['manyObjects']>)[number]>;
+}
+
+export namespace NotQuery {
+  export type Variables = NotQueryQueryVariables;
+  export type query = NotQueryQuery;
+  export type manyObjects = NonNullable<(NonNullable<NotQueryQuery['manyObjects']>)[number]>;
+}
+
+export namespace AndQuery {
+  export type Variables = AndQueryQueryVariables;
+  export type query = AndQueryQuery;
+  export type manyObjects = NonNullable<(NonNullable<AndQueryQuery['manyObjects']>)[number]>;
+}
+
+export namespace OrQuery {
+  export type Variables = OrQueryQueryVariables;
+  export type query = OrQueryQuery;
+  export type manyObjects = NonNullable<(NonNullable<OrQueryQuery['manyObjects']>)[number]>;
 }
 
 export namespace DeleteAnotherObjectMutation {
