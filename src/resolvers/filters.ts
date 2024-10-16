@@ -84,6 +84,36 @@ const applyWhere = (node: WhereNode, where: Where, ops: QueryBuilderOps, joins: 
   for (const key of Object.keys(where)) {
     const value = where[key];
 
+    if (key === 'NOT') {
+      const subOps: QueryBuilderOps = [];
+      applyWhere(node, value as Where, subOps, joins);
+      ops.push((query) => query.whereNot((subQuery) => apply(subQuery, subOps)));
+      continue;
+    }
+
+    if (key === 'AND') {
+      for (const subWhere of value as Where[]) {
+        applyWhere(node, subWhere, ops, joins);
+      }
+      continue;
+    }
+
+    if (key === 'OR') {
+      const allSubOps: QueryBuilderOps[] = [];
+      for (const subWhere of value as Where[]) {
+        const subOps: QueryBuilderOps = [];
+        applyWhere(node, subWhere, subOps, joins);
+        allSubOps.push(subOps);
+      }
+      ops.push((query) =>
+        ors(
+          query,
+          allSubOps.map((subOps) => (subQuery) => apply(subQuery, subOps))
+        )
+      );
+      continue;
+    }
+
     const specialFilter = key.match(/^(\w+)_(\w+)$/);
     if (specialFilter) {
       const [, actualKey, filter] = specialFilter;
