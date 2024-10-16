@@ -2,7 +2,7 @@
 
 Welcome to graphql-magic!
 
-See the [docs](https://smartive.github.io/graphql-magic/)
+See the incredibly up-to-date [docs](https://smartive.github.io/graphql-magic/).
 
 ## Development
 
