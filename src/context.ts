@@ -1,4 +1,4 @@
-import { DocumentNode, GraphQLResolveInfo } from 'graphql';
+import { GraphQLResolveInfo } from 'graphql';
 import { IncomingMessage } from 'http';
 import { Knex } from 'knex';
 import { Models } from './models/models';
@@ -15,7 +15,6 @@ export type Context<DateType extends AnyDateType = AnyDateType> = {
   now: DateType;
   timeZone?: string;
   knex: Knex;
-  document: DocumentNode;
   locale: string;
   locales: string[];
   user?: User;

@@ -1,9 +1,11 @@
+import { readFileSync } from 'fs';
 import { TypedQueryDocumentNode } from 'graphql';
 import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
 import { RequestListener, createServer } from 'http';
 import { Knex } from 'knex';
 import { up } from '../../migrations/20230912185644_setup';
 import { execute } from '../../src';
+import { resolvers } from '../generated/resolvers';
 import { getKnex } from './database/knex';
 import { ADMIN_ID, setupSeed } from './database/seed';
 import { models, permissions } from './models';
@@ -50,7 +52,10 @@ export const withServer = async (
             res(JSON.parse(Buffer.concat(chunks).toString()));
           });
       });
+
       const result = await execute({
+        typeDefs: readFileSync('tests/generated/schema.graphql', 'utf8'),
+        resolvers,
         req,
         knex,
         locale: 'en',

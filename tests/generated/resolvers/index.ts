@@ -1,0 +1,41 @@
+import { mutationResolver, queryResolver } from '../../../src';
+
+export const resolvers = {
+  Query: {
+    me: queryResolver,
+    someObject: queryResolver,
+    reaction: queryResolver,
+    review: queryResolver,
+    question: queryResolver,
+    answer: queryResolver,
+    anotherObjects: queryResolver,
+    manyObjects: queryResolver,
+    reactions: queryResolver,
+    reviews: queryResolver,
+    questions: queryResolver,
+    answers: queryResolver,
+  },
+  Mutation: {
+    createSomeObject: mutationResolver,
+    createReview: mutationResolver,
+    createQuestion: mutationResolver,
+    createAnswer: mutationResolver,
+    updateSomeObject: mutationResolver,
+    updateReview: mutationResolver,
+    updateQuestion: mutationResolver,
+    updateAnswer: mutationResolver,
+    deleteAnotherObject: mutationResolver,
+    restoreAnotherObject: mutationResolver,
+    deleteSomeObject: mutationResolver,
+    restoreSomeObject: mutationResolver,
+    deleteReview: mutationResolver,
+    restoreReview: mutationResolver,
+    deleteQuestion: mutationResolver,
+    restoreQuestion: mutationResolver,
+    deleteAnswer: mutationResolver,
+    restoreAnswer: mutationResolver,
+  },
+  Reaction: {
+    resolveType: ({ TYPE }) => TYPE,
+  },
+};

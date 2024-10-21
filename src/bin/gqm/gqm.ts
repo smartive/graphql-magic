@@ -12,6 +12,7 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
+import { generateResolvers } from '../../resolvers/generate';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
@@ -43,6 +44,7 @@ program
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
     await generateGraphqlApiTypes(dateLibrary);
     await generateGraphqlClientTypes();
+    writeToFile(`${generatedFolderPath}/resolvers/index.ts`, generateResolvers(models, gqlModule));
   });
 
 program
