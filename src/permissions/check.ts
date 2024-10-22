@@ -2,8 +2,9 @@ import { Knex } from 'knex';
 import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { EntityModel } from '../models/models';
-import { get, isRelation } from '../models/utils';
+import { isRelation } from '../models/utils';
 import { AliasGenerator, hash, ors } from '../resolvers/utils';
+import { get } from '../utils/getters';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
 export const getRole = (ctx: Pick<FullContext, 'user'>) => ctx.user?.role ?? 'UNAUTHENTICATED';

@@ -1,8 +1,8 @@
-import { DocumentNode, GraphQLResolveInfo } from 'graphql';
+import { GraphQLResolveInfo } from 'graphql';
 import { IncomingMessage } from 'http';
 import { Knex } from 'knex';
 import { Models } from './models/models';
-import { Entity, MutationHook } from './models/mutation-hook';
+import { MutationHook } from './models/mutation-hook';
 import { Permissions } from './permissions/generate';
 import { AliasGenerator } from './resolvers/utils';
 import { AnyDateType } from './utils';
@@ -15,17 +15,15 @@ export type Context<DateType extends AnyDateType = AnyDateType> = {
   now: DateType;
   timeZone?: string;
   knex: Knex;
-  document: DocumentNode;
   locale: string;
   locales: string[];
   user?: User;
   models: Models;
   permissions: Permissions;
   mutationHook?: MutationHook<DateType>;
-  handleUploads?: (data: Entity) => Promise<void>;
 };
 
-export type FullContext = Context & {
+export type FullContext<DateType extends AnyDateType = AnyDateType> = Context<DateType> & {
   info: GraphQLResolveInfo;
   aliases: AliasGenerator;
 };

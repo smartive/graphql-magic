@@ -10,8 +10,10 @@ import {
   generateKnexTables,
   generateMutations,
   getMigrationDate,
+  printSchemaAsVariables as printSchemaAsVariable,
   printSchemaFromModels,
 } from '../..';
+import { generateResolvers } from '../../resolvers/generate';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
@@ -35,14 +37,16 @@ program
     await getSetting('knexfilePath');
     const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    const gqlModule = await getSetting('gqlModule');
+    const gqmModule = await getSetting('gqmModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/schema/index.ts`, printSchemaAsVariable(models));
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models));
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
     await generateGraphqlApiTypes(dateLibrary);
     await generateGraphqlClientTypes();
+    writeToFile(`${generatedFolderPath}/resolvers/index.ts`, generateResolvers(models, { dateLibrary, gqmModule }));
   });
 
 program

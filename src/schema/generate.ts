@@ -1,6 +1,6 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import { Models } from '../models/models';
-import { isQueriableField, isRootModel, typeToField } from '../models/utils';
+import { isQueriableField, isRootModel } from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar } from './utils';
 
 export const generateDefinitions = ({
@@ -174,14 +174,14 @@ export const generateDefinitions = ({
       },
       ...entities
         .filter(({ queriable }) => queriable)
-        .map(({ name }) => ({
-          name: typeToField(name),
-          type: name,
+        .map((model) => ({
+          name: model.asField,
+          type: model.name,
           nonNull: true,
           args: [
             {
               name: 'where',
-              type: `${name}WhereUnique`,
+              type: `${model.name}WhereUnique`,
               nonNull: true,
             },
           ],
@@ -308,3 +308,7 @@ export const printSchema = (schema: GraphQLSchema): string =>
 export const printSchemaFromDocument = (document: DocumentNode) => printSchema(buildASTSchema(document));
 
 export const printSchemaFromModels = (models: Models) => printSchema(buildASTSchema(generate(models)));
+
+export const printSchemaAsVariables = (models: Models) => {
+  return `import { gql } from 'graphql-request';\n\nexport const typeDefs = gql\`${printSchemaFromModels(models)}\`;\n`;
+};
