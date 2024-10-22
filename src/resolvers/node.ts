@@ -9,7 +9,8 @@ import type {
 
 import { FullContext } from '../context';
 import { EntityModel, Relation } from '../models/models';
-import { get, isObjectModel, summonByKey } from '../models/utils';
+import { isObjectModel } from '../models/utils';
+import { get, summonByKey } from '../utils/getters';
 import {
   getFragmentTypeName,
   getNameOrAlias,

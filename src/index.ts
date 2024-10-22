@@ -1,6 +1,5 @@
 // created from 'create-ts-index'
 
-export * from './api';
 export * from './client';
 export * from './db';
 export * from './migrations';

@@ -63,7 +63,7 @@ for (const oid of Object.values(dateOids)) {
 }
 `;
 
-export const GET_ME = `import { gql } from '@smartive/graphql-magic';
+export const GET_ME = `import { gql } from 'graphql-request';
 
 export const GET_ME = gql\`
   query GetMe {

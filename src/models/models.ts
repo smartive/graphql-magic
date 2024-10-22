@@ -2,6 +2,7 @@ import { pluralize } from 'inflection';
 import { cloneDeep, kebabCase, omit, pick } from 'lodash';
 import { isRelation } from '.';
 import {
+  Action,
   CustomFieldDefinition,
   EnumFieldDefinition,
   FloatFieldDefinition,
@@ -17,6 +18,7 @@ import {
   StringFieldDefinition,
   UploadFieldDefinition,
 } from '..';
+import { get, summonByName } from '../utils/getters';
 import {
   BooleanFieldDefinition,
   DateTimeFieldDefinition,
@@ -28,7 +30,7 @@ import {
   ObjectFieldDefinition,
   RelationFieldDefinition,
 } from './model-definitions';
-import { get, getLabel, summonByName, typeToField } from './utils';
+import { getLabel, typeToField } from './utils';
 
 // These might one day become classes
 
@@ -330,6 +332,7 @@ export class EntityModel extends Model {
   private _reverseRelationsByName: Record<string, ReverseRelation>;
   private _manyToManyRelations: ManyToManyRelation[];
   private _manyToManyRelationsByName: Record<string, ManyToManyRelation>;
+  public asField: string;
   public pluralField: string;
   public slug: string;
   public labelPlural: string;
@@ -339,6 +342,7 @@ export class EntityModel extends Model {
   constructor(models: Models, definition: EntityModelDefinition) {
     super(models, definition);
     Object.assign(this, omit(definition, 'name', 'plural', 'description'));
+    this.asField = typeToField(this.name);
     this.pluralField = typeToField(this.plural);
     this.slug = kebabCase(this.plural);
     this.labelPlural = getLabel(this.plural);
@@ -373,6 +377,15 @@ export class EntityModel extends Model {
 
   public getRelation(name: string) {
     return get(this.relationsByName, name);
+  }
+
+  public getActionableRelations(action: Action | 'filter') {
+    return this.relations.filter(
+      (relation) =>
+        relation.field[
+          `${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable'
+        ]
+    );
   }
 
   public get reverseRelations() {
@@ -488,8 +501,7 @@ export class NormalRelation extends Relation {
 export class ReverseRelation extends Relation {
   constructor(public reverse: NormalRelation) {
     super(
-      reverse.field.reverse ||
-        (reverse.field.toOne ? typeToField(reverse.sourceModel.name) : reverse.sourceModel.pluralField),
+      reverse.field.reverse || (reverse.field.toOne ? reverse.sourceModel.asField : reverse.sourceModel.pluralField),
       reverse.targetModel,
       reverse.field,
       reverse.sourceModel

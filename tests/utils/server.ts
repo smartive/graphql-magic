@@ -1,11 +1,12 @@
-import { readFileSync } from 'fs';
-import { TypedQueryDocumentNode } from 'graphql';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { execute, GraphQLResolveInfo, parse, Source, TypedQueryDocumentNode } from 'graphql';
 import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
-import { RequestListener, createServer } from 'http';
+import { createServer, RequestListener } from 'http';
 import { Knex } from 'knex';
 import { up } from '../../migrations/20230912185644_setup';
-import { execute } from '../../src';
+import { Context, get } from '../../src';
 import { resolvers } from '../generated/resolvers';
+import { typeDefs } from '../generated/schema';
 import { getKnex } from './database/knex';
 import { ADMIN_ID, setupSeed } from './database/seed';
 import { models, permissions } from './models';
@@ -53,9 +54,7 @@ export const withServer = async (
           });
       });
 
-      const result = await execute({
-        typeDefs: readFileSync('tests/generated/schema.graphql', 'utf8'),
-        resolvers,
+      const contextValue: Context = {
         req,
         knex,
         locale: 'en',
@@ -64,7 +63,22 @@ export const withServer = async (
         models,
         permissions,
         now,
-        body,
+      };
+      const result = await execute({
+        schema: makeExecutableSchema({
+          typeDefs,
+          resolvers,
+        }),
+        document: parse(new Source(body.query, 'GraphQL request')),
+        contextValue,
+        variableValues: body.variables,
+        operationName: body.operationName,
+        fieldResolver: (parent, _args, _ctx, info: GraphQLResolveInfo) => {
+          const node = get(info.fieldNodes, 0);
+          const alias = node.alias;
+
+          return parent[alias ? alias.value : node.name.value];
+        },
       });
 
       res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -58,7 +58,7 @@ const DEFAULTS = {
       ensureFileExists(`${path}/execute.ts`, EXECUTE);
     },
   },
-  gqlModule: {
+  gqmModule: {
     defaultValue: '@smartive/graphql-magic',
   },
   dateLibrary: {

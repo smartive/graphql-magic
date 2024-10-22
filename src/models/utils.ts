@@ -1,6 +1,4 @@
-import assert from 'assert';
-import { camelCase, startCase } from 'lodash';
-import lodashGet from 'lodash/get';
+import { camelCase, lowerFirst, startCase } from 'lodash';
 import {
   CustomField,
   EntityField,
@@ -22,8 +20,7 @@ const isNotFalsy = <T>(v: T | null | undefined | false): v is T => typeof v !== 
 export const merge = <T>(objects: ({ [name: string]: T } | undefined | false)[] | undefined): { [name: string]: T } =>
   (objects || []).filter(isNotFalsy).reduce((i, acc) => ({ ...acc, ...i }), {});
 
-// Target -> target
-export const typeToField = (type: string) => type.substr(0, 1).toLowerCase() + type.substr(1);
+export const typeToField = (type: string) => lowerFirst(type);
 
 export const getLabel = (s: string) => startCase(camelCase(s));
 
@@ -108,60 +105,6 @@ export const isUpdatableBy = (role: string) => (field: EntityField) =>
 export const isCreatableBy = (role: string) => (field: EntityField) =>
   field.creatable && (field.creatable === true || !field.creatable.roles || field.creatable.roles.includes(role));
 
-export const getActionableRelations = (model: EntityModel, action: 'create' | 'update' | 'filter') =>
-  model.relations
-    .filter(
-      (relation) =>
-        relation.field[
-          `${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable'
-        ]
-    )
-    .map(({ name }) => name);
-
-export const summonByName = <T extends { name: string }>(array: T[], value: string) => summonByKey(array, 'name', value);
-
-export const summonByKey = <T>(array: readonly T[] | undefined, key: string, value: unknown) =>
-  summon(array, (element: T) => lodashGet(element, key) === value, `No element found with ${key} ${value}`);
-
-export const summon = <T>(array: readonly T[] | undefined, cb: Parameters<T[]['find']>[1], errorMessage?: string) => {
-  if (array === undefined) {
-    console.trace();
-    throw new Error('Base array is not defined.');
-  }
-  const result = array.find(cb);
-  if (result === undefined) {
-    console.trace();
-    throw new Error(errorMessage || 'Element not found.');
-  }
-  return result;
-};
-
-type ForSure<T> = T extends undefined | null ? never : T;
-
-export const it = <T>(object: T | null | undefined): ForSure<T> => {
-  if (object === undefined || object === null) {
-    console.trace();
-    throw new Error('Base object is not defined.');
-  }
-
-  return object as ForSure<T>;
-};
-
-export const get = <T, U extends keyof ForSure<T>>(object: T | null | undefined, key: U): ForSure<ForSure<T>[U]> => {
-  const value = it(object)[key];
-  if (value === undefined || value === null) {
-    const error = new Error(`Object doesn't have ${String(key)}`);
-    console.warn(error);
-    throw error;
-  }
-  return value as ForSure<ForSure<T>[U]>;
-};
-
-export const getString = (v: unknown) => {
-  assert(typeof v === 'string');
-  return v;
-};
-
 export const retry = async <T>(cb: () => Promise<T>, condition: (e: any) => boolean) => {
   try {
     return await cb();
@@ -172,24 +115,4 @@ export const retry = async <T>(cb: () => Promise<T>, condition: (e: any) => bool
       throw e;
     }
   }
-};
-
-type Typeof = {
-  string: string;
-  number: number;
-  bigint: bigint;
-  boolean: boolean;
-  symbol: symbol;
-  undefined: undefined;
-  object: object;
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  function: Function;
-};
-
-export const as = <T extends keyof Typeof>(value: unknown, type: T): Typeof[T] => {
-  if (typeof value !== type) {
-    throw new Error(`No string`);
-  }
-
-  return value as Typeof[T];
 };

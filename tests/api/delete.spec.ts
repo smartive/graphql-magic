@@ -1,4 +1,4 @@
-import { gql } from '../../src';
+import { gql } from 'graphql-request';
 import { ANOTHER_ID } from '../utils/database/seed';
 import { withServer } from '../utils/server';
 

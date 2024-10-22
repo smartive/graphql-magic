@@ -11,13 +11,13 @@ exports[`inheritance mutations create 1`] = `
 
 exports[`inheritance mutations delete and restore 1`] = `
 {
-  "deleteReview": "817c55de-2f77-4159-bd44-9837d868f889",
+  "mutated": "817c55de-2f77-4159-bd44-9837d868f889",
 }
 `;
 
 exports[`inheritance mutations delete and restore 2`] = `
 {
-  "restoreReview": "817c55de-2f77-4159-bd44-9837d868f889",
+  "mutated": "817c55de-2f77-4159-bd44-9837d868f889",
 }
 `;
 

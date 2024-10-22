@@ -7,13 +7,13 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  DateTime: { input: string; output: string; }
-  Upload: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  DateTime: { input: string; output: string };
+  Upload: { input: any; output: any };
 };
 
 export type AnotherObject = {
@@ -28,7 +28,6 @@ export type AnotherObject = {
   self: Maybe<AnotherObject>;
 };
 
-
 export type AnotherObjectmanyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -36,7 +35,6 @@ export type AnotherObjectmanyObjectsArgs = {
   search?: InputMaybe<Scalars['String']['input']>;
   where?: InputMaybe<SomeObjectWhere>;
 };
-
 
 export type AnotherObjectselfArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -83,14 +81,12 @@ export type Answer = Reaction & {
   updatedBy: User;
 };
 
-
 export type AnswerchildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type AnswerchildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -99,14 +95,12 @@ export type AnswerchildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type AnswerchildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type AnswerchildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -172,99 +166,81 @@ export type Mutation = {
   updateSomeObject: SomeObject;
 };
 
-
 export type MutationcreateAnswerArgs = {
   data: CreateAnswer;
 };
-
 
 export type MutationcreateQuestionArgs = {
   data: CreateQuestion;
 };
 
-
 export type MutationcreateReviewArgs = {
   data: CreateReview;
 };
 
-
 export type MutationcreateSomeObjectArgs = {
   data: CreateSomeObject;
 };
-
 
 export type MutationdeleteAnotherObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnotherObjectWhereUnique;
 };
 
-
 export type MutationdeleteAnswerArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnswerWhereUnique;
 };
-
 
 export type MutationdeleteQuestionArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: QuestionWhereUnique;
 };
 
-
 export type MutationdeleteReviewArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: ReviewWhereUnique;
 };
-
 
 export type MutationdeleteSomeObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: SomeObjectWhereUnique;
 };
 
-
 export type MutationrestoreAnotherObjectArgs = {
   where: AnotherObjectWhereUnique;
 };
-
 
 export type MutationrestoreAnswerArgs = {
   where: AnswerWhereUnique;
 };
 
-
 export type MutationrestoreQuestionArgs = {
   where: QuestionWhereUnique;
 };
-
 
 export type MutationrestoreReviewArgs = {
   where: ReviewWhereUnique;
 };
 
-
 export type MutationrestoreSomeObjectArgs = {
   where: SomeObjectWhereUnique;
 };
-
 
 export type MutationupdateAnswerArgs = {
   data: UpdateAnswer;
   where: AnswerWhereUnique;
 };
 
-
 export type MutationupdateQuestionArgs = {
   data: UpdateQuestion;
   where: QuestionWhereUnique;
 };
 
-
 export type MutationupdateReviewArgs = {
   data: UpdateReview;
   where: ReviewWhereUnique;
 };
-
 
 export type MutationupdateSomeObjectArgs = {
   data: UpdateSomeObject;
@@ -273,7 +249,7 @@ export type MutationupdateSomeObjectArgs = {
 
 export enum Order {
   ASC = 'ASC',
-  DESC = 'DESC'
+  DESC = 'DESC',
 }
 
 export type Query = {
@@ -292,7 +268,6 @@ export type Query = {
   someObject: SomeObject;
 };
 
-
 export type QueryanotherObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -300,11 +275,9 @@ export type QueryanotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
-
 export type QueryanswerArgs = {
   where: AnswerWhereUnique;
 };
-
 
 export type QueryanswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -312,7 +285,6 @@ export type QueryanswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type QuerymanyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -322,11 +294,9 @@ export type QuerymanyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type QueryquestionArgs = {
   where: QuestionWhereUnique;
 };
-
 
 export type QueryquestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -335,11 +305,9 @@ export type QueryquestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type QueryreactionArgs = {
   where: ReactionWhereUnique;
 };
-
 
 export type QueryreactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -348,11 +316,9 @@ export type QueryreactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type QueryreviewArgs = {
   where: ReviewWhereUnique;
 };
-
 
 export type QueryreviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -360,7 +326,6 @@ export type QueryreviewsArgs = {
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
-
 
 export type QuerysomeObjectArgs = {
   where: SomeObjectWhereUnique;
@@ -385,14 +350,12 @@ export type Question = Reaction & {
   updatedBy: User;
 };
 
-
 export type QuestionchildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type QuestionchildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -401,14 +364,12 @@ export type QuestionchildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type QuestionchildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type QuestionchildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -453,14 +414,12 @@ export type Reaction = {
   updatedBy: User;
 };
 
-
 export type ReactionchildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type ReactionchildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -469,14 +428,12 @@ export type ReactionchildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type ReactionchildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type ReactionchildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -494,7 +451,7 @@ export type ReactionOrderBy = {
 export enum ReactionType {
   Answer = 'Answer',
   Question = 'Question',
-  Review = 'Review'
+  Review = 'Review',
 }
 
 export type ReactionWhere = {
@@ -529,14 +486,12 @@ export type Review = Reaction & {
   updatedBy: User;
 };
 
-
 export type ReviewchildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type ReviewchildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -545,14 +500,12 @@ export type ReviewchildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type ReviewchildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type ReviewchildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -585,13 +538,13 @@ export type ReviewWhereUnique = {
 
 export enum Role {
   ADMIN = 'ADMIN',
-  USER = 'USER'
+  USER = 'USER',
 }
 
 export enum SomeEnum {
   A = 'A',
   B = 'B',
-  C = 'C'
+  C = 'C',
 }
 
 export type SomeObject = {
@@ -610,7 +563,6 @@ export type SomeObject = {
   updatedBy: User;
   xyz: Scalars['Int']['output'];
 };
-
 
 export type SomeObjectlistArgs = {
   magic?: InputMaybe<Scalars['Boolean']['input']>;
@@ -684,14 +636,12 @@ export type User = {
   username: Maybe<Scalars['String']['output']>;
 };
 
-
 export type UsercreatedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UsercreatedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -701,14 +651,12 @@ export type UsercreatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UsercreatedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
-
 
 export type UsercreatedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -717,14 +665,12 @@ export type UsercreatedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type UsercreatedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
-
 
 export type UserdeletedAnotherObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -733,14 +679,12 @@ export type UserdeletedAnotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
-
 export type UserdeletedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UserdeletedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -750,14 +694,12 @@ export type UserdeletedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UserdeletedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
-
 
 export type UserdeletedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -766,7 +708,6 @@ export type UserdeletedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type UserdeletedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -774,14 +715,12 @@ export type UserdeletedReviewsArgs = {
   where?: InputMaybe<ReviewWhere>;
 };
 
-
 export type UserupdatedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UserupdatedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -791,7 +730,6 @@ export type UserupdatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UserupdatedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -799,14 +737,12 @@ export type UserupdatedQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type UserupdatedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type UserupdatedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -826,205 +762,228 @@ export type UserWhereUnique = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type DeleteAnotherObjectMutationVariables = Exact<{ [key: string]: never; }>;
-
+export type DeleteAnotherObjectMutationVariables = Exact<{ [key: string]: never }>;
 
 export type DeleteAnotherObjectMutation = { deleteAnotherObject: string };
 
-export type GetAnotherObjectQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetAnotherObjectQueryVariables = Exact<{ [key: string]: never }>;
 
+export type GetAnotherObjectQuery = { anotherObjects: Array<{ __typename: 'AnotherObject'; id: string; deleted: boolean }> };
 
-export type GetAnotherObjectQuery = { anotherObjects: Array<{ __typename: 'AnotherObject', id: string, deleted: boolean }> };
+export type GetReactionsQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetReactionsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetReactionsQuery = {
+  reactions: Array<
+    | { __typename: 'Answer'; type: ReactionType; content: string | null }
+    | { __typename: 'Question'; type: ReactionType; content: string | null }
+    | { __typename: 'Review'; rating: number | null; type: ReactionType; content: string | null }
+  >;
+};
 
+export type GetReactionQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetReactionsQuery = { reactions: Array<{ __typename: 'Answer', type: ReactionType, content: string | null } | { __typename: 'Question', type: ReactionType, content: string | null } | { __typename: 'Review', rating: number | null, type: ReactionType, content: string | null }> };
+export type GetReactionQuery = {
+  reaction:
+    | { __typename: 'Answer'; type: ReactionType; content: string | null }
+    | { __typename: 'Question'; type: ReactionType; content: string | null }
+    | { __typename: 'Review'; rating: number | null; type: ReactionType; content: string | null };
+};
 
-export type GetReactionQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetReviewsQueryVariables = Exact<{ [key: string]: never }>;
 
+export type GetReviewsQuery = {
+  reviews: Array<{ __typename: 'Review'; type: ReactionType; content: string | null; rating: number | null }>;
+};
 
-export type GetReactionQuery = { reaction: { __typename: 'Answer', type: ReactionType, content: string | null } | { __typename: 'Question', type: ReactionType, content: string | null } | { __typename: 'Review', rating: number | null, type: ReactionType, content: string | null } };
+export type GetReviewQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetReviewsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetReviewsQuery = { reviews: Array<{ __typename: 'Review', type: ReactionType, content: string | null, rating: number | null }> };
-
-export type GetReviewQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetReviewQuery = { review: { __typename: 'Review', type: ReactionType, content: string | null, rating: number | null } };
+export type GetReviewQuery = {
+  review: { __typename: 'Review'; type: ReactionType; content: string | null; rating: number | null };
+};
 
 export type CreateReviewMutationVariables = Exact<{
   data: CreateReview;
 }>;
 
-
-export type CreateReviewMutation = { createReview: { __typename: 'Review', content: string | null, rating: number | null } };
+export type CreateReviewMutation = { createReview: { __typename: 'Review'; content: string | null; rating: number | null } };
 
 export type UpdateReviewMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   data: UpdateReview;
 }>;
 
+export type UpdateReviewMutation = { updateReview: { __typename: 'Review'; content: string | null; rating: number | null } };
 
-export type UpdateReviewMutation = { updateReview: { __typename: 'Review', content: string | null, rating: number | null } };
+export type SomeQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type SomeQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type SomeQueryQuery = {
+  manyObjects: Array<{
+    __typename: 'SomeObject';
+    id: string;
+    field: string | null;
+    xyz: number;
+    another: {
+      __typename: 'AnotherObject';
+      id: string;
+      manyObjects: Array<{ __typename: 'SomeObject'; id: string; field: string | null }>;
+    };
+  }>;
+};
 
+export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, xyz: number, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } }> };
+export type ReverseFiltersQueryQuery = {
+  all: Array<{ __typename: 'AnotherObject'; id: string; manyObjects: Array<{ __typename: 'SomeObject'; float: number }> }>;
+  withFloat0: Array<{
+    __typename: 'AnotherObject';
+    id: string;
+    manyObjects: Array<{ __typename: 'SomeObject'; float: number }>;
+  }>;
+  withFloat0_5: Array<{
+    __typename: 'AnotherObject';
+    id: string;
+    manyObjects: Array<{ __typename: 'SomeObject'; float: number }>;
+  }>;
+  noneFloat0: Array<{
+    __typename: 'AnotherObject';
+    id: string;
+    manyObjects: Array<{ __typename: 'SomeObject'; float: number }>;
+  }>;
+  noneFloat0_5: Array<{
+    __typename: 'AnotherObject';
+    id: string;
+    manyObjects: Array<{ __typename: 'SomeObject'; float: number }>;
+  }>;
+  noneFloat2: Array<{
+    __typename: 'AnotherObject';
+    id: string;
+    manyObjects: Array<{ __typename: 'SomeObject'; float: number }>;
+  }>;
+};
 
-export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type NotQueryQueryVariables = Exact<{ [key: string]: never }>;
 
+export type NotQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject'; id: string }> };
 
-export type ReverseFiltersQueryQuery = { all: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat2: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
+export type AndQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type NotQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type AndQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject'; id: string }> };
 
+export type OrQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type NotQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
-
-export type AndQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AndQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
-
-export type OrQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type OrQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+export type OrQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject'; id: string }> };
 
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type DeleteAnotherObjectMutationMutation = { deleteAnotherObject: string };
+export type DeleteAnotherObjectMutationMutation = { mutated: string };
 
 export type RestoreAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type RestoreAnotherObjectMutationMutation = { restoreAnotherObject: string };
+export type RestoreAnotherObjectMutationMutation = { mutated: string };
 
 export type CreateSomeObjectMutationMutationVariables = Exact<{
   data: CreateSomeObject;
 }>;
 
-
-export type CreateSomeObjectMutationMutation = { createSomeObject: { __typename: 'SomeObject', id: string } };
+export type CreateSomeObjectMutationMutation = { mutated: { __typename: 'SomeObject'; id: string } };
 
 export type UpdateSomeObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   data: UpdateSomeObject;
 }>;
 
-
-export type UpdateSomeObjectMutationMutation = { updateSomeObject: { __typename: 'SomeObject', id: string } };
+export type UpdateSomeObjectMutationMutation = { mutated: { __typename: 'SomeObject'; id: string } };
 
 export type DeleteSomeObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type DeleteSomeObjectMutationMutation = { deleteSomeObject: string };
+export type DeleteSomeObjectMutationMutation = { mutated: string };
 
 export type RestoreSomeObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type RestoreSomeObjectMutationMutation = { restoreSomeObject: string };
+export type RestoreSomeObjectMutationMutation = { mutated: string };
 
 export type CreateReviewMutationMutationVariables = Exact<{
   data: CreateReview;
 }>;
 
-
-export type CreateReviewMutationMutation = { createReview: { __typename: 'Review', id: string } };
+export type CreateReviewMutationMutation = { mutated: { __typename: 'Review'; id: string } };
 
 export type UpdateReviewMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   data: UpdateReview;
 }>;
 
-
-export type UpdateReviewMutationMutation = { updateReview: { __typename: 'Review', id: string } };
+export type UpdateReviewMutationMutation = { mutated: { __typename: 'Review'; id: string } };
 
 export type DeleteReviewMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type DeleteReviewMutationMutation = { deleteReview: string };
+export type DeleteReviewMutationMutation = { mutated: string };
 
 export type RestoreReviewMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type RestoreReviewMutationMutation = { restoreReview: string };
+export type RestoreReviewMutationMutation = { mutated: string };
 
 export type CreateQuestionMutationMutationVariables = Exact<{
   data: CreateQuestion;
 }>;
 
-
-export type CreateQuestionMutationMutation = { createQuestion: { __typename: 'Question', id: string } };
+export type CreateQuestionMutationMutation = { mutated: { __typename: 'Question'; id: string } };
 
 export type UpdateQuestionMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   data: UpdateQuestion;
 }>;
 
-
-export type UpdateQuestionMutationMutation = { updateQuestion: { __typename: 'Question', id: string } };
+export type UpdateQuestionMutationMutation = { mutated: { __typename: 'Question'; id: string } };
 
 export type DeleteQuestionMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type DeleteQuestionMutationMutation = { deleteQuestion: string };
+export type DeleteQuestionMutationMutation = { mutated: string };
 
 export type RestoreQuestionMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type RestoreQuestionMutationMutation = { restoreQuestion: string };
+export type RestoreQuestionMutationMutation = { mutated: string };
 
 export type CreateAnswerMutationMutationVariables = Exact<{
   data: CreateAnswer;
 }>;
 
-
-export type CreateAnswerMutationMutation = { createAnswer: { __typename: 'Answer', id: string } };
+export type CreateAnswerMutationMutation = { mutated: { __typename: 'Answer'; id: string } };
 
 export type UpdateAnswerMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   data: UpdateAnswer;
 }>;
 
-
-export type UpdateAnswerMutationMutation = { updateAnswer: { __typename: 'Answer', id: string } };
+export type UpdateAnswerMutationMutation = { mutated: { __typename: 'Answer'; id: string } };
 
 export type DeleteAnswerMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type DeleteAnswerMutationMutation = { deleteAnswer: string };
+export type DeleteAnswerMutationMutation = { mutated: string };
 
 export type RestoreAnswerMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
-
-export type RestoreAnswerMutationMutation = { restoreAnswer: string };
+export type RestoreAnswerMutationMutation = { mutated: string };
 
 type DiscriminateUnion<T, U> = T extends U ? T : never;
 
@@ -1036,88 +995,107 @@ export namespace DeleteAnotherObject {
 export namespace GetAnotherObject {
   export type Variables = GetAnotherObjectQueryVariables;
   export type query = GetAnotherObjectQuery;
-  export type anotherObjects = NonNullable<(NonNullable<GetAnotherObjectQuery['anotherObjects']>)[number]>;
+  export type anotherObjects = NonNullable<NonNullable<GetAnotherObjectQuery['anotherObjects']>[number]>;
 }
 
 export namespace GetReactions {
   export type Variables = GetReactionsQueryVariables;
   export type query = GetReactionsQuery;
-  export type reactions = NonNullable<(NonNullable<GetReactionsQuery['reactions']>)[number]>;
-  export type ReviewInlineFragment = (DiscriminateUnion<NonNullable<(NonNullable<GetReactionsQuery['reactions']>)[number]>, { __typename: 'Review' }>);
+  export type reactions = NonNullable<NonNullable<GetReactionsQuery['reactions']>[number]>;
+  export type ReviewInlineFragment = DiscriminateUnion<
+    NonNullable<NonNullable<GetReactionsQuery['reactions']>[number]>,
+    { __typename: 'Review' }
+  >;
 }
 
 export namespace GetReaction {
   export type Variables = GetReactionQueryVariables;
   export type query = GetReactionQuery;
-  export type reaction = (NonNullable<GetReactionQuery['reaction']>);
-  export type ReviewInlineFragment = (DiscriminateUnion<(NonNullable<GetReactionQuery['reaction']>), { __typename: 'Review' }>);
+  export type reaction = NonNullable<GetReactionQuery['reaction']>;
+  export type ReviewInlineFragment = DiscriminateUnion<NonNullable<GetReactionQuery['reaction']>, { __typename: 'Review' }>;
 }
 
 export namespace GetReviews {
   export type Variables = GetReviewsQueryVariables;
   export type query = GetReviewsQuery;
-  export type reviews = NonNullable<(NonNullable<GetReviewsQuery['reviews']>)[number]>;
+  export type reviews = NonNullable<NonNullable<GetReviewsQuery['reviews']>[number]>;
 }
 
 export namespace GetReview {
   export type Variables = GetReviewQueryVariables;
   export type query = GetReviewQuery;
-  export type review = (NonNullable<GetReviewQuery['review']>);
+  export type review = NonNullable<GetReviewQuery['review']>;
 }
 
 export namespace CreateReview {
   export type Variables = CreateReviewMutationVariables;
   export type mutation = CreateReviewMutation;
-  export type createReview = (NonNullable<CreateReviewMutation['createReview']>);
+  export type createReview = NonNullable<CreateReviewMutation['createReview']>;
 }
 
 export namespace UpdateReview {
   export type Variables = UpdateReviewMutationVariables;
   export type mutation = UpdateReviewMutation;
-  export type updateReview = (NonNullable<UpdateReviewMutation['updateReview']>);
+  export type updateReview = NonNullable<UpdateReviewMutation['updateReview']>;
 }
 
 export namespace SomeQuery {
   export type Variables = SomeQueryQueryVariables;
   export type query = SomeQueryQuery;
-  export type manyObjects = NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>;
-  export type another = (NonNullable<NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>['another']>);
-  export type _manyObjects = NonNullable<(NonNullable<(NonNullable<NonNullable<(NonNullable<SomeQueryQuery['manyObjects']>)[number]>['another']>)['manyObjects']>)[number]>;
+  export type manyObjects = NonNullable<NonNullable<SomeQueryQuery['manyObjects']>[number]>;
+  export type another = NonNullable<NonNullable<NonNullable<SomeQueryQuery['manyObjects']>[number]>['another']>;
+  export type _manyObjects = NonNullable<
+    NonNullable<
+      NonNullable<NonNullable<NonNullable<SomeQueryQuery['manyObjects']>[number]>['another']>['manyObjects']
+    >[number]
+  >;
 }
 
 export namespace ReverseFiltersQuery {
   export type Variables = ReverseFiltersQueryQueryVariables;
   export type query = ReverseFiltersQueryQuery;
-  export type all = NonNullable<(NonNullable<ReverseFiltersQueryQuery['all']>)[number]>;
-  export type manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['all']>)[number]>['manyObjects']>)[number]>;
-  export type withFloat0 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['withFloat0']>)[number]>;
-  export type _manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['withFloat0']>)[number]>['manyObjects']>)[number]>;
-  export type withFloat0_5 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['withFloat0_5']>)[number]>;
-  export type __manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['withFloat0_5']>)[number]>['manyObjects']>)[number]>;
-  export type noneFloat0 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0']>)[number]>;
-  export type ___manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0']>)[number]>['manyObjects']>)[number]>;
-  export type noneFloat0_5 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>)[number]>;
-  export type ____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>)[number]>['manyObjects']>)[number]>;
-  export type noneFloat2 = NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>;
-  export type _____manyObjects = NonNullable<(NonNullable<NonNullable<(NonNullable<ReverseFiltersQueryQuery['noneFloat2']>)[number]>['manyObjects']>)[number]>;
+  export type all = NonNullable<NonNullable<ReverseFiltersQueryQuery['all']>[number]>;
+  export type manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['all']>[number]>['manyObjects']>[number]
+  >;
+  export type withFloat0 = NonNullable<NonNullable<ReverseFiltersQueryQuery['withFloat0']>[number]>;
+  export type _manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['withFloat0']>[number]>['manyObjects']>[number]
+  >;
+  export type withFloat0_5 = NonNullable<NonNullable<ReverseFiltersQueryQuery['withFloat0_5']>[number]>;
+  export type __manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['withFloat0_5']>[number]>['manyObjects']>[number]
+  >;
+  export type noneFloat0 = NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat0']>[number]>;
+  export type ___manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat0']>[number]>['manyObjects']>[number]
+  >;
+  export type noneFloat0_5 = NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>[number]>;
+  export type ____manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat0_5']>[number]>['manyObjects']>[number]
+  >;
+  export type noneFloat2 = NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat2']>[number]>;
+  export type _____manyObjects = NonNullable<
+    NonNullable<NonNullable<NonNullable<ReverseFiltersQueryQuery['noneFloat2']>[number]>['manyObjects']>[number]
+  >;
 }
 
 export namespace NotQuery {
   export type Variables = NotQueryQueryVariables;
   export type query = NotQueryQuery;
-  export type manyObjects = NonNullable<(NonNullable<NotQueryQuery['manyObjects']>)[number]>;
+  export type manyObjects = NonNullable<NonNullable<NotQueryQuery['manyObjects']>[number]>;
 }
 
 export namespace AndQuery {
   export type Variables = AndQueryQueryVariables;
   export type query = AndQueryQuery;
-  export type manyObjects = NonNullable<(NonNullable<AndQueryQuery['manyObjects']>)[number]>;
+  export type manyObjects = NonNullable<NonNullable<AndQueryQuery['manyObjects']>[number]>;
 }
 
 export namespace OrQuery {
   export type Variables = OrQueryQueryVariables;
   export type query = OrQueryQuery;
-  export type manyObjects = NonNullable<(NonNullable<OrQueryQuery['manyObjects']>)[number]>;
+  export type manyObjects = NonNullable<NonNullable<OrQueryQuery['manyObjects']>[number]>;
 }
 
 export namespace DeleteAnotherObjectMutation {
@@ -1133,13 +1111,13 @@ export namespace RestoreAnotherObjectMutation {
 export namespace CreateSomeObjectMutation {
   export type Variables = CreateSomeObjectMutationMutationVariables;
   export type mutation = CreateSomeObjectMutationMutation;
-  export type createSomeObject = (NonNullable<CreateSomeObjectMutationMutation['createSomeObject']>);
+  export type mutated = NonNullable<CreateSomeObjectMutationMutation['mutated']>;
 }
 
 export namespace UpdateSomeObjectMutation {
   export type Variables = UpdateSomeObjectMutationMutationVariables;
   export type mutation = UpdateSomeObjectMutationMutation;
-  export type updateSomeObject = (NonNullable<UpdateSomeObjectMutationMutation['updateSomeObject']>);
+  export type mutated = NonNullable<UpdateSomeObjectMutationMutation['mutated']>;
 }
 
 export namespace DeleteSomeObjectMutation {
@@ -1155,13 +1133,13 @@ export namespace RestoreSomeObjectMutation {
 export namespace CreateReviewMutation {
   export type Variables = CreateReviewMutationMutationVariables;
   export type mutation = CreateReviewMutationMutation;
-  export type createReview = (NonNullable<CreateReviewMutationMutation['createReview']>);
+  export type mutated = NonNullable<CreateReviewMutationMutation['mutated']>;
 }
 
 export namespace UpdateReviewMutation {
   export type Variables = UpdateReviewMutationMutationVariables;
   export type mutation = UpdateReviewMutationMutation;
-  export type updateReview = (NonNullable<UpdateReviewMutationMutation['updateReview']>);
+  export type mutated = NonNullable<UpdateReviewMutationMutation['mutated']>;
 }
 
 export namespace DeleteReviewMutation {
@@ -1177,13 +1155,13 @@ export namespace RestoreReviewMutation {
 export namespace CreateQuestionMutation {
   export type Variables = CreateQuestionMutationMutationVariables;
   export type mutation = CreateQuestionMutationMutation;
-  export type createQuestion = (NonNullable<CreateQuestionMutationMutation['createQuestion']>);
+  export type mutated = NonNullable<CreateQuestionMutationMutation['mutated']>;
 }
 
 export namespace UpdateQuestionMutation {
   export type Variables = UpdateQuestionMutationMutationVariables;
   export type mutation = UpdateQuestionMutationMutation;
-  export type updateQuestion = (NonNullable<UpdateQuestionMutationMutation['updateQuestion']>);
+  export type mutated = NonNullable<UpdateQuestionMutationMutation['mutated']>;
 }
 
 export namespace DeleteQuestionMutation {
@@ -1199,13 +1177,13 @@ export namespace RestoreQuestionMutation {
 export namespace CreateAnswerMutation {
   export type Variables = CreateAnswerMutationMutationVariables;
   export type mutation = CreateAnswerMutationMutation;
-  export type createAnswer = (NonNullable<CreateAnswerMutationMutation['createAnswer']>);
+  export type mutated = NonNullable<CreateAnswerMutationMutation['mutated']>;
 }
 
 export namespace UpdateAnswerMutation {
   export type Variables = UpdateAnswerMutationMutationVariables;
   export type mutation = UpdateAnswerMutationMutation;
-  export type updateAnswer = (NonNullable<UpdateAnswerMutationMutation['updateAnswer']>);
+  export type mutated = NonNullable<UpdateAnswerMutationMutation['mutated']>;
 }
 
 export namespace DeleteAnswerMutation {

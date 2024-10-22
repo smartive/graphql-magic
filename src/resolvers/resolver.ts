@@ -4,9 +4,10 @@ import cloneDeep from 'lodash/cloneDeep';
 import flatMap from 'lodash/flatMap';
 import { Context, FullContext } from '../context';
 import { NotFoundError } from '../errors';
-import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
+import { AnyDateType } from '../utils';
+import { get, summonByKey } from '../utils/getters';
 import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
@@ -15,7 +16,7 @@ import { AliasGenerator, Entry, ID_ALIAS, Joins, applyJoins, getColumn, getNameO
 export const queryResolver = (_parent: any, _args: any, ctx: Context, info: GraphQLResolveInfo) =>
   resolve({ ...ctx, info, aliases: new AliasGenerator() });
 
-export const resolve = async (ctx: FullContext, id?: string) => {
+export const resolve = async <DateType extends AnyDateType = AnyDateType>(ctx: FullContext<DateType>, id?: string) => {
   const fieldNode = summonByKey(ctx.info.fieldNodes, 'name.value', ctx.info.fieldName);
   const baseTypeDefinition = get(
     ctx.info.operation.operation === 'query' ? ctx.info.schema.getQueryType() : ctx.info.schema.getMutationType(),
