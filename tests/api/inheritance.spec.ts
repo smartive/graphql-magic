@@ -1,4 +1,4 @@
-import { gql } from '../../src';
+import { gql } from 'graphql-request';
 import { DELETE_REVIEW, RESTORE_REVIEW } from '../generated/client/mutations';
 import { REVIEW_ID } from '../utils/database/seed';
 import { withServer } from '../utils/server';
