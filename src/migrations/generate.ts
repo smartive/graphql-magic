@@ -7,16 +7,15 @@ import lowerFirst from 'lodash/lowerFirst';
 import { EntityField, EntityModel, EnumModel, Models } from '../models/models';
 import {
   and,
-  get,
   isCreatableModel,
   isInherited,
   isUpdatableField,
   isUpdatableModel,
   modelNeedsTable,
   not,
-  summonByName,
   typeToField,
 } from '../models/utils';
+import { get, summonByName } from '../utils/getters';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];
@@ -94,13 +93,13 @@ export class MigrationGenerator {
           up.push(() => {
             this.renameTable(`${model.oldName}Revision`, `${model.name}Revision`);
             this.alterTable(`${model.name}Revision`, () => {
-              this.renameColumn(`${typeToField(get(model, 'oldName'))}Id`, `${typeToField(model.name)}Id`);
+              this.renameColumn(`${typeToField(get(model, 'oldName'))}Id`, `${model.asField}Id`);
             });
           });
           down.push(() => {
             this.renameTable(`${model.name}Revision`, `${model.oldName}Revision`);
             this.alterTable(`${model.oldName}Revision`, () => {
-              this.renameColumn(`${typeToField(model.name)}Id`, `${typeToField(get(model, 'oldName'))}Id`);
+              this.renameColumn(`${model.asField}Id`, `${typeToField(get(model, 'oldName'))}Id`);
             });
           });
           tables[tables.indexOf(`${model.oldName}Revision`)] = `${model.name}Revision`;
@@ -183,7 +182,7 @@ export class MigrationGenerator {
                         .write(`await knex.batchInsert('${model.name}Revision', data.map((row) => (`)
                         .inlineBlock(() => {
                           writer.writeLine(`id: uuid(),`);
-                          writer.writeLine(`${typeToField(model.name)}Id: row.id,`);
+                          writer.writeLine(`${model.asField}Id: row.id,`);
                           this.nowUsed = true;
                           writer.writeLine(`createdAt: row.updatedAt || row.createdAt || now,`);
                           writer.writeLine(`createdById: row.updatedById || row.createdById,`);
@@ -441,7 +440,7 @@ export class MigrationGenerator {
     this.createTable(`${model.name}Revision`, () => {
       writer.writeLine(`table.uuid('id').notNullable().primary();`);
       if (!model.parent) {
-        writer.writeLine(`table.uuid('${typeToField(model.name)}Id').notNullable();`);
+        writer.writeLine(`table.uuid('${model.asField}Id').notNullable();`);
         writer.writeLine(`table.uuid('createdById').notNullable();`);
         writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
         if (model.deletable) {
@@ -474,9 +473,7 @@ export class MigrationGenerator {
               const col = type === 'relation' ? `${name}Id` : name;
               this.writer
                 .write(
-                  `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
-                    model.name
-                  }Revision"."${typeToField(model.name)}Id")'),`
+                  `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${model.name}Revision"."${model.asField}Id")'),`
                 )
                 .newLine();
             }

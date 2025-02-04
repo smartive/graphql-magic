@@ -10,13 +10,13 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  DateTime: { input: DateTime; output: DateTime; }
-  Upload: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  DateTime: { input: DateTime; output: DateTime };
+  Upload: { input: any; output: any };
 };
 
 export type AnotherObject = {
@@ -31,7 +31,6 @@ export type AnotherObject = {
   self?: Maybe<AnotherObject>;
 };
 
-
 export type AnotherObjectManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -39,7 +38,6 @@ export type AnotherObjectManyObjectsArgs = {
   search?: InputMaybe<Scalars['String']['input']>;
   where?: InputMaybe<SomeObjectWhere>;
 };
-
 
 export type AnotherObjectSelfArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -86,14 +84,12 @@ export type Answer = Reaction & {
   updatedBy: User;
 };
 
-
 export type AnswerChildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type AnswerChildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -102,14 +98,12 @@ export type AnswerChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type AnswerChildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type AnswerChildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -175,99 +169,81 @@ export type Mutation = {
   updateSomeObject: SomeObject;
 };
 
-
 export type MutationCreateAnswerArgs = {
   data: CreateAnswer;
 };
-
 
 export type MutationCreateQuestionArgs = {
   data: CreateQuestion;
 };
 
-
 export type MutationCreateReviewArgs = {
   data: CreateReview;
 };
 
-
 export type MutationCreateSomeObjectArgs = {
   data: CreateSomeObject;
 };
-
 
 export type MutationDeleteAnotherObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnotherObjectWhereUnique;
 };
 
-
 export type MutationDeleteAnswerArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnswerWhereUnique;
 };
-
 
 export type MutationDeleteQuestionArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: QuestionWhereUnique;
 };
 
-
 export type MutationDeleteReviewArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: ReviewWhereUnique;
 };
-
 
 export type MutationDeleteSomeObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: SomeObjectWhereUnique;
 };
 
-
 export type MutationRestoreAnotherObjectArgs = {
   where: AnotherObjectWhereUnique;
 };
-
 
 export type MutationRestoreAnswerArgs = {
   where: AnswerWhereUnique;
 };
 
-
 export type MutationRestoreQuestionArgs = {
   where: QuestionWhereUnique;
 };
-
 
 export type MutationRestoreReviewArgs = {
   where: ReviewWhereUnique;
 };
 
-
 export type MutationRestoreSomeObjectArgs = {
   where: SomeObjectWhereUnique;
 };
-
 
 export type MutationUpdateAnswerArgs = {
   data: UpdateAnswer;
   where: AnswerWhereUnique;
 };
 
-
 export type MutationUpdateQuestionArgs = {
   data: UpdateQuestion;
   where: QuestionWhereUnique;
 };
 
-
 export type MutationUpdateReviewArgs = {
   data: UpdateReview;
   where: ReviewWhereUnique;
 };
-
 
 export type MutationUpdateSomeObjectArgs = {
   data: UpdateSomeObject;
@@ -276,7 +252,7 @@ export type MutationUpdateSomeObjectArgs = {
 
 export enum Order {
   Asc = 'ASC',
-  Desc = 'DESC'
+  Desc = 'DESC',
 }
 
 export type Query = {
@@ -295,7 +271,6 @@ export type Query = {
   someObject: SomeObject;
 };
 
-
 export type QueryAnotherObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -303,11 +278,9 @@ export type QueryAnotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
-
 export type QueryAnswerArgs = {
   where: AnswerWhereUnique;
 };
-
 
 export type QueryAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -315,7 +288,6 @@ export type QueryAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type QueryManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -325,11 +297,9 @@ export type QueryManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type QueryQuestionArgs = {
   where: QuestionWhereUnique;
 };
-
 
 export type QueryQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -338,11 +308,9 @@ export type QueryQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type QueryReactionArgs = {
   where: ReactionWhereUnique;
 };
-
 
 export type QueryReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -351,11 +319,9 @@ export type QueryReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type QueryReviewArgs = {
   where: ReviewWhereUnique;
 };
-
 
 export type QueryReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -363,7 +329,6 @@ export type QueryReviewsArgs = {
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
-
 
 export type QuerySomeObjectArgs = {
   where: SomeObjectWhereUnique;
@@ -388,14 +353,12 @@ export type Question = Reaction & {
   updatedBy: User;
 };
 
-
 export type QuestionChildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type QuestionChildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -404,14 +367,12 @@ export type QuestionChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type QuestionChildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type QuestionChildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -456,14 +417,12 @@ export type Reaction = {
   updatedBy: User;
 };
 
-
 export type ReactionChildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type ReactionChildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -472,14 +431,12 @@ export type ReactionChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type ReactionChildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type ReactionChildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -497,7 +454,7 @@ export type ReactionOrderBy = {
 export enum ReactionType {
   Answer = 'Answer',
   Question = 'Question',
-  Review = 'Review'
+  Review = 'Review',
 }
 
 export type ReactionWhere = {
@@ -532,14 +489,12 @@ export type Review = Reaction & {
   updatedBy: User;
 };
 
-
 export type ReviewChildAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type ReviewChildQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -548,14 +503,12 @@ export type ReviewChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type ReviewChildReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type ReviewChildReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -588,13 +541,13 @@ export type ReviewWhereUnique = {
 
 export enum Role {
   Admin = 'ADMIN',
-  User = 'USER'
+  User = 'USER',
 }
 
 export enum SomeEnum {
   A = 'A',
   B = 'B',
-  C = 'C'
+  C = 'C',
 }
 
 export type SomeObject = {
@@ -613,7 +566,6 @@ export type SomeObject = {
   updatedBy: User;
   xyz: Scalars['Int']['output'];
 };
-
 
 export type SomeObjectListArgs = {
   magic?: InputMaybe<Scalars['Boolean']['input']>;
@@ -687,14 +639,12 @@ export type User = {
   username?: Maybe<Scalars['String']['output']>;
 };
 
-
 export type UserCreatedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UserCreatedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -704,14 +654,12 @@ export type UserCreatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UserCreatedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
-
 
 export type UserCreatedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -720,14 +668,12 @@ export type UserCreatedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type UserCreatedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
-
 
 export type UserDeletedAnotherObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -736,14 +682,12 @@ export type UserDeletedAnotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
-
 export type UserDeletedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UserDeletedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -753,14 +697,12 @@ export type UserDeletedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UserDeletedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
-
 
 export type UserDeletedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -769,7 +711,6 @@ export type UserDeletedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
-
 export type UserDeletedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -777,14 +718,12 @@ export type UserDeletedReviewsArgs = {
   where?: InputMaybe<ReviewWhere>;
 };
 
-
 export type UserUpdatedAnswersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
-
 
 export type UserUpdatedManyObjectsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -794,7 +733,6 @@ export type UserUpdatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
-
 export type UserUpdatedQuestionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -802,14 +740,12 @@ export type UserUpdatedQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
-
 export type UserUpdatedReactionsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
-
 
 export type UserUpdatedReviewsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -829,15 +765,14 @@ export type UserWhereUnique = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
-
-
 export type ResolverTypeWrapper<T> = Promise<T> | T;
-
 
 export type ResolverWithResolve<TResult, TParent, TContext, TArgs> = {
   resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
 };
-export type Resolver<TResult, TParent = {}, TContext = {}, TArgs = {}> = ResolverFn<TResult, TParent, TContext, TArgs> | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
+export type Resolver<TResult, TParent = {}, TContext = {}, TArgs = {}> =
+  | ResolverFn<TResult, TParent, TContext, TArgs>
+  | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
 
 export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
@@ -884,7 +819,11 @@ export type TypeResolveFn<TTypes, TParent = {}, TContext = {}> = (
   info: GraphQLResolveInfo
 ) => Maybe<TTypes> | Promise<Maybe<TTypes>>;
 
-export type IsTypeOfResolverFn<T = {}, TContext = {}> = (obj: T, context: TContext, info: GraphQLResolveInfo) => boolean | Promise<boolean>;
+export type IsTypeOfResolverFn<T = {}, TContext = {}> = (
+  obj: T,
+  context: TContext,
+  info: GraphQLResolveInfo
+) => boolean | Promise<boolean>;
 
 export type NextResolverFn<T> = () => Promise<T>;
 
@@ -896,10 +835,9 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
-
 /** Mapping of interface types */
 export type ResolversInterfaceTypes<RefType extends Record<string, unknown>> = {
-  Reaction: ( Answer ) | ( Question ) | ( Review );
+  Reaction: Answer | Question | Review;
 };
 
 /** Mapping between all available schema types and the resolvers types */
@@ -1004,19 +942,30 @@ export type ResolversParentTypes = {
   UserWhereUnique: UserWhereUnique;
 };
 
-export type AnotherObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['AnotherObject'] = ResolversParentTypes['AnotherObject']> = {
+export type AnotherObjectResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnotherObject'] = ResolversParentTypes['AnotherObject']
+> = {
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<AnotherObjectManyObjectsArgs>>;
+  manyObjects?: Resolver<
+    Array<ResolversTypes['SomeObject']>,
+    ParentType,
+    ContextType,
+    Partial<AnotherObjectManyObjectsArgs>
+  >;
   myself?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   self?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<AnotherObjectSelfArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type AnswerResolvers<ContextType = any, ParentType extends ResolversParentTypes['Answer'] = ResolversParentTypes['Answer']> = {
+export type AnswerResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Answer'] = ResolversParentTypes['Answer']
+> = {
   childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<AnswerChildAnswersArgs>>;
   childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<AnswerChildQuestionsArgs>>;
   childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<AnswerChildReactionsArgs>>;
@@ -1039,29 +988,110 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
-  createAnswer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<MutationCreateAnswerArgs, 'data'>>;
-  createQuestion?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<MutationCreateQuestionArgs, 'data'>>;
-  createReview?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<MutationCreateReviewArgs, 'data'>>;
-  createSomeObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<MutationCreateSomeObjectArgs, 'data'>>;
-  deleteAnotherObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteAnotherObjectArgs, 'where'>>;
+export type MutationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']
+> = {
+  createAnswer?: Resolver<
+    ResolversTypes['Answer'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationCreateAnswerArgs, 'data'>
+  >;
+  createQuestion?: Resolver<
+    ResolversTypes['Question'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationCreateQuestionArgs, 'data'>
+  >;
+  createReview?: Resolver<
+    ResolversTypes['Review'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationCreateReviewArgs, 'data'>
+  >;
+  createSomeObject?: Resolver<
+    ResolversTypes['SomeObject'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationCreateSomeObjectArgs, 'data'>
+  >;
+  deleteAnotherObject?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteAnotherObjectArgs, 'where'>
+  >;
   deleteAnswer?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteAnswerArgs, 'where'>>;
-  deleteQuestion?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteQuestionArgs, 'where'>>;
+  deleteQuestion?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteQuestionArgs, 'where'>
+  >;
   deleteReview?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteReviewArgs, 'where'>>;
-  deleteSomeObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteSomeObjectArgs, 'where'>>;
-  restoreAnotherObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreAnotherObjectArgs, 'where'>>;
+  deleteSomeObject?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteSomeObjectArgs, 'where'>
+  >;
+  restoreAnotherObject?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRestoreAnotherObjectArgs, 'where'>
+  >;
   restoreAnswer?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreAnswerArgs, 'where'>>;
-  restoreQuestion?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreQuestionArgs, 'where'>>;
+  restoreQuestion?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRestoreQuestionArgs, 'where'>
+  >;
   restoreReview?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreReviewArgs, 'where'>>;
-  restoreSomeObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreSomeObjectArgs, 'where'>>;
-  updateAnswer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<MutationUpdateAnswerArgs, 'data' | 'where'>>;
-  updateQuestion?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<MutationUpdateQuestionArgs, 'data' | 'where'>>;
-  updateReview?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<MutationUpdateReviewArgs, 'data' | 'where'>>;
-  updateSomeObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<MutationUpdateSomeObjectArgs, 'data' | 'where'>>;
+  restoreSomeObject?: Resolver<
+    ResolversTypes['ID'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRestoreSomeObjectArgs, 'where'>
+  >;
+  updateAnswer?: Resolver<
+    ResolversTypes['Answer'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateAnswerArgs, 'data' | 'where'>
+  >;
+  updateQuestion?: Resolver<
+    ResolversTypes['Question'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateQuestionArgs, 'data' | 'where'>
+  >;
+  updateReview?: Resolver<
+    ResolversTypes['Review'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateReviewArgs, 'data' | 'where'>
+  >;
+  updateSomeObject?: Resolver<
+    ResolversTypes['SomeObject'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateSomeObjectArgs, 'data' | 'where'>
+  >;
 };
 
-export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  anotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<QueryAnotherObjectsArgs>>;
+export type QueryResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']
+> = {
+  anotherObjects?: Resolver<
+    Array<ResolversTypes['AnotherObject']>,
+    ParentType,
+    ContextType,
+    Partial<QueryAnotherObjectsArgs>
+  >;
   answer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<QueryAnswerArgs, 'where'>>;
   answers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<QueryAnswersArgs>>;
   manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<QueryManyObjectsArgs>>;
@@ -1075,7 +1105,10 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   someObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<QuerySomeObjectArgs, 'where'>>;
 };
 
-export type QuestionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Question'] = ResolversParentTypes['Question']> = {
+export type QuestionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Question'] = ResolversParentTypes['Question']
+> = {
   childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<QuestionChildAnswersArgs>>;
   childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<QuestionChildQuestionsArgs>>;
   childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<QuestionChildReactionsArgs>>;
@@ -1094,7 +1127,10 @@ export type QuestionResolvers<ContextType = any, ParentType extends ResolversPar
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type ReactionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Reaction'] = ResolversParentTypes['Reaction']> = {
+export type ReactionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Reaction'] = ResolversParentTypes['Reaction']
+> = {
   __resolveType: TypeResolveFn<'Answer' | 'Question' | 'Review', ParentType, ContextType>;
   childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<ReactionChildAnswersArgs>>;
   childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<ReactionChildQuestionsArgs>>;
@@ -1113,7 +1149,10 @@ export type ReactionResolvers<ContextType = any, ParentType extends ResolversPar
   updatedBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
 };
 
-export type ReviewResolvers<ContextType = any, ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review']> = {
+export type ReviewResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review']
+> = {
   childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<ReviewChildAnswersArgs>>;
   childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<ReviewChildQuestionsArgs>>;
   childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<ReviewChildReactionsArgs>>;
@@ -1133,7 +1172,10 @@ export type ReviewResolvers<ContextType = any, ParentType extends ResolversParen
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type SomeObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['SomeObject'] = ResolversParentTypes['SomeObject']> = {
+export type SomeObjectResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SomeObject'] = ResolversParentTypes['SomeObject']
+> = {
   another?: Resolver<ResolversTypes['AnotherObject'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1150,7 +1192,10 @@ export type SomeObjectResolvers<ContextType = any, ParentType extends ResolversP
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type SomeRawObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['SomeRawObject'] = ResolversParentTypes['SomeRawObject']> = {
+export type SomeRawObjectResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SomeRawObject'] = ResolversParentTypes['SomeRawObject']
+> = {
   field?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -1159,22 +1204,45 @@ export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTyp
   name: 'Upload';
 }
 
-export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+export type UserResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']
+> = {
   createdAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserCreatedAnswersArgs>>;
-  createdManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserCreatedManyObjectsArgs>>;
+  createdManyObjects?: Resolver<
+    Array<ResolversTypes['SomeObject']>,
+    ParentType,
+    ContextType,
+    Partial<UserCreatedManyObjectsArgs>
+  >;
   createdQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserCreatedQuestionsArgs>>;
   createdReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserCreatedReactionsArgs>>;
   createdReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserCreatedReviewsArgs>>;
-  deletedAnotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<UserDeletedAnotherObjectsArgs>>;
+  deletedAnotherObjects?: Resolver<
+    Array<ResolversTypes['AnotherObject']>,
+    ParentType,
+    ContextType,
+    Partial<UserDeletedAnotherObjectsArgs>
+  >;
   deletedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserDeletedAnswersArgs>>;
-  deletedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserDeletedManyObjectsArgs>>;
+  deletedManyObjects?: Resolver<
+    Array<ResolversTypes['SomeObject']>,
+    ParentType,
+    ContextType,
+    Partial<UserDeletedManyObjectsArgs>
+  >;
   deletedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserDeletedQuestionsArgs>>;
   deletedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserDeletedReactionsArgs>>;
   deletedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserDeletedReviewsArgs>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['Role']>, ParentType, ContextType>;
   updatedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserUpdatedAnswersArgs>>;
-  updatedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserUpdatedManyObjectsArgs>>;
+  updatedManyObjects?: Resolver<
+    Array<ResolversTypes['SomeObject']>,
+    ParentType,
+    ContextType,
+    Partial<UserUpdatedManyObjectsArgs>
+  >;
   updatedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserUpdatedQuestionsArgs>>;
   updatedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserUpdatedReactionsArgs>>;
   updatedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserUpdatedReviewsArgs>>;
@@ -1196,4 +1264,3 @@ export type Resolvers<ContextType = any> = {
   Upload?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
 };
-

@@ -14,7 +14,7 @@ import { Knex } from 'knex';
 import { isEqual } from 'lodash';
 import { EntityField } from '..';
 import { UserInputError } from '../errors';
-import { get, it } from '../models/utils';
+import { get, it } from '../utils/getters';
 import { Value } from '../values';
 import { FieldResolverNode, ResolverNode } from './node';
 

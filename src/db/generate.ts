@@ -1,7 +1,8 @@
 import CodeBlockWriter from 'code-block-writer';
-import { EntityField, get, getColumnName, isCustomField, isInTable, isRootModel, not } from '..';
+import { EntityField, getColumnName, isCustomField, isInTable, isRootModel, not } from '..';
 import { Models } from '../models/models';
 import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../utils/dates';
+import { get } from '../utils/getters';
 
 const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -44,6 +45,14 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
       .blankLine();
 
     writer
+      .writeLine(
+        `export type Full${model.name} = ${
+          model.rootModel === model ? model.name : `${model.name} & ${model.rootModel.name}`
+        }`
+      )
+      .blankLine();
+
+    writer
       .write(`export type ${model.name}Initializer = `)
       .inlineBlock(() => {
         for (const field of fields.filter(not(isCustomField)).filter(isInTable)) {
@@ -53,7 +62,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
                 field,
                 dateLibrary,
                 true
-              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'};`
+              )}${field.list ? ' | string' : ''}${field.nonNull ? '  | null' : ' | null'};` // TODO?
             )
             .newLine();
         }
@@ -67,7 +76,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
           writer
             .write(
               `'${getColumnName(field)}'?: ${getFieldType(field, dateLibrary, true)}${field.list ? ' | string' : ''}${
-                field.nonNull ? '' : ' | null'
+                field.nonNull ? ' | null' : ' | null' // TODO null input in not nullable fields just doesn't update???
               };`
             )
             .newLine();

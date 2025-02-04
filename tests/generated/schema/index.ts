@@ -1,0 +1,389 @@
+import { gql } from 'graphql-request';
+
+export const typeDefs = gql`
+  type AnotherObject {
+    id: ID!
+    name: String
+    myself: AnotherObject
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+    self(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): AnotherObject
+    manyObjects(
+      where: SomeObjectWhere
+      search: String
+      orderBy: [SomeObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [SomeObject!]!
+  }
+
+  input AnotherObjectOrderBy {
+    name: Order
+    deletedAt: Order
+  }
+
+  input AnotherObjectWhere {
+    id: [ID!]
+    deleted: [Boolean!]
+    manyObjects_SOME: SomeObjectWhere
+    manyObjects_NONE: SomeObjectWhere
+    NOT: AnotherObjectWhere
+    AND: [AnotherObjectWhere!]
+    OR: [AnotherObjectWhere!]
+  }
+
+  input AnotherObjectWhereUnique {
+    id: ID
+  }
+
+  type Answer implements Reaction {
+    id: ID!
+    type: ReactionType!
+    parent: Reaction
+    content: String
+    createdAt: DateTime!
+    createdBy: User!
+    updatedAt: DateTime!
+    updatedBy: User!
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+    childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  input AnswerOrderBy {
+    createdAt: Order
+    updatedAt: Order
+    deletedAt: Order
+  }
+
+  input AnswerWhere {
+    id: [ID!]
+    deleted: [Boolean!]
+    NOT: AnswerWhere
+    AND: [AnswerWhere!]
+    OR: [AnswerWhere!]
+  }
+
+  input AnswerWhereUnique {
+    id: ID
+  }
+
+  input CreateAnswer {
+    content: String
+  }
+
+  input CreateQuestion {
+    content: String
+  }
+
+  input CreateReview {
+    content: String
+    rating: Float
+  }
+
+  input CreateSomeObject {
+    xyz: Int!
+  }
+
+  scalar DateTime
+
+  type Mutation {
+    deleteAnotherObject(where: AnotherObjectWhereUnique!, dryRun: Boolean): ID!
+    restoreAnotherObject(where: AnotherObjectWhereUnique!): ID!
+    createSomeObject(data: CreateSomeObject!): SomeObject!
+    updateSomeObject(where: SomeObjectWhereUnique!, data: UpdateSomeObject!): SomeObject!
+    deleteSomeObject(where: SomeObjectWhereUnique!, dryRun: Boolean): ID!
+    restoreSomeObject(where: SomeObjectWhereUnique!): ID!
+    createReview(data: CreateReview!): Review!
+    updateReview(where: ReviewWhereUnique!, data: UpdateReview!): Review!
+    deleteReview(where: ReviewWhereUnique!, dryRun: Boolean): ID!
+    restoreReview(where: ReviewWhereUnique!): ID!
+    createQuestion(data: CreateQuestion!): Question!
+    updateQuestion(where: QuestionWhereUnique!, data: UpdateQuestion!): Question!
+    deleteQuestion(where: QuestionWhereUnique!, dryRun: Boolean): ID!
+    restoreQuestion(where: QuestionWhereUnique!): ID!
+    createAnswer(data: CreateAnswer!): Answer!
+    updateAnswer(where: AnswerWhereUnique!, data: UpdateAnswer!): Answer!
+    deleteAnswer(where: AnswerWhereUnique!, dryRun: Boolean): ID!
+    restoreAnswer(where: AnswerWhereUnique!): ID!
+  }
+
+  enum Order {
+    ASC
+    DESC
+  }
+
+  type Query {
+    me: User
+    someObject(where: SomeObjectWhereUnique!): SomeObject!
+    reaction(where: ReactionWhereUnique!): Reaction!
+    review(where: ReviewWhereUnique!): Review!
+    question(where: QuestionWhereUnique!): Question!
+    answer(where: AnswerWhereUnique!): Answer!
+    anotherObjects(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
+    manyObjects(
+      where: SomeObjectWhere
+      search: String
+      orderBy: [SomeObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [SomeObject!]!
+    reactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    reviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    questions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    answers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  type Question implements Reaction {
+    id: ID!
+    type: ReactionType!
+    parent: Reaction
+    content: String
+    createdAt: DateTime!
+    createdBy: User!
+    updatedAt: DateTime!
+    updatedBy: User!
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+    childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  input QuestionOrderBy {
+    createdAt: Order
+    updatedAt: Order
+    deletedAt: Order
+  }
+
+  input QuestionWhere {
+    id: [ID!]
+    deleted: [Boolean!]
+    NOT: QuestionWhere
+    AND: [QuestionWhere!]
+    OR: [QuestionWhere!]
+  }
+
+  input QuestionWhereUnique {
+    id: ID
+  }
+
+  interface Reaction {
+    id: ID!
+    type: ReactionType!
+    parent: Reaction
+    content: String
+    createdAt: DateTime!
+    createdBy: User!
+    updatedAt: DateTime!
+    updatedBy: User!
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+    childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  input ReactionOrderBy {
+    createdAt: Order
+    updatedAt: Order
+    deletedAt: Order
+  }
+
+  enum ReactionType {
+    Review
+    Question
+    Answer
+  }
+
+  input ReactionWhere {
+    id: [ID!]
+    deleted: [Boolean!]
+    NOT: ReactionWhere
+    AND: [ReactionWhere!]
+    OR: [ReactionWhere!]
+  }
+
+  input ReactionWhereUnique {
+    id: ID
+  }
+
+  type Review implements Reaction {
+    id: ID!
+    type: ReactionType!
+    parent: Reaction
+    content: String
+    createdAt: DateTime!
+    createdBy: User!
+    updatedAt: DateTime!
+    updatedBy: User!
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+    rating: Float
+    childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  input ReviewOrderBy {
+    createdAt: Order
+    updatedAt: Order
+    deletedAt: Order
+  }
+
+  input ReviewWhere {
+    id: [ID!]
+    deleted: [Boolean!]
+    rating_GT: Float
+    rating_GTE: Float
+    rating_LT: Float
+    rating_LTE: Float
+    NOT: ReviewWhere
+    AND: [ReviewWhere!]
+    OR: [ReviewWhere!]
+  }
+
+  input ReviewWhereUnique {
+    id: ID
+  }
+
+  enum Role {
+    ADMIN
+    USER
+  }
+
+  enum SomeEnum {
+    A
+    B
+    C
+  }
+
+  type SomeObject {
+    id: ID!
+    field: String
+    another: AnotherObject!
+    float: Float!
+    list(magic: Boolean): [SomeEnum!]!
+    xyz: Int!
+    createdAt: DateTime!
+    createdBy: User!
+    updatedAt: DateTime!
+    updatedBy: User!
+    deleted: Boolean!
+    deletedAt: DateTime
+    deletedBy: User
+  }
+
+  input SomeObjectOrderBy {
+    xyz: Order
+    createdAt: Order
+    updatedAt: Order
+    deletedAt: Order
+  }
+
+  input SomeObjectWhere {
+    id: [ID!]
+    float: [Float!]
+    xyz: [Int!]
+    deleted: [Boolean!]
+    another: AnotherObjectWhere
+    NOT: SomeObjectWhere
+    AND: [SomeObjectWhere!]
+    OR: [SomeObjectWhere!]
+  }
+
+  input SomeObjectWhereUnique {
+    id: ID
+  }
+
+  type SomeRawObject {
+    field: String
+  }
+
+  input UpdateAnswer {
+    content: String
+  }
+
+  input UpdateQuestion {
+    content: String
+  }
+
+  input UpdateReview {
+    content: String
+    rating: Float
+  }
+
+  input UpdateSomeObject {
+    anotherId: ID
+    xyz: Int
+  }
+
+  scalar Upload
+
+  type User {
+    id: ID!
+    username: String
+    role: Role
+    deletedAnotherObjects(
+      where: AnotherObjectWhere
+      orderBy: [AnotherObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [AnotherObject!]!
+    createdManyObjects(
+      where: SomeObjectWhere
+      search: String
+      orderBy: [SomeObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [SomeObject!]!
+    updatedManyObjects(
+      where: SomeObjectWhere
+      search: String
+      orderBy: [SomeObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [SomeObject!]!
+    deletedManyObjects(
+      where: SomeObjectWhere
+      search: String
+      orderBy: [SomeObjectOrderBy!]
+      limit: Int
+      offset: Int
+    ): [SomeObject!]!
+    createdReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    updatedReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    deletedReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+    createdReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    updatedReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    deletedReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+    createdQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    updatedQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    deletedQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+    createdAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+    updatedAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+    deletedAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  }
+
+  input UserWhere {
+    id: [ID!]
+    NOT: UserWhere
+    AND: [UserWhere!]
+    OR: [UserWhere!]
+  }
+
+  input UserWhereUnique {
+    id: ID
+  }
+`;
