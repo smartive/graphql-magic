@@ -36,7 +36,7 @@
   },
   "overrides": {
     "graphql": "$graphql",
-    "rollup": "3.29.5"
+    "rollup": "4.34.8"
   },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
