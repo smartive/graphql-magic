@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Fields | graphql-magic</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://smartive.github.io/graphql-magic/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://smartive.github.io/graphql-magic/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://smartive.github.io/graphql-magic/docs/fields"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Fields | graphql-magic"><meta data-rh="true" name="description" content="Models of kind &#x27;entity&#x27;, &#x27;object&#x27;, &#x27;interface&#x27; (see the docs on models) have an option called fields."><meta data-rh="true" property="og:description" content="Models of kind &#x27;entity&#x27;, &#x27;object&#x27;, &#x27;interface&#x27; (see the docs on models) have an option called fields."><link data-rh="true" rel="icon" href="/graphql-magic/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://smartive.github.io/graphql-magic/docs/fields"><link data-rh="true" rel="alternate" href="https://smartive.github.io/graphql-magic/docs/fields" hreflang="en"><link data-rh="true" rel="alternate" href="https://smartive.github.io/graphql-magic/docs/fields" hreflang="x-default"><link rel="stylesheet" href="/graphql-magic/assets/css/styles.b6d6c1cc.css">
-<script src="/graphql-magic/assets/js/runtime~main.0474db54.js" defer="defer"></script>
+<script src="/graphql-magic/assets/js/runtime~main.308b1ad7.js" defer="defer"></script>
 <script src="/graphql-magic/assets/js/main.d7ee38b3.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -47,15 +47,15 @@
 </ul>
 <p>For more details, see section on <a href="#kinds">kinds</a> below.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="type"><code>type</code><a href="#type" class="hash-link" aria-label="Direct link to type" title="Direct link to type">​</a></h3>
-<p>This represents the graphql &quot;return type&quot;, which can be a primitive or a separate model (depending on the <a href="#kinds">kind</a>).</p>
+<p>This represents the GraphQL &quot;return type&quot;, which can be a primitive or a separate model (depending on the <a href="#kinds">kind</a>).</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="description"><code>description</code><a href="#description" class="hash-link" aria-label="Direct link to description" title="Direct link to description">​</a></h3>
-<p>Will appear as description in the graphql schema.</p>
+<p>Will appear as description in the GraphQL schema.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="list"><code>list</code><a href="#list" class="hash-link" aria-label="Direct link to list" title="Direct link to list">​</a></h3>
 <p>If <code>list</code> is <code>true</code> the result is an array.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="nonnull"><code>nonNull</code><a href="#nonnull" class="hash-link" aria-label="Direct link to nonnull" title="Direct link to nonnull">​</a></h3>
-<p>Will make the field required both in the graphql schema and in the database.</p>
+<p>Will make the field required both in the GraphQL schema and in the database.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="defaultvalue"><code>defaultValue</code><a href="#defaultvalue" class="hash-link" aria-label="Direct link to defaultvalue" title="Direct link to defaultvalue">​</a></h3>
-<p>Will set this as default value in graphql mutations and in the database.</p>
+<p>Will set this as default value in GraphQL mutations and in the database.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="args"><code>args</code><a href="#args" class="hash-link" aria-label="Direct link to args" title="Direct link to args">​</a></h3>
 <p>An array of fields that can then be used as parameters, e.g. if this field is implemented as a custom resolver.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="directives"><code>directives</code><a href="#directives" class="hash-link" aria-label="Direct link to directives" title="Direct link to directives">​</a></h3>
@@ -107,7 +107,7 @@
 <li><code>_LTE</code>: less than or equal</li>
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="queriable"><code>queriable</code><a href="#queriable" class="hash-link" aria-label="Direct link to queriable" title="Direct link to queriable">​</a></h3>
-<p><code>true</code> by default. If explicitly set to <code>false</code>, the field won&#x27;t be queriable via graphql.</p>
+<p><code>true</code> by default. If explicitly set to <code>false</code>, the field won&#x27;t be queriable via GraphQL.</p>
 <p>Also accepts an object that defines a list of <code>roles</code> to restrict access to specific roles.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="creatable"><code>creatable</code><a href="#creatable" class="hash-link" aria-label="Direct link to creatable" title="Direct link to creatable">​</a></h3>
 <p>If <code>true</code> this field will be available in the create mutation for the entity.</p>
