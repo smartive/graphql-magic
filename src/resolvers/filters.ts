@@ -30,21 +30,6 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
       normalizedArguments.orderBy = [{ createdAt: 'DESC' }];
     }
   }
-  if (node.model.deletable) {
-    if (!normalizedArguments.where) {
-      normalizedArguments.where = {};
-    }
-    if (
-      normalizedArguments.where.deleted &&
-      (!Array.isArray(normalizedArguments.where.deleted) || normalizedArguments.where.deleted.some((v) => v))
-    ) {
-      if (node.ctx.user?.role !== 'ADMIN') {
-        throw new ForbiddenError('You cannot access deleted entries.');
-      }
-    } else {
-      normalizedArguments.where.deleted = false;
-    }
-  }
   const { limit, offset, orderBy, where, search } = normalizedArguments;
 
   if (limit) {
@@ -67,18 +52,36 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
     });
   }
 
-  if (where) {
     const ops: QueryBuilderOps = [];
     applyWhere(node, where, ops, joins);
     void apply(query, ops);
-  }
 
   if (search) {
     void applySearch(node, search, query);
   }
 };
 
-const applyWhere = (node: WhereNode, where: Where, ops: QueryBuilderOps, joins: Joins) => {
+const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
+  if (node.model.deletable) {
+    if (!where) {
+      where = {};
+    }
+    if (
+      where.deleted &&
+      (!Array.isArray(where.deleted) || where.deleted.some((v) => v))
+    ) {
+      if (node.ctx.user?.role !== 'ADMIN') {
+        throw new ForbiddenError('You cannot access deleted entries.');
+      }
+    } else {
+      where.deleted = false;
+    }
+  }
+
+  if (!where) {
+    return
+  }
+
   const aliases = node.ctx.aliases;
 
   for (const key of Object.keys(where)) {
