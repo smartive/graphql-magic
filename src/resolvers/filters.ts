@@ -52,9 +52,9 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
     });
   }
 
-    const ops: QueryBuilderOps = [];
-    applyWhere(node, where, ops, joins);
-    void apply(query, ops);
+  const ops: QueryBuilderOps = [];
+  applyWhere(node, where, ops, joins);
+  void apply(query, ops);
 
   if (search) {
     void applySearch(node, search, query);
@@ -66,10 +66,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
     if (!where) {
       where = {};
     }
-    if (
-      where.deleted &&
-      (!Array.isArray(where.deleted) || where.deleted.some((v) => v))
-    ) {
+    if (where.deleted && (!Array.isArray(where.deleted) || where.deleted.some((v) => v))) {
       if (node.ctx.user?.role !== 'ADMIN') {
         throw new ForbiddenError('You cannot access deleted entries.');
       }
@@ -79,7 +76,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
   }
 
   if (!where) {
-    return
+    return;
   }
 
   const aliases = node.ctx.aliases;
