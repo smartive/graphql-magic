@@ -1,5 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`query AND works 1`] = `
+{
+  "manyObjects": [
+    {
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+  ],
+}
+`;
+
+exports[`query NOT works 1`] = `
+{
+  "manyObjects": [
+    {
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+  ],
+}
+`;
+
+exports[`query OR works 1`] = `
+{
+  "manyObjects": [
+    {
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+}
+`;
+
 exports[`query can be executed 1`] = `
 {
   "manyObjects": [

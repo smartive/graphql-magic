@@ -2,7 +2,6 @@
 
 Welcome to `graphql-magic`, a revolutionary library that transforms the way of working with GraphQL and databases in TypeScript projects. This library aims to streamline the development process, enhancing speed, efficiency, and type safety.
 
-
 ## Key Features
 
 - **Model First**: Define your models and their relations directly in TypeScript. `graphql-magic` seamlessly integrates with your TypeScript projects, ensuring type safety and reducing the need for redundant code.
@@ -23,8 +22,13 @@ The magic of `graphql-magic` takes TypeScript projects to the next level. To get
 ## Development
 
 Start the required dependencies such as a Postgres database:
+
 ```
 npm run deps
+```
+
+```
+npm bootstrap
 ```
 
 Bootstrap the application by generating all the models, migrations and graphql schema:

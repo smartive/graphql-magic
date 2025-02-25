@@ -36,7 +36,7 @@
   },
   "overrides": {
     "graphql": "$graphql",
-    "rollup": "3.29.4"
+    "rollup": "3.29.5"
   },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
@@ -71,21 +71,21 @@
   "devDependencies": {
     "@smartive/eslint-config": "3.3.0",
     "@smartive/prettier-config": "3.1.2",
-    "@types/jest": "29.5.12",
-    "@types/lodash": "4.17.7",
+    "@types/jest": "29.5.14",
+    "@types/lodash": "4.17.15",
     "@types/luxon": "3.4.2",
-    "@types/pg": "8.11.6",
+    "@types/pg": "8.11.11",
     "@types/uuid": "9.0.8",
     "create-ts-index": "1.14.0",
     "del-cli": "5.1.0",
-    "esbuild": "0.23.0",
-    "eslint": "8.57.0",
+    "esbuild": "0.25.0",
+    "eslint": "8.57.1",
     "graphql-request": "6.1.0",
     "jest": "29.7.0",
     "mock-knex": "0.4.13",
     "prettier": "2.8.8",
-    "ts-jest": "29.2.2",
+    "ts-jest": "29.2.6",
     "ts-node": "10.9.2",
-    "typescript": "5.5.3"
+    "typescript": "5.5.4"
   }
 }

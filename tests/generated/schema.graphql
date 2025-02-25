@@ -19,6 +19,9 @@ input AnotherObjectWhere {
   deleted: [Boolean!]
   manyObjects_SOME: SomeObjectWhere
   manyObjects_NONE: SomeObjectWhere
+  NOT: AnotherObjectWhere
+  AND: [AnotherObjectWhere!]
+  OR: [AnotherObjectWhere!]
 }
 
 input AnotherObjectWhereUnique {
@@ -52,6 +55,9 @@ input AnswerOrderBy {
 input AnswerWhere {
   id: [ID!]
   deleted: [Boolean!]
+  NOT: AnswerWhere
+  AND: [AnswerWhere!]
+  OR: [AnswerWhere!]
 }
 
 input AnswerWhereUnique {
@@ -145,6 +151,9 @@ input QuestionOrderBy {
 input QuestionWhere {
   id: [ID!]
   deleted: [Boolean!]
+  NOT: QuestionWhere
+  AND: [QuestionWhere!]
+  OR: [QuestionWhere!]
 }
 
 input QuestionWhereUnique {
@@ -184,6 +193,9 @@ enum ReactionType {
 input ReactionWhere {
   id: [ID!]
   deleted: [Boolean!]
+  NOT: ReactionWhere
+  AND: [ReactionWhere!]
+  OR: [ReactionWhere!]
 }
 
 input ReactionWhereUnique {
@@ -222,6 +234,9 @@ input ReviewWhere {
   rating_GTE: Float
   rating_LT: Float
   rating_LTE: Float
+  NOT: ReviewWhere
+  AND: [ReviewWhere!]
+  OR: [ReviewWhere!]
 }
 
 input ReviewWhereUnique {
@@ -265,8 +280,12 @@ input SomeObjectOrderBy {
 input SomeObjectWhere {
   id: [ID!]
   float: [Float!]
+  xyz: [Int!]
   deleted: [Boolean!]
   another: AnotherObjectWhere
+  NOT: SomeObjectWhere
+  AND: [SomeObjectWhere!]
+  OR: [SomeObjectWhere!]
 }
 
 input SomeObjectWhereUnique {
@@ -321,6 +340,9 @@ type User {
 
 input UserWhere {
   id: [ID!]
+  NOT: UserWhere
+  AND: [UserWhere!]
+  OR: [UserWhere!]
 }
 
 input UserWhereUnique {

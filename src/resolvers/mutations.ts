@@ -279,7 +279,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook(model, 'restore', 'before', data, ctx);
+        await ctx.mutationHook(currentModel, 'restore', 'before', data, ctx);
       });
     }
     mutations.push(async () => {
@@ -288,7 +288,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook(model, 'restore', 'after', data, ctx);
+        await ctx.mutationHook(currentModel, 'restore', 'after', data, ctx);
       });
     }
 

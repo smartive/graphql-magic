@@ -165,7 +165,8 @@
         "nonNull": true,
         "creatable": true,
         "updatable": true,
-        "orderable": true
+        "orderable": true,
+        "filterable": true
       },
       {
         "name": "createdAt",

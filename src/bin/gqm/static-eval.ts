@@ -170,6 +170,8 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
     switch (node.getOperatorToken().getKind()) {
       case SyntaxKind.EqualsEqualsEqualsToken:
         return staticEval(node.getLeft(), context) === staticEval(node.getRight(), context);
+      case SyntaxKind.ExclamationEqualsEqualsToken:
+        return staticEval(node.getLeft(), context) !== staticEval(node.getRight(), context);
       case SyntaxKind.BarBarToken:
         return staticEval(node.getLeft(), context) || staticEval(node.getRight(), context);
       default:
