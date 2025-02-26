@@ -35,8 +35,7 @@
     "gqm": "dist/bin/gqm.cjs"
   },
   "overrides": {
-    "graphql": "$graphql",
-    "rollup": "3.29.5"
+    "graphql": "$graphql"
   },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
