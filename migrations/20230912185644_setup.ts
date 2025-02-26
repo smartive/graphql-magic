@@ -10,7 +10,7 @@ export const up = async (knex: Knex) => {
   await knex.schema.createTable('User', (table) => {
     table.uuid('id').notNullable().primary();
     table.string('username', undefined).nullable();
-    table.enum('role', null as any, {
+    table.enum('role', null, {
       useNative: true,
       existingType: true,
       enumName: 'role',
@@ -61,7 +61,7 @@ export const up = async (knex: Knex) => {
 
   await knex.schema.createTable('Reaction', (table) => {
     table.uuid('id').notNullable().primary();
-    table.enum('type', null as any, {
+    table.enum('type', null, {
       useNative: true,
       existingType: true,
       enumName: 'reactionType',
