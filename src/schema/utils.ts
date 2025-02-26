@@ -1,9 +1,11 @@
 import { Dayjs } from 'dayjs';
 import {
-  ArgumentNode,
+  ConstArgumentNode,
+  ConstDirectiveNode,
+  ConstObjectFieldNode,
+  ConstValueNode,
   DefinitionNode,
   DirectiveDefinitionNode,
-  DirectiveNode,
   DocumentNode,
   EnumTypeDefinitionNode,
   EnumValueDefinitionNode,
@@ -11,16 +13,15 @@ import {
   InputObjectTypeDefinitionNode,
   InputValueDefinitionNode,
   InterfaceTypeDefinitionNode,
+  Kind,
   ListTypeNode,
   NamedTypeNode,
   NameNode,
   NonNullTypeNode,
-  ObjectFieldNode,
   ObjectTypeDefinitionNode,
   ScalarTypeDefinitionNode,
   StringValueNode,
   TypeNode,
-  ValueNode,
 } from 'graphql';
 import { DateTime } from 'luxon';
 import { Directive, Value, Values } from '../values';
@@ -46,34 +47,34 @@ export type DirectiveLocation =
   | 'INPUT_OBJECT';
 
 export const document = (definitions: DefinitionNode[]): DocumentNode => ({
-  kind: 'Document',
+  kind: Kind.DOCUMENT,
   definitions,
 });
 
 export const directive = (nme: string, locations: DirectiveLocation[], fields?: Field[]): DirectiveDefinitionNode => ({
   name: name(nme),
   repeatable: false,
-  kind: 'DirectiveDefinition',
+  kind: Kind.DIRECTIVE_DEFINITION,
   arguments: fields && inputValues(fields),
   locations: locations.map(name),
 });
 
 export const scalar = (nme: string): ScalarTypeDefinitionNode => ({
   name: name(nme),
-  kind: 'ScalarTypeDefinition',
+  kind: Kind.SCALAR_TYPE_DEFINITION,
 });
 
 export const input = (nme: string, fields: Field[], dvs?: Directive[]): InputObjectTypeDefinitionNode => ({
   name: name(nme),
   fields: inputValues(fields),
-  kind: 'InputObjectTypeDefinition',
+  kind: Kind.INPUT_OBJECT_TYPE_DEFINITION,
   directives: directives(dvs),
 });
 
 export const object = (nme: string, fds: Field[], interfaces?: string[], dvs?: Directive[]): ObjectTypeDefinitionNode => ({
   name: name(nme),
   fields: fields(fds),
-  kind: 'ObjectTypeDefinition',
+  kind: Kind.OBJECT_TYPE_DEFINITION,
   interfaces: interfaces?.map((i) => namedType(i)),
   directives: directives(dvs),
 });
@@ -81,7 +82,7 @@ export const object = (nme: string, fds: Field[], interfaces?: string[], dvs?: D
 export const iface = (nme: string, fds: Field[], interfaces?: string[], dvs?: Directive[]): InterfaceTypeDefinitionNode => ({
   name: name(nme),
   fields: fields(fds),
-  kind: 'InterfaceTypeDefinition',
+  kind: Kind.INTERFACE_TYPE_DEFINITION,
   interfaces: interfaces?.map((i) => namedType(i)),
   directives: directives(dvs),
 });
@@ -89,7 +90,7 @@ export const iface = (nme: string, fds: Field[], interfaces?: string[], dvs?: Di
 export const inputValues = (fields: Field[]): InputValueDefinitionNode[] =>
   fields.map(
     (field): InputValueDefinitionNode => ({
-      kind: 'InputValueDefinition',
+      kind: Kind.INPUT_VALUE_DEFINITION,
       name: name(field.name),
       type: fieldType(field),
       defaultValue: field.defaultValue === undefined ? undefined : value(field.defaultValue),
@@ -100,11 +101,11 @@ export const inputValues = (fields: Field[]): InputValueDefinitionNode[] =>
 export const fields = (fields: Field[]): FieldDefinitionNode[] =>
   fields.map(
     (field): FieldDefinitionNode => ({
-      kind: 'FieldDefinition',
+      kind: Kind.FIELD_DEFINITION,
       name: name(field.name),
       type: fieldType(field),
       arguments: field.args?.map((arg) => ({
-        kind: 'InputValueDefinition',
+        kind: Kind.INPUT_VALUE_DEFINITION,
         name: name(arg.name),
         type: fieldType(arg),
         defaultValue: arg.defaultValue === undefined ? undefined : value(arg.defaultValue),
@@ -122,25 +123,25 @@ export const inputValue = (
 ): InputValueDefinitionNode => ({
   name: name(nme),
   type,
-  kind: 'InputValueDefinition',
+  kind: Kind.INPUT_VALUE_DEFINITION,
   directives: directives(dvs),
   defaultValue: defaultValue ? value(defaultValue) : undefined,
   description: description ? (value(description) as StringValueNode) : undefined,
 });
 
-export const directives = (directives?: Directive[]): DirectiveNode[] | undefined =>
+export const directives = (directives?: Directive[]): ConstDirectiveNode[] | undefined =>
   directives?.map(
-    (directive): DirectiveNode => ({
-      kind: 'Directive',
+    (directive): ConstDirectiveNode => ({
+      kind: Kind.DIRECTIVE,
       name: name(directive.name),
       arguments: args(directive.values),
     }),
   );
 
-export const args = (ags: Values | undefined): readonly ArgumentNode[] | undefined =>
+export const args = (ags: Values | undefined): readonly ConstArgumentNode[] | undefined =>
   ags?.map(
-    (argument): ArgumentNode => ({
-      kind: 'Argument',
+    (argument): ConstArgumentNode => ({
+      kind: Kind.ARGUMENT,
       name: name(argument.name),
       value: value(argument.values),
     }),
@@ -148,10 +149,10 @@ export const args = (ags: Values | undefined): readonly ArgumentNode[] | undefin
 
 export const enm = (nme: string, values: string[]): EnumTypeDefinitionNode => ({
   name: name(nme),
-  kind: 'EnumTypeDefinition',
+  kind: Kind.ENUM_TYPE_DEFINITION,
   values: values.map(
     (v): EnumValueDefinitionNode => ({
-      kind: 'EnumValueDefinition',
+      kind: Kind.ENUM_VALUE_DEFINITION,
       name: name(v),
     }),
   ),
@@ -159,21 +160,21 @@ export const enm = (nme: string, values: string[]): EnumTypeDefinitionNode => ({
 
 export const nonNull = (type: NamedTypeNode | ListTypeNode): NonNullTypeNode => ({
   type,
-  kind: 'NonNullType',
+  kind: Kind.NON_NULL_TYPE,
 });
 
 export const namedType = (nme: string): NamedTypeNode => ({
-  kind: 'NamedType',
+  kind: Kind.NAMED_TYPE,
   name: name(nme),
 });
 
 export const list = (type: TypeNode): ListTypeNode => ({
   type,
-  kind: 'ListType',
+  kind: Kind.LIST_TYPE,
 });
 
 export const name = (name: string): NameNode => ({
-  kind: 'Name',
+  kind: Kind.NAME,
   value: name,
 });
 
@@ -189,52 +190,52 @@ export const fieldType = (field: Field) => {
   return type;
 };
 
-export const value = (val: Value = null): ValueNode =>
+export const value = (val: Value = null): ConstValueNode =>
   val === null
     ? {
-        kind: 'NullValue',
+        kind: Kind.NULL,
       }
     : typeof val === 'boolean'
       ? {
-          kind: 'BooleanValue',
+          kind: Kind.BOOLEAN,
           value: val,
         }
       : typeof val === 'number'
         ? {
-            kind: 'IntValue',
+            kind: Kind.INT,
             value: `${val}`,
           }
         : typeof val === 'string'
           ? {
-              kind: 'StringValue',
+              kind: Kind.STRING,
               value: val,
             }
           : val instanceof Symbol
             ? {
-                kind: 'EnumValue',
+                kind: Kind.ENUM,
                 value: val.description!,
               }
             : Array.isArray(val)
               ? {
-                  kind: 'ListValue',
+                  kind: Kind.LIST,
                   values: val.map(value),
                 }
               : val instanceof DateTime
                 ? {
-                    kind: 'StringValue',
+                    kind: Kind.STRING,
                     value: val.toString(),
                   }
                 : val instanceof Dayjs
                   ? {
-                      kind: 'StringValue',
+                      kind: Kind.STRING,
                       value: val.toISOString(),
                     }
                   : typeof val === 'object'
                     ? {
-                        kind: 'ObjectValue',
+                        kind: Kind.OBJECT,
                         fields: Object.keys(val).map(
-                          (nme): ObjectFieldNode => ({
-                            kind: 'ObjectField',
+                          (nme): ConstObjectFieldNode => ({
+                            kind: Kind.OBJECT_FIELD,
                             name: name(nme),
                             value: value(val[nme]),
                           }),
