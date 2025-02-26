@@ -23,7 +23,7 @@ type FieldDefinitionBase2 =
       | {
           type: 'DateTime';
           dateTimeType?: 'year' | 'date' | 'datetime' | 'year_and_month';
-          endOfDay?: boolean;
+          endOfPeriod?: boolean;
         }
       | ({
           type: 'Int';
