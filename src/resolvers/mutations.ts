@@ -137,15 +137,17 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
     throw new ForbiddenError('Entity is already deleted.');
   }
 
-  const toDelete: { [type: string]: { [id: string]: string } } = {};
-  const toUnlink: {
-    [type: string]: {
-      [id: string]: {
+  const toDelete: Record<string, Record<string, string>> = {};
+  const toUnlink: Record<
+    string,
+    Record<
+      string,
+      {
         display: string;
         fields: string[];
-      };
-    };
-  } = {};
+      }
+    >
+  > = {};
 
   const beforeHooks: Callbacks = [];
   const mutations: Callbacks = [];
@@ -167,18 +169,19 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
     if (!dryRun) {
       const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user?.id };
       const data = { prev: entity, input: {}, normalizedInput, next: { ...entity, ...normalizedInput } };
-      if (ctx.mutationHook) {
+      const mutationHook = ctx.mutationHook;
+      if (mutationHook) {
         beforeHooks.push(async () => {
-          await ctx.mutationHook(currentModel, 'delete', 'before', data, ctx);
+          await mutationHook(currentModel, 'delete', 'before', data, ctx);
         });
       }
       mutations.push(async () => {
         await ctx.knex(currentModel.name).where({ id: entity.id }).update(normalizedInput);
         await createRevision(currentModel, { ...entity, deleted: true }, ctx);
       });
-      if (ctx.mutationHook) {
+      if (mutationHook) {
         afterHooks.push(async () => {
-          await ctx.mutationHook(currentModel, 'delete', 'after', data, ctx);
+          await mutationHook(currentModel, 'delete', 'after', data, ctx);
         });
       }
     }
@@ -270,7 +273,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     if (
       !relatedEntity.deleted ||
       !relatedEntity.deletedAt ||
-      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone).equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone))
+      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
     ) {
       return;
     }
@@ -279,7 +282,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook(currentModel, 'restore', 'before', data, ctx);
+        await ctx.mutationHook!(currentModel, 'restore', 'before', data, ctx);
       });
     }
     mutations.push(async () => {
@@ -288,7 +291,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook(currentModel, 'restore', 'after', data, ctx);
+        await ctx.mutationHook!(currentModel, 'restore', 'after', data, ctx);
       });
     }
 
@@ -369,7 +372,7 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
     }
 
     if (isEndOfDay(field) && data[key]) {
-      data[key] = anyDateToLuxon(data[key], ctx.timeZone).endOf('day');
+      data[key] = anyDateToLuxon(data[key], ctx.timeZone)!.endOf('day');
       continue;
     }
 
@@ -380,5 +383,5 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
   }
 };
 
-const isEndOfDay = (field?: EntityField) =>
+const isEndOfDay = (field: EntityField) =>
   isPrimitive(field) && field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date';

@@ -33,12 +33,10 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   const { limit, offset, orderBy, where, search } = normalizedArguments;
 
   if (limit) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
     query.limit(limit);
   }
 
   if (offset) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- we do not need to await knex here
     query.offset(offset);
   }
 
@@ -108,8 +106,8 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
       ops.push((query) =>
         ors(
           query,
-          allSubOps.map((subOps) => (subQuery) => apply(subQuery, subOps))
-        )
+          allSubOps.map((subOps) => (subQuery) => apply(subQuery, subOps)),
+        ),
       );
       continue;
     }
@@ -145,7 +143,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
               ]);
             void apply(subQuery, subOps);
             applyJoins(aliases, subQuery, subJoins);
-          })
+          }),
         );
         continue;
       }
@@ -183,8 +181,8 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
         ops.push((query) =>
           ors(
             query,
-            value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, column] as string[]))
-          )
+            value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, column] as string[])),
+          ),
         );
         continue;
       }
@@ -195,7 +193,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
             ors(query, [
               (subQuery) => subQuery.whereIn(column, value.filter((v) => v !== null) as string[]),
               (subQuery) => subQuery.whereNull(column),
-            ])
+            ]),
           );
           continue;
         }
@@ -220,8 +218,8 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
       .map(
         ({ name }) =>
           (query) =>
-            query.whereILike(getColumn(node, name), `%${search}%`)
-      )
+            query.whereILike(getColumn(node, name), `%${search}%`),
+      ),
   );
 
 const applyOrderBy = (node: FieldResolverNode, orderBy: OrderBy, query: Knex.QueryBuilder) => {

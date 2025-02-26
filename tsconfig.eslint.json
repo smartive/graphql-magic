@@ -1,5 +1,20 @@
 {
-  "extends": "./tsconfig.json",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist"],
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ],
+  "compilerOptions": {
+    "outDir": "./dist/esm",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": true,
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true
+  },
 }

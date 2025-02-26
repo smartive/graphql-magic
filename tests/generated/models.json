@@ -45,7 +45,8 @@
       {
         "name": "role",
         "kind": "enum",
-        "type": "Role"
+        "type": "Role",
+        "nonNull": true
       }
     ]
   },

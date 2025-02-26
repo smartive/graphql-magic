@@ -9,25 +9,25 @@ export type ReactionType = 'Review' | 'Question' | 'Answer';
 export type User = {
   'id': string;
   'username': string | null;
-  'role': Role | null;
+  'role': Role;
 }
 
 export type UserInitializer = {
   'id': string;
   'username'?: string | null;
-  'role'?: Role | null;
+  'role': Role;
 }
 
 export type UserMutator = {
   'id'?: string;
   'username'?: string | null;
-  'role'?: Role | null;
+  'role'?: Role;
 }
 
 export type UserSeed = {
   'id': string;
   'username'?: string | null;
-  'role'?: string | null;
+  'role': string;
 }
 
 export type AnotherObject = {

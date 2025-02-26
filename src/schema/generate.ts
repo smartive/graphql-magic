@@ -22,12 +22,12 @@ export const generateDefinitions = ({
     ...inputs.map((model) => input(model.name, model.fields)),
     ...objects
       .filter((model) =>
-        entities.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name))
+        entities.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name)),
       )
       .map((model) => input(`Create${model.name}`, model.fields)),
     ...objects
       .filter((model) =>
-        entities.some((m) => m.updatable && m.fields.some((f) => f.updatable && f.kind === 'json' && f.type === model.name))
+        entities.some((m) => m.updatable && m.fields.some((f) => f.updatable && f.kind === 'json' && f.type === model.name)),
       )
       .map((model) => input(`Update${model.name}`, model.fields)),
 
@@ -58,7 +58,7 @@ export const generateDefinitions = ({
               ],
             })),
           ],
-          [...(model.parent ? [model.parent] : []), ...(model.interfaces || [])]
+          [...(model.parent ? [model.parent] : []), ...(model.interfaces || [])],
         ),
         input(`${model.name}Where`, [
           ...model.fields
@@ -112,13 +112,13 @@ export const generateDefinitions = ({
         ]),
         input(
           `${model.name}WhereUnique`,
-          model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type }))
+          model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
         ),
         ...(model.fields.some(({ orderable }) => orderable)
           ? [
               input(
                 `${model.name}OrderBy`,
-                model.fields.filter(({ orderable }) => orderable).map(({ name }) => ({ name, type: 'Order' }))
+                model.fields.filter(({ orderable }) => orderable).map(({ name }) => ({ name, type: 'Order' })),
               ),
             ]
           : []),
@@ -139,9 +139,9 @@ export const generateDefinitions = ({
                         type: field.kind === 'json' ? `Create${field.type}` : field.type,
                         list: field.list,
                         nonNull: field.nonNull && field.defaultValue === undefined,
-                      }
-                )
-            )
+                      },
+                ),
+            ),
           );
         }
 
@@ -158,9 +158,9 @@ export const generateDefinitions = ({
                         name: field.name,
                         type: field.kind === 'json' ? `Update${field.type}` : field.type,
                         list: field.list,
-                      }
-                )
-            )
+                      },
+                ),
+            ),
           );
         }
       }

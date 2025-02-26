@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 
 export type DateLibrary = 'luxon' | 'dayjs';
 
-export const DATE_CLASS: { [key in DateLibrary]: string } = {
+export const DATE_CLASS: Record<DateLibrary, string> = {
   luxon: 'DateTime',
   dayjs: 'Dayjs',
 };
@@ -19,9 +19,9 @@ export const anyDateToLuxon = (date: unknown, zone: string | undefined, fallback
   if (!date) {
     if (fallbackToNow) {
       return DateTime.local({ zone });
-    } else {
-      return undefined;
     }
+
+    return undefined;
   }
 
   if (DateTime.isDateTime(date)) {

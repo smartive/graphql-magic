@@ -19,7 +19,7 @@ import {
 
 const isNotFalsy = <T>(v: T | null | undefined | false): v is T => typeof v !== 'undefined' && v !== null && v !== false;
 
-export const merge = <T>(objects: ({ [name: string]: T } | undefined | false)[] | undefined): { [name: string]: T } =>
+export const merge = <T>(objects: (Record<string, T> | undefined | false)[] | undefined): Record<string, T> =>
   (objects || []).filter(isNotFalsy).reduce((i, acc) => ({ ...acc, ...i }), {});
 
 // Target -> target
@@ -42,7 +42,7 @@ export const not =
   (field: T) =>
     !predicate(field);
 
-export const isRootModel = (model: EntityModel) => model.root;
+export const isRootModel = (model: EntityModel) => !!model.root;
 
 export const isEntityModel = (model: Model): model is EntityModel => model instanceof EntityModel;
 
@@ -77,7 +77,7 @@ export const isEnum = (field: EntityField): field is EnumField => field.kind ===
 
 export const isRelation = (field: EntityField): field is RelationField => field.kind === 'relation';
 
-export const isInherited = (field: EntityField) => field.inherited;
+export const isInherited = (field: EntityField) => !!field.inherited;
 
 export const isInTable = (field: EntityField) => field.name === 'id' || !field.inherited;
 
@@ -114,7 +114,7 @@ export const getActionableRelations = (model: EntityModel, action: 'create' | 'u
       (relation) =>
         relation.field[
           `${action === 'filter' ? action : action.slice(0, -1)}able` as 'filterable' | 'creatable' | 'updatable'
-        ]
+        ],
     )
     .map(({ name }) => name);
 
@@ -133,6 +133,7 @@ export const summon = <T>(array: readonly T[] | undefined, cb: Parameters<T[]['f
     console.trace();
     throw new Error(errorMessage || 'Element not found.');
   }
+
   return result;
 };
 
@@ -154,11 +155,13 @@ export const get = <T, U extends keyof ForSure<T>>(object: T | null | undefined,
     console.warn(error);
     throw error;
   }
+
   return value as ForSure<ForSure<T>[U]>;
 };
 
 export const getString = (v: unknown) => {
   assert(typeof v === 'string');
+
   return v;
 };
 
@@ -168,9 +171,8 @@ export const retry = async <T>(cb: () => Promise<T>, condition: (e: any) => bool
   } catch (e) {
     if (condition(e)) {
       return await cb();
-    } else {
-      throw e;
     }
+    throw e;
   }
 };
 
@@ -182,7 +184,6 @@ type Typeof = {
   symbol: symbol;
   undefined: undefined;
   object: object;
-  // eslint-disable-next-line @typescript-eslint/ban-types
   function: Function;
 };
 

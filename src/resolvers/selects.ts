@@ -34,7 +34,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
               role,
               'READ',
               `${node.model.name}'s field "${field.name}"`,
-              'field permission not available'
+              'field permission not available',
             );
           }
 
@@ -49,6 +49,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
           if ([ID_ALIAS, TYPE_ALIAS].includes(fieldAlias)) {
             throw new UserInputError(`Keyword ${fieldAlias} is reserved by graphql-magic.`);
           }
+
           return {
             fieldNode,
             field: fieldNode.name.value,
@@ -59,8 +60,8 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
         }),
     ].map(
       ({ tableAlias, resultAlias, field, fieldAlias }) =>
-        `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`
-    )
+        `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`,
+    ),
   );
 
   for (const subNode of getInlineFragments(node)) {

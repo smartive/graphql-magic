@@ -19,7 +19,7 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   const fieldNode = summonByKey(ctx.info.fieldNodes, 'name.value', ctx.info.fieldName);
   const baseTypeDefinition = get(
     ctx.info.operation.operation === 'query' ? ctx.info.schema.getQueryType() : ctx.info.schema.getMutationType(),
-    'astNode'
+    'astNode',
   );
   const node = getRootFieldNode({
     ctx,
@@ -29,7 +29,7 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   const { query, verifiedPermissionStacks } = await buildQuery(node);
 
   if (ctx.info.fieldName === 'me') {
-    if (!node.ctx.user.id) {
+    if (!node.ctx.user?.id) {
       return undefined;
     }
 
@@ -66,7 +66,7 @@ type VerifiedPermissionStacks = Record<string, PermissionStack>;
 
 const buildQuery = async (
   node: FieldResolverNode,
-  parentVerifiedPermissionStacks?: VerifiedPermissionStacks
+  parentVerifiedPermissionStacks?: VerifiedPermissionStacks,
 ): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks }> => {
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
 
@@ -88,7 +88,7 @@ const buildQuery = async (
       node.ctx.aliases.getShort(alias),
       query,
       'READ',
-      parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')]
+      parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
     );
 
     if (typeof verifiedPermissionStack !== 'boolean') {
@@ -102,13 +102,13 @@ const buildQuery = async (
 const applySubQueries = async (
   node: ResolverNode,
   entries: Entry[],
-  parentVerifiedPermissionStacks: VerifiedPermissionStacks
+  parentVerifiedPermissionStacks: VerifiedPermissionStacks,
 ): Promise<void> => {
   if (!entries.length) {
     return;
   }
 
-  const entriesById: { [id: string]: Entry[] } = {};
+  const entriesById: Record<string, Entry[]> = {};
   for (const entry of entries) {
     if (!entriesById[entry[ID_ALIAS]]) {
       entriesById[entry[ID_ALIAS]] = [];
@@ -130,7 +130,7 @@ const applySubQueries = async (
       query
         .clone()
         .select(`${shortTableAlias}.${foreignKey} as ${shortResultAlias}__${foreignKey}`)
-        .where({ [`${shortTableAlias}.${foreignKey}`]: id })
+        .where({ [`${shortTableAlias}.${foreignKey}`]: id }),
     );
 
     // TODO: make unionAll faster then promise.all...
@@ -153,10 +153,11 @@ const applySubQueries = async (
       flatMap(
         entries.map((entry) => {
           const children = entry[fieldName];
+
           return (isList ? children : children ? [children] : []) as Entry[];
-        })
+        }),
       ),
-      verifiedPermissionStacks
+      verifiedPermissionStacks,
     );
   }
 
@@ -172,7 +173,7 @@ const applySubQueries = async (
     await applySubQueries(
       subNode,
       entries.map((item) => item[getNameOrAlias(subNode.field)] as Entry).filter(Boolean),
-      parentVerifiedPermissionStacks
+      parentVerifiedPermissionStacks,
     );
   }
 };

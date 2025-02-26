@@ -31,6 +31,7 @@ const modelDefinitions: ModelDefinitions = [
         name: 'role',
         kind: 'enum',
         type: 'Role',
+        nonNull: true,
       },
     ],
   },

@@ -149,7 +149,7 @@ export const getInlineFragments = (node: ResolverNode) =>
 
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: getFragmentTypeName(subNode),
-    })
+    }),
   );
 
 export const getFragmentSpreads = (node: ResolverNode) =>
@@ -166,7 +166,7 @@ export const getFragmentSpreads = (node: ResolverNode) =>
 
       baseTypeDefinition: node.baseTypeDefinition,
       typeName: node.model.name,
-    })
+    }),
   );
 
 export const getJoins = (node: ResolverNode, toMany: boolean) => {
@@ -217,5 +217,6 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       isList: isListType(fieldDefinition.type),
     });
   }
+
   return nodes;
 };

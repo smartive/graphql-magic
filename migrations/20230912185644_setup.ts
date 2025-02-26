@@ -14,7 +14,7 @@ export const up = async (knex: Knex) => {
       useNative: true,
       existingType: true,
       enumName: 'role',
-    }).nullable();
+    }).notNullable();
   });
 
   await knex.schema.createTable('AnotherObject', (table) => {

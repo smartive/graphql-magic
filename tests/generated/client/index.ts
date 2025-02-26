@@ -675,7 +675,7 @@ export type User = {
   deletedReactions: Array<Reaction>;
   deletedReviews: Array<Review>;
   id: Scalars['ID']['output'];
-  role: Maybe<Role>;
+  role: Role;
   updatedAnswers: Array<Answer>;
   updatedManyObjects: Array<SomeObject>;
   updatedQuestions: Array<Question>;

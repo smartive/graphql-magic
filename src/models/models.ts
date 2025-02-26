@@ -71,7 +71,7 @@ export class Models {
         kind: 'raw-enum',
         name: 'Order',
         values: ['ASC', 'DESC'],
-      }
+      },
     );
     const entities = this.definitions.filter(isEntityModelDefinition);
 
@@ -204,7 +204,7 @@ export class Models {
     }
 
     this.models = this.definitions.map(
-      (definition) => new (MODEL_KIND_TO_CLASS_MAPPING[definition.kind] as any)(this, definition)
+      (definition) => new (MODEL_KIND_TO_CLASS_MAPPING[definition.kind] as any)(this, definition),
     );
     for (const model of this.models) {
       this.modelsByName[model.name] = model;
@@ -228,6 +228,7 @@ export class Models {
     if (!(model instanceof expectedType)) {
       throw new Error(`Model ${name} is not of kind ${kind}.`);
     }
+
     return model as ModelKindToClassMapping[K];
   }
 }
@@ -237,7 +238,10 @@ export abstract class Model {
   plural: string;
   description: string;
 
-  constructor(public models: Models, definition: ModelDefinition) {
+  constructor(
+    public models: Models,
+    definition: ModelDefinition,
+  ) {
     Object.assign(this, definition);
     this.plural = definition.plural || pluralize(definition.name);
   }
@@ -358,6 +362,7 @@ export class EntityModel extends Model {
         .filter(isRelation)
         .map((relationField) => new NormalRelation(this, relationField, this.models.getModel(relationField.type, 'entity')));
     }
+
     return this._relations;
   }
 
@@ -368,6 +373,7 @@ export class EntityModel extends Model {
         this._relationsByName[relation.name] = relation;
       }
     }
+
     return this._relationsByName;
   }
 
@@ -380,9 +386,10 @@ export class EntityModel extends Model {
       this._reverseRelations = this.models.entities.flatMap((model) =>
         model.relations
           .filter((relation) => relation.targetModel.name === this.name || relation.targetModel.name === this.rootModel.name)
-          .map((relation) => relation.reverse)
+          .map((relation) => relation.reverse),
       );
     }
+
     return this._reverseRelations;
   }
 
@@ -393,6 +400,7 @@ export class EntityModel extends Model {
         this._reverseRelationsByName[reverseRelation.name] = reverseRelation;
       }
     }
+
     return this._reverseRelationsByName;
   }
 
@@ -405,7 +413,7 @@ export class EntityModel extends Model {
       this._manyToManyRelations = [];
       for (const relationFromSource of this.reverseRelations) {
         const relationToTarget = relationFromSource.targetModel.relations.find(
-          (relation) => !relation.field.generated && relation.field.name !== relationFromSource.field.name
+          (relation) => !relation.field.generated && relation.field.name !== relationFromSource.field.name,
         );
         if (!relationToTarget) {
           continue;
@@ -413,7 +421,7 @@ export class EntityModel extends Model {
 
         const inapplicableFields = relationFromSource.targetModel.fields.filter(
           (otherField) =>
-            !otherField.generated && ![relationFromSource.field.name, relationToTarget.field.name].includes(otherField.name)
+            !otherField.generated && ![relationFromSource.field.name, relationToTarget.field.name].includes(otherField.name),
         );
         if (inapplicableFields.length) {
           continue;
@@ -422,6 +430,7 @@ export class EntityModel extends Model {
         this._manyToManyRelations.push(new ManyToManyRelation(relationFromSource, relationToTarget));
       }
     }
+
     return this._manyToManyRelations;
   }
 
@@ -432,6 +441,7 @@ export class EntityModel extends Model {
         this._manyToManyRelationsByName[manyToManyRelation.name] = manyToManyRelation;
       }
     }
+
     return this._manyToManyRelationsByName;
   }
 
@@ -444,6 +454,7 @@ export class EntityModel extends Model {
       if (!this._parentModel) {
         this._parentModel = this.models.getModel(this.parent, 'entity');
       }
+
       return this._parentModel;
     }
   }
@@ -472,14 +483,18 @@ export abstract class Relation {
     public name: string,
     public sourceModel: EntityModel,
     public field: RelationField,
-    public targetModel: EntityModel
+    public targetModel: EntityModel,
   ) {}
 }
 
 export class NormalRelation extends Relation {
   public reverse: ReverseRelation;
 
-  constructor(sourceModel: EntityModel, public field: RelationField, targetModel: EntityModel) {
+  constructor(
+    sourceModel: EntityModel,
+    public field: RelationField,
+    targetModel: EntityModel,
+  ) {
     super(field.name, sourceModel, field, targetModel);
     this.reverse = new ReverseRelation(this);
   }
@@ -492,7 +507,7 @@ export class ReverseRelation extends Relation {
         (reverse.field.toOne ? typeToField(reverse.sourceModel.name) : reverse.sourceModel.pluralField),
       reverse.targetModel,
       reverse.field,
-      reverse.sourceModel
+      reverse.sourceModel,
     );
   }
 }
