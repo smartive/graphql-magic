@@ -34,9 +34,6 @@
   "bin": {
     "gqm": "dist/bin/gqm.cjs"
   },
-  "overrides": {
-    "graphql": "$graphql"
-  },
   "browserslist": "> 0.25%, not dead",
   "publishConfig": {
     "access": "public"
@@ -46,7 +43,6 @@
     "@graphql-codegen/add": "^5.0.0",
     "@graphql-codegen/cli": "^5.0.0",
     "@graphql-codegen/typescript": "^4.0.1",
-    "@graphql-codegen/typescript-compatibility": "^2.1.5",
     "@graphql-codegen/typescript-operations": "^4.0.1",
     "@graphql-codegen/typescript-resolvers": "^4.0.1",
     "@types/node": "^22.13.5",

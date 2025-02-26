@@ -30,7 +30,7 @@ export const generateGraphqlClientTypes = async () => {
     documents: [graphqlQueriesPath, `${generatedFolderPath}/client/mutations.ts`],
     generates: {
       [`${generatedFolderPath}/client/index.ts`]: {
-        plugins: ['typescript', 'typescript-operations', 'typescript-compatibility'],
+        plugins: ['typescript', 'typescript-operations'],
       },
     },
     config: {

@@ -98,7 +98,7 @@ const nextConfig = {
 Install `@smartive/graphql-magic` and needed dependencies:
 
 ```bash
-npm install @smartive/graphql-magic @graphql-codegen/typescript-compatibility
+npm install @smartive/graphql-magic
 ```
 
 Run the gqm cli:

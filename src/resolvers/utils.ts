@@ -28,8 +28,10 @@ export const getTypeName = (t: TypeNode): string => {
     case 'ListType':
     case 'NonNullType':
       return getTypeName(t.type);
-    default:
+    case 'NamedType':
       return t.name.value;
+    default:
+      throw new Error(`Unknown type node kind: ${t.kind}`);
   }
 };
 
