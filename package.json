@@ -49,6 +49,7 @@
     "@graphql-codegen/typescript-compatibility": "^2.1.5",
     "@graphql-codegen/typescript-operations": "^4.0.1",
     "@graphql-codegen/typescript-resolvers": "^4.0.1",
+    "@types/node": "^22.13.5",
     "code-block-writer": "^13.0.0",
     "commander": "^13.0.0",
     "dayjs": "^1.11.10",
@@ -85,6 +86,6 @@
     "prettier": "2.8.8",
     "ts-jest": "29.2.6",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4"
+    "typescript": "5.7.3"
   }
 }
