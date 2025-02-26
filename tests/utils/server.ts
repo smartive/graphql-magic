@@ -1,16 +1,15 @@
-import { TypedQueryDocumentNode } from 'graphql';
-import graphqlRequest, { RequestDocument, Variables } from 'graphql-request';
 import { RequestListener, createServer } from 'http';
 import { Knex } from 'knex';
 import { up } from '../../migrations/20230912185644_setup';
 import { execute } from '../../src';
 import { getKnex } from './database/knex';
 import { ADMIN_ID, setupSeed } from './database/seed';
+import { graphqlRequest } from './graphql-client';
 import { models, permissions } from './models';
 
 export const withServer = async (
   cb: (
-    request: (document: RequestDocument | TypedQueryDocumentNode, ...variablesAndRequestHeaders: any) => Promise<any>,
+    request: (document: string, ...variablesAndRequestHeaders: any) => Promise<any>,
     knex: Knex
   ) => Promise<void>
 ) => {
@@ -66,8 +65,8 @@ export const withServer = async (
       res.end(JSON.stringify(result));
     };
 
-    const request = <T, V extends Variables = Variables>(
-      document: RequestDocument | TypedQueryDocumentNode<T, V>,
+    const request = <T, V>(
+      document: string,
       ...variablesAndRequestHeaders: any
     ) => graphqlRequest(`http://localhost:${port}`, document, ...variablesAndRequestHeaders);
 
