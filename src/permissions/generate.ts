@@ -8,36 +8,19 @@ const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'REST
 /**
  * Initial representation (tree structure, as defined by user).
  */
-export type PermissionsConfig = {
-  [role: string]:
-    | true
-    | {
-        [type: string]: PermissionsBlock;
-      };
-};
+export type PermissionsConfig = Record<string, true | Record<string, PermissionsBlock>>;
 
-export type PermissionsBlock = {
-  [action in PermissionAction]?: true;
-} & {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PermissionsBlock = Partial<Record<PermissionAction, true>> & {
   WHERE?: Record<string, any>;
-  RELATIONS?: {
-    [relation: string]: PermissionsBlock;
-  };
+  RELATIONS?: Record<string, PermissionsBlock>;
 };
 
 /**
  * Final representation (lookup table (role, model, action) -> permission stack).
  */
-export type Permissions = {
-  [role: string]: true | RolePermissions;
-};
+export type Permissions = Record<string, true | RolePermissions>;
 
-type RolePermissions = {
-  [type: string]: {
-    [action in PermissionAction]?: true | PermissionStack;
-  };
-};
+type RolePermissions = Record<string, Partial<Record<PermissionAction, true | PermissionStack>>>;
 
 /**
  * For a given role, model and action,
@@ -53,7 +36,7 @@ export type PermissionLink = {
   foreignKey?: string;
   reverse?: boolean;
   me?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   where?: any;
 };
 
@@ -85,7 +68,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
             ...('WHERE' in block && { where: block.WHERE }),
           },
         ],
-        block
+        block,
       );
     }
     permissions[role] = rolePermissions;
@@ -107,7 +90,7 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
         permissions[type][action] = [];
       }
       if (permissions[type][action] !== true) {
-        (permissions[type][action] as PermissionStack).push(links);
+        permissions[type][action].push(links);
       }
     }
   }

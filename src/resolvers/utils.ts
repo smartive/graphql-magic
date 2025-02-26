@@ -21,9 +21,7 @@ import { FieldResolverNode, ResolverNode } from './node';
 export const ID_ALIAS = 'ID';
 export const TYPE_ALIAS = 'TYPE';
 
-export type VariableValues = {
-  [variableName: string]: Value;
-};
+export type VariableValues = Record<string, Value>;
 
 export const getTypeName = (t: TypeNode): string => {
   switch (t.kind) {
@@ -67,14 +65,14 @@ export type Entry = {
 
 export function hydrate<T extends Entry>(
   node: FieldResolverNode,
-  raw: { [key: string]: undefined | null | string | Date | number }[]
+  raw: Record<string, undefined | null | string | Date | number>[],
 ): T[] {
   const resultAlias = node.resultAlias;
   const res = raw.map((entry) => {
     const res: any = {};
     outer: for (const [column, value] of Object.entries(entry)) {
       let current = res;
-      const [, columnWithoutField, fieldName] = column.match(/^(.*\w)__(\w+)$/);
+      const [, columnWithoutField, fieldName] = column.match(/^(.*\w)__(\w+)$/)!;
       const longColumn = node.ctx.aliases.getLong(columnWithoutField);
       const longColumnWithoutRoot = longColumn.replace(new RegExp(`^${resultAlias}(__)?`), '');
       const allParts = [resultAlias, ...(longColumnWithoutRoot ? longColumnWithoutRoot.split('__') : []), fieldName];
@@ -92,6 +90,7 @@ export function hydrate<T extends Entry>(
       }
       current[it(fieldName)] = value;
     }
+
     return res[resultAlias];
   });
 
@@ -102,6 +101,7 @@ export const ors = (query: Knex.QueryBuilder, [first, ...rest]: ((query: Knex.Qu
   if (!first) {
     return query;
   }
+
   return query.where((subQuery) => {
     void subQuery.where((subSubQuery) => {
       void first(subSubQuery);
@@ -117,7 +117,7 @@ export const ors = (query: Knex.QueryBuilder, [first, ...rest]: ((query: Knex.Qu
 export const getNameOrAlias = (node: FieldNode) => {
   const name = node.alias ? node.alias.value : node.name.value;
 
-  if ([ID_ALIAS].indexOf(name) >= 0) {
+  if ([ID_ALIAS].includes(name)) {
     throw new UserInputError(`"${name}" can not be used as alias since it's a reserved word`);
   }
 
@@ -140,7 +140,7 @@ export const applyJoins = (aliases: AliasGenerator, query: Knex.QueryBuilder, jo
     void query.leftJoin(
       `${table2Name} as ${table2ShortAlias}`,
       `${table1ShortAlias}.${column1}`,
-      `${table2ShortAlias}.${column2}`
+      `${table2ShortAlias}.${column2}`,
     );
   }
 };
@@ -154,7 +154,7 @@ export const addJoin = (
   table2Name: string,
   table2Alias: string,
   column1: string,
-  column2: string
+  column2: string,
 ) => {
   const join = { table1Alias, table2Name, table2Alias, column1, column2 };
   const existingJoin = joins.find((j) => j.table2Alias === join.table2Alias);
@@ -173,6 +173,7 @@ export class AliasGenerator {
   public getShort(long?: string) {
     if (!long) {
       const short = `a${Object.keys(this.reverse).length}`;
+
       return (this.reverse[short] = short);
     }
 
@@ -187,6 +188,7 @@ export class AliasGenerator {
     }
 
     this.reverse[short] = long;
+
     return short;
   }
 
@@ -201,6 +203,7 @@ export const getColumnName = (field: EntityField) =>
   field.kind === 'relation' ? field.foreignKey || `${field.name}Id` : field.name;
 
 export const getColumn = (node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>, key: string) => {
-  const field = node.model.fields.find((field) => getColumnName(field) === key);
+  const field = node.model.fields.find((field) => getColumnName(field) === key)!;
+
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${key}`;
 };

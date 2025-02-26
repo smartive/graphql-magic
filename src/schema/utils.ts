@@ -74,7 +74,7 @@ export const object = (nme: string, fds: Field[], interfaces?: string[], dvs?: D
   name: name(nme),
   fields: fields(fds),
   kind: 'ObjectTypeDefinition',
-  interfaces: interfaces && interfaces.map((i) => namedType(i)),
+  interfaces: interfaces?.map((i) => namedType(i)),
   directives: directives(dvs),
 });
 
@@ -82,7 +82,7 @@ export const iface = (nme: string, fds: Field[], interfaces?: string[], dvs?: Di
   name: name(nme),
   fields: fields(fds),
   kind: 'InterfaceTypeDefinition',
-  interfaces: interfaces && interfaces.map((i) => namedType(i)),
+  interfaces: interfaces?.map((i) => namedType(i)),
   directives: directives(dvs),
 });
 
@@ -94,7 +94,7 @@ export const inputValues = (fields: Field[]): InputValueDefinitionNode[] =>
       type: fieldType(field),
       defaultValue: field.defaultValue === undefined ? undefined : value(field.defaultValue),
       directives: directives(field.directives),
-    })
+    }),
   );
 
 export const fields = (fields: Field[]): FieldDefinitionNode[] =>
@@ -110,7 +110,7 @@ export const fields = (fields: Field[]): FieldDefinitionNode[] =>
         defaultValue: arg.defaultValue === undefined ? undefined : value(arg.defaultValue),
       })),
       directives: directives(field.directives),
-    })
+    }),
   );
 
 export const inputValue = (
@@ -118,7 +118,7 @@ export const inputValue = (
   type: TypeNode,
   dvs?: Directive[],
   description?: string,
-  defaultValue?: Value
+  defaultValue?: Value,
 ): InputValueDefinitionNode => ({
   name: name(nme),
   type,
@@ -134,16 +134,16 @@ export const directives = (directives?: Directive[]): DirectiveNode[] | undefine
       kind: 'Directive',
       name: name(directive.name),
       arguments: args(directive.values),
-    })
+    }),
   );
 
-export const args = (ags: Values | undefined): ReadonlyArray<ArgumentNode> | undefined =>
+export const args = (ags: Values | undefined): readonly ArgumentNode[] | undefined =>
   ags?.map(
     (argument): ArgumentNode => ({
       kind: 'Argument',
       name: name(argument.name),
       value: value(argument.values),
-    })
+    }),
   );
 
 export const enm = (nme: string, values: string[]): EnumTypeDefinitionNode => ({
@@ -153,7 +153,7 @@ export const enm = (nme: string, values: string[]): EnumTypeDefinitionNode => ({
     (v): EnumValueDefinitionNode => ({
       kind: 'EnumValueDefinition',
       name: name(v),
-    })
+    }),
   ),
 });
 
@@ -185,6 +185,7 @@ export const fieldType = (field: Field) => {
   if (field.nonNull) {
     type = nonNull(type);
   }
+
   return type;
 };
 
@@ -194,52 +195,52 @@ export const value = (val: Value = null): ValueNode =>
         kind: 'NullValue',
       }
     : typeof val === 'boolean'
-    ? {
-        kind: 'BooleanValue',
-        value: val,
-      }
-    : typeof val === 'number'
-    ? {
-        kind: 'IntValue',
-        value: `${val}`,
-      }
-    : typeof val === 'string'
-    ? {
-        kind: 'StringValue',
-        value: val,
-      }
-    : val instanceof Symbol
-    ? {
-        kind: 'EnumValue',
-        value: val.description,
-      }
-    : Array.isArray(val)
-    ? {
-        kind: 'ListValue',
-        values: val.map(value),
-      }
-    : val instanceof DateTime
-    ? {
-        kind: 'StringValue',
-        value: val.toString(),
-      }
-    : val instanceof Dayjs
-    ? {
-        kind: 'StringValue',
-        value: val.toISOString(),
-      }
-    : typeof val === 'object'
-    ? {
-        kind: 'ObjectValue',
-        fields: Object.keys(val).map(
-          (nme): ObjectFieldNode => ({
-            kind: 'ObjectField',
-            name: name(nme),
-            value: value(val[nme]),
-          })
-        ),
-      }
-    : doThrow(`Unsupported value ${val}`);
+      ? {
+          kind: 'BooleanValue',
+          value: val,
+        }
+      : typeof val === 'number'
+        ? {
+            kind: 'IntValue',
+            value: `${val}`,
+          }
+        : typeof val === 'string'
+          ? {
+              kind: 'StringValue',
+              value: val,
+            }
+          : val instanceof Symbol
+            ? {
+                kind: 'EnumValue',
+                value: val.description!,
+              }
+            : Array.isArray(val)
+              ? {
+                  kind: 'ListValue',
+                  values: val.map(value),
+                }
+              : val instanceof DateTime
+                ? {
+                    kind: 'StringValue',
+                    value: val.toString(),
+                  }
+                : val instanceof Dayjs
+                  ? {
+                      kind: 'StringValue',
+                      value: val.toISOString(),
+                    }
+                  : typeof val === 'object'
+                    ? {
+                        kind: 'ObjectValue',
+                        fields: Object.keys(val).map(
+                          (nme): ObjectFieldNode => ({
+                            kind: 'ObjectField',
+                            name: name(nme),
+                            value: value(val[nme]),
+                          }),
+                        ),
+                      }
+                    : doThrow(`Unsupported value ${val}`);
 
 const doThrow = (message: string) => {
   throw new Error(message);

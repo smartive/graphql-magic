@@ -678,7 +678,7 @@ export type User = {
   deletedReactions: Array<Reaction>;
   deletedReviews: Array<Review>;
   id: Scalars['ID']['output'];
-  role?: Maybe<Role>;
+  role: Role;
   updatedAnswers: Array<Answer>;
   updatedManyObjects: Array<SomeObject>;
   updatedQuestions: Array<Question>;
@@ -1172,7 +1172,7 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   deletedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserDeletedReactionsArgs>>;
   deletedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserDeletedReviewsArgs>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  role?: Resolver<Maybe<ResolversTypes['Role']>, ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
   updatedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserUpdatedAnswersArgs>>;
   updatedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserUpdatedManyObjectsArgs>>;
   updatedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserUpdatedQuestionsArgs>>;

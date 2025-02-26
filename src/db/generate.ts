@@ -15,6 +15,7 @@ const PRIMITIVE_TYPES = {
 const OPTIONAL_SEED_FIELDS = ['createdAt', 'createdById', 'updatedAt', 'updatedById', 'deletedAt', 'deletedById'];
 
 export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
+  // eslint-disable-next-line @typescript-eslint/dot-notation
   const writer: CodeBlockWriter = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
@@ -52,8 +53,8 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
               `'${getColumnName(field)}'${field.nonNull && field.defaultValue === undefined ? '' : '?'}: ${getFieldType(
                 field,
                 dateLibrary,
-                true
-              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'};`
+                true,
+              )}${field.list ? ' | string' : ''}${field.nonNull ? '' : ' | null'};`,
             )
             .newLine();
         }
@@ -68,7 +69,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
             .write(
               `'${getColumnName(field)}'?: ${getFieldType(field, dateLibrary, true)}${field.list ? ' | string' : ''}${
                 field.nonNull ? '' : ' | null'
-              };`
+              };`,
             )
             .newLine();
         }
@@ -90,7 +91,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
                   field.nonNull && field.defaultValue === undefined && !OPTIONAL_SEED_FIELDS.includes(fieldName) ? '' : '?'
                 }: ${field.kind === 'enum' ? (field.list ? 'string[]' : 'string') : getFieldType(field, dateLibrary, true)}${
                   field.list ? ' | string' : ''
-                }${field.nonNull ? '' : ' | null'};`
+                }${field.nonNull ? '' : ' | null'};`,
               )
               .newLine();
           }
@@ -126,6 +127,7 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
       if (field.type === 'DateTime') {
         return (input ? `(${DATE_CLASS[dateLibrary]} | string)` : DATE_CLASS[dateLibrary]) + (field.list ? '[]' : '');
       }
+
       return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');
     default: {
       const exhaustiveCheck: never = kind;
@@ -135,6 +137,7 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
 };
 
 export const generateKnexTables = (models: Models) => {
+  // eslint-disable-next-line @typescript-eslint/dot-notation
   const writer: CodeBlockWriter = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
@@ -145,7 +148,7 @@ export const generateKnexTables = (models: Models) => {
     .write(
       `import { ${models.entities
         .map((model) => `${model.name}, ${model.name}Initializer, ${model.name}Mutator`)
-        .join(', ')} } from '.';`
+        .join(', ')} } from '.';`,
     )
     .blankLine();
 

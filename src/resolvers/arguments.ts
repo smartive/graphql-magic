@@ -35,6 +35,7 @@ function getRawValue(value: ValueNode, values?: VariableValues): Value {
       if (!values) {
         return;
       }
+
       return value.values.map((value) => getRawValue(value, values));
     case Kind.VARIABLE:
       return values?.[value.name.value];
@@ -56,6 +57,7 @@ function getRawValue(value: ValueNode, values?: VariableValues): Value {
       for (const field of value.fields) {
         res[field.name.value] = getRawValue(field.value, values);
       }
+
       return res;
     }
   }
@@ -69,7 +71,7 @@ export const normalizeArguments = (node: FieldResolverNode) => {
       const normalizedValue = normalizeValue(
         rawValue,
         summonByKey(node.fieldDefinition.arguments || [], 'name.value', argument.name.value).type,
-        node.ctx.info.schema
+        node.ctx.info.schema,
       );
       if (normalizedValue === undefined) {
         continue;
@@ -77,6 +79,7 @@ export const normalizeArguments = (node: FieldResolverNode) => {
       normalizedArguments[argument.name.value] = normalizedValue as any;
     }
   }
+
   return normalizedArguments;
 };
 
@@ -88,6 +91,7 @@ export function normalizeValue(value: Value, type: TypeNode, schema: GraphQLSche
         for (const v of value) {
           res.push(normalizeValue(v, type.type, schema));
         }
+
         return res;
       }
 
@@ -104,7 +108,7 @@ export function normalizeValue(value: Value, type: TypeNode, schema: GraphQLSche
       return normalizeValueByTypeDefinition(
         value,
         (schema.getType(type.name.value) as Maybe<GraphQLObjectType>)?.astNode,
-        schema
+        schema,
       );
   }
 }
@@ -125,5 +129,6 @@ export const normalizeValueByTypeDefinition = (value: Value, type: Maybe<TypeDef
     }
     res[key] = normalizedValue;
   }
+
   return res;
 };

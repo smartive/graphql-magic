@@ -2,6 +2,6 @@
 export const gql = (chunks: TemplateStringsArray, ...variables: (string | number | boolean)[]): string => {
   return chunks.reduce(
     (accumulator, chunk, index) => `${accumulator}${chunk}${index in variables ? variables[index] : ''}`,
-    ''
+    '',
   );
 };

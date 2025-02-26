@@ -15,8 +15,8 @@ import {
 export const getUpdateEntityQuery = (
   model: EntityModel,
   role: string,
-  fields?: string[] | undefined,
-  additionalFields = ''
+  fields?: string[],
+  additionalFields = '',
 ) => `query Update${model.name}Fields ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     id
@@ -39,6 +39,7 @@ export const fieldIsSearchable = (model: EntityModel, fieldName: string) => {
   const relation = model.getRelation(fieldName);
   const targetModel = relation.targetModel;
   const displayField = targetModel.getField(targetModel.displayField || 'id');
+
   return displayField.searchable;
 };
 
@@ -52,7 +53,7 @@ export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames:
         (relation) =>
           `$${relation.name}Where: ${relation.targetModel.name}Where, $${relation.name}Limit: Int${
             fieldIsSearchable(model, relation.name) ? `, $${relation.name}Search: String` : ''
-          }`
+          }`,
       )
       .join(', ')}) {
       ${relations
@@ -85,7 +86,7 @@ export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames:
 export const getManyToManyRelationsQuery = (
   model: Model,
   action: 'create' | 'update',
-  manyToManyRelations: ManyToManyRelation[]
+  manyToManyRelations: ManyToManyRelation[],
 ) =>
   !!manyToManyRelations.length &&
   (action === 'update'
@@ -138,14 +139,14 @@ export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'de
         }
         `
     : action === 'update'
-    ? `
+      ? `
         mutation Update${model.name} ($id: ID!, $data: Update${model.name}!) {
           mutated: update${model.name}(where: { id: $id } data: $data) {
             id
           }
         }
         `
-    : `
+      : `
         mutation Delete${model.name} ($id: ID!) {
           mutated: delete${model.name}(where: { id: $id }) {
             id
@@ -162,7 +163,7 @@ export const getEntityListQuery = (
   role: string,
   relations?: string[],
   fragment = '',
-  reverseRelation?: ReverseRelation
+  reverseRelation?: ReverseRelation,
 ) => `query ${model.plural}List(
   ${reverseRelation ? '$id: ID!,' : ''}
   $limit: Int!,
@@ -171,14 +172,14 @@ export const getEntityListQuery = (
 ) {
   ${reverseRelation ? `root: ${typeToField(reverseRelation.sourceModel.name)}(where: { id: $id }) {` : ''}
     data: ${reverseRelation ? reverseRelation.name : model.pluralField}(limit: $limit, where: $where, ${
-  model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
-}) {
+      model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
+    }) {
       ${displayField(model)}
       ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
       ${fragment}
       ${queryRelations(
         model.models,
-        model.relations.filter((relation) => !relations || relations.includes(relation.name))
+        model.relations.filter((relation) => !relations || relations.includes(relation.name)),
       )}
       ${fragment}
     }
@@ -193,14 +194,14 @@ export const getEntityQuery = (model: EntityModel, role: string, relations?: str
     ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
     ${queryRelations(
       model.models,
-      model.relations.filter((relation) => !relations || relations.includes(relation.name))
+      model.relations.filter((relation) => !relations || relations.includes(relation.name)),
     )}
     ${queryRelations(
       model.models,
       model.reverseRelations.filter(
         (reverseRelation) =>
-          isToOneRelation(reverseRelation.field) && (!relations || relations.includes(reverseRelation.name))
-      )
+          isToOneRelation(reverseRelation.field) && (!relations || relations.includes(reverseRelation.name)),
+      ),
     )}
     ${fragment}
   }
@@ -220,6 +221,6 @@ export const queryRelations = (models: Models, relations: Relation[]) =>
       (relation): string => `${relation.name} {
           id
           ${displayField(relation.targetModel)}
-        }`
+        }`,
     )
     .join('\n');

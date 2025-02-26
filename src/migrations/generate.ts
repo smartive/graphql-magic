@@ -22,6 +22,7 @@ import { Value } from '../values';
 type Callbacks = (() => void)[];
 
 export class MigrationGenerator {
+  // eslint-disable-next-line @typescript-eslint/dot-notation
   private writer: CodeBlockWriter = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
@@ -31,7 +32,10 @@ export class MigrationGenerator {
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
 
-  constructor(knex: Knex, private models: Models) {
+  constructor(
+    knex: Knex,
+    private models: Models,
+  ) {
     this.schema = SchemaInspector(knex);
   }
 
@@ -49,7 +53,7 @@ export class MigrationGenerator {
     this.createEnums(
       this.models.enums.filter((enm) => !enums.includes(lowerFirst(enm.name))),
       up,
-      down
+      down,
     );
 
     for (const model of models.entities) {
@@ -81,10 +85,10 @@ export class MigrationGenerator {
       if (model.oldName) {
         // Rename table
         up.push(() => {
-          this.renameTable(model.oldName, model.name);
+          this.renameTable(model.oldName!, model.name);
         });
         down.push(() => {
-          this.renameTable(model.name, model.oldName);
+          this.renameTable(model.name, model.oldName!);
         });
         tables[tables.indexOf(model.oldName)] = model.name;
         this.columns[model.name] = this.columns[model.oldName];
@@ -137,7 +141,7 @@ export class MigrationGenerator {
             model,
             model.fields.filter(not(isInherited)).filter(({ oldName }) => oldName),
             up,
-            down
+            down,
           );
 
           // Add missing fields
@@ -148,10 +152,10 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !this.getColumn(model.name, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                  !this.getColumn(model.name, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               ),
             up,
-            down
+            down,
           );
 
           // Update fields
@@ -160,6 +164,7 @@ export class MigrationGenerator {
             if (!col) {
               return false;
             }
+
             return !nonNull && !col.is_nullable;
           });
           this.updateFields(model, existingFields, up, down);
@@ -215,7 +220,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                  !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               );
 
             this.createRevisionFields(model, missingRevisionFields, up, down);
@@ -226,7 +231,7 @@ export class MigrationGenerator {
                 field.kind !== 'custom' &&
                 !updatable &&
                 !(field.kind === 'relation' && field.foreignKey === 'id') &&
-                this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name)
+                this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
             );
             this.createRevisionFields(model, revisionFieldsToRemove, down, up);
           }
@@ -267,7 +272,7 @@ export class MigrationGenerator {
             model,
             model.fields.filter(isUpdatableField).filter(({ deleted }) => deleted),
             down,
-            up
+            up,
           );
         }
       }
@@ -276,7 +281,7 @@ export class MigrationGenerator {
     this.createEnums(
       this.models.enums.filter((enm) => enm.deleted),
       down,
-      up
+      up,
     );
 
     writer.writeLine(`import { Knex } from 'knex';`);
@@ -308,7 +313,7 @@ export class MigrationGenerator {
         this.alterTable(model.name, () => {
           this.renameColumn(
             field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
-            field.kind === 'relation' ? `${field.name}Id` : field.name
+            field.kind === 'relation' ? `${field.name}Id` : field.name,
           );
         });
       }
@@ -319,15 +324,14 @@ export class MigrationGenerator {
         this.alterTable(model.name, () => {
           this.renameColumn(
             field.kind === 'relation' ? `${field.name}Id` : field.name,
-            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName')
+            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
           );
         });
       }
     });
 
     for (const field of fields) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      summonByName(this.columns[model.name]!, field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
+      summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
         field.kind === 'relation' ? `${field.name}Id` : field.name;
     }
   }
@@ -400,7 +404,7 @@ export class MigrationGenerator {
           this.column(
             field,
             { alter: true },
-            summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name)
+            summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
           );
         }
       });
@@ -426,7 +430,7 @@ export class MigrationGenerator {
             this.column(
               field,
               { alter: true },
-              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name)
+              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
             );
           }
         });
@@ -476,7 +480,7 @@ export class MigrationGenerator {
                 .write(
                   `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
                     model.name
-                  }Revision"."${typeToField(model.name)}Id")'),`
+                  }Revision"."${typeToField(model.name)}Id")'),`,
                 )
                 .newLine();
             }
@@ -511,9 +515,9 @@ export class MigrationGenerator {
       up.push(() =>
         this.writer
           .writeLine(
-            `await knex.raw(\`CREATE TYPE "${name}" AS ENUM (${enm.values.map((value) => `'${value}'`).join(',')})\`);`
+            `await knex.raw(\`CREATE TYPE "${name}" AS ENUM (${enm.values.map((value) => `'${value}'`).join(',')})\`);`,
           )
-          .newLine()
+          .newLine(),
       );
       down.push(() => this.writer.writeLine(`await knex.raw('DROP TYPE "${name}"');`));
     }
@@ -575,7 +579,7 @@ export class MigrationGenerator {
   private column(
     { name, primary, list, ...field }: EntityField,
     { setUnique = true, setNonNull = true, alter = false, foreign = true, setDefault = true } = {},
-    toColumn?: Column
+    toColumn?: Column,
   ) {
     const col = (what?: string) => {
       if (what) {
@@ -648,7 +652,7 @@ export class MigrationGenerator {
         col(`table.uuid('${field.foreignKey}')`);
         if (foreign && !alter) {
           this.writer.writeLine(
-            `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('CASCADE');`
+            `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('CASCADE');`,
           );
         }
         break;

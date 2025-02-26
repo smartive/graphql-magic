@@ -35,6 +35,7 @@ export const execute = async ({
     fieldResolver: (parent, _args, _ctx, info: GraphQLResolveInfo) => {
       const node = get(info.fieldNodes, 0);
       const alias = node.alias;
+
       return parent[alias ? alias.value : node.name.value];
     },
   });

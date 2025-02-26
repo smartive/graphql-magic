@@ -17,7 +17,7 @@
     "generate:index-files": "cti create ./src --excludes bin --withoutbackup",
     "generate:gqm-stuff": "npx gqm generate",
     "generate:setup-migration": "npm run build:bin && npx gqm generate-migration setup 20230912185644",
-    "lint": "eslint src",
+    "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src --fix",
     "deps": "docker compose up",
     "test": "npm run lint && npm run test:all && npm run build",
@@ -69,7 +69,7 @@
     "knex": "^3.0.1"
   },
   "devDependencies": {
-    "@smartive/eslint-config": "3.3.0",
+    "@smartive/eslint-config": "6.5.0",
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.15",
@@ -79,11 +79,11 @@
     "create-ts-index": "1.14.0",
     "del-cli": "6.0.0",
     "esbuild": "0.25.0",
-    "eslint": "8.57.1",
+    "eslint": "9.21.0",
     "graphql-request": "6.1.0",
     "jest": "29.7.0",
     "mock-knex": "0.4.13",
-    "prettier": "2.8.8",
+    "prettier": "3.5.2",
     "ts-jest": "29.2.6",
     "ts-node": "10.9.2",
     "typescript": "5.7.3"
