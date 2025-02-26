@@ -49,6 +49,7 @@
     "@graphql-codegen/typescript-compatibility": "^2.1.5",
     "@graphql-codegen/typescript-operations": "^4.0.1",
     "@graphql-codegen/typescript-resolvers": "^4.0.1",
+    "@types/node": "^22.13.5",
     "code-block-writer": "^13.0.0",
     "commander": "^13.0.0",
     "dayjs": "^1.11.10",

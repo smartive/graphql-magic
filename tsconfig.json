@@ -1,6 +1,13 @@
 {
-  "include": ["./src/**/*.ts", "./src/**/*.tsx"],
-  "exclude": ["node_modules", "dist", "src/bin"],
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/bin"
+  ],
   "compilerOptions": {
     "outDir": "./dist/esm",
     "rootDir": "./src",
