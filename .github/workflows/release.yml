@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'next'
 
 jobs:
   release:
@@ -14,7 +15,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - run: npm ci
       - run: npm run build
       - name: semantic release
@@ -22,6 +23,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +34,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
       - name: Install and Build
         run: |
           cd docs
