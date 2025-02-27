@@ -43,9 +43,8 @@ program
     await getSetting('knexfilePath');
     const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    const gqlModule = await getSetting('gqlModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models));
     writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
