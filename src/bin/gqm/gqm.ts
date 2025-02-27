@@ -5,12 +5,12 @@ import { config } from 'dotenv';
 import knex from 'knex';
 import { simpleGit } from 'simple-git';
 import {
-  MigrationGenerator,
-  generateDBModels,
-  generateKnexTables,
-  generateMutations,
-  getMigrationDate,
-  printSchemaFromModels,
+    MigrationGenerator,
+    generateDBModels,
+    generateKnexTables,
+    generateMutations,
+    getMigrationDate,
+    printSchemaFromModels,
 } from '../..';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
@@ -35,9 +35,9 @@ program
     await getSetting('knexfilePath');
     const models = await parseModels();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    const gqlModule = await getSetting('gqlModule');
+    const gqmModule = await getSetting('gqmModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqmModule));
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
