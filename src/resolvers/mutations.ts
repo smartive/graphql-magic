@@ -280,18 +280,19 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
 
     const normalizedInput: Entity = { deleted: false, deletedAt: null, deletedById: null };
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
-    if (ctx.mutationHook) {
+    const mutationHook = ctx.mutationHook;
+    if (mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook!(currentModel, 'restore', 'before', data, ctx);
+        await mutationHook(currentModel, 'restore', 'before', data, ctx);
       });
     }
     mutations.push(async () => {
       await ctx.knex(currentModel.name).where({ id: relatedEntity.id }).update(normalizedInput);
       await createRevision(currentModel, { ...relatedEntity, deleted: false }, ctx);
     });
-    if (ctx.mutationHook) {
+    if (mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook!(currentModel, 'restore', 'after', data, ctx);
+        await mutationHook(currentModel, 'restore', 'after', data, ctx);
       });
     }
 

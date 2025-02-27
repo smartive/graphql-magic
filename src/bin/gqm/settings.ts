@@ -97,6 +97,7 @@ const initSetting = async (name: string) => {
   const { question, defaultValue, init } = DEFAULTS[name];
   const value = (await readLine(`${question} (${defaultValue})`)) || defaultValue;
   await init(value);
+
   return value;
 };
 
@@ -118,6 +119,7 @@ export const getSettings = async (): Promise<Settings> => {
   if (!existsSync(SETTINGS_PATH)) {
     await initSettings();
   }
+
   return JSON.parse(readFileSync(SETTINGS_PATH, 'utf8'));
 };
 
@@ -131,6 +133,7 @@ export const getSetting = async (name: keyof Settings): Promise<string> => {
       return DEFAULTS[name].defaultValue;
     }
   }
+
   return settings[name];
 };
 
@@ -144,6 +147,7 @@ export const ensureDirectoryExists = (dir: string) => {
   try {
     console.info(`Creating directory ${dir}`);
     mkdirSync(dir);
+
     return true;
   } catch (err) {
     if (err.code === 'EEXIST') {

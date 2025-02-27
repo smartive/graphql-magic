@@ -23,7 +23,7 @@ type Callbacks = (() => void)[];
 
 export class MigrationGenerator {
   // eslint-disable-next-line @typescript-eslint/dot-notation
-  private writer: CodeBlockWriter = new CodeBlockWriter['default']({
+  private writer = new CodeBlockWriter['default']({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });
@@ -82,34 +82,35 @@ export class MigrationGenerator {
         }
       }
 
-      if (model.oldName) {
+      const oldName = model.oldName;
+      if (oldName) {
         // Rename table
         up.push(() => {
-          this.renameTable(model.oldName!, model.name);
+          this.renameTable(oldName, model.name);
         });
         down.push(() => {
-          this.renameTable(model.name, model.oldName!);
+          this.renameTable(model.name, oldName);
         });
-        tables[tables.indexOf(model.oldName)] = model.name;
-        this.columns[model.name] = this.columns[model.oldName];
-        delete this.columns[model.oldName];
+        tables[tables.indexOf(oldName)] = model.name;
+        this.columns[model.name] = this.columns[oldName];
+        delete this.columns[oldName];
 
         if (isUpdatableModel(model)) {
           up.push(() => {
-            this.renameTable(`${model.oldName}Revision`, `${model.name}Revision`);
+            this.renameTable(`${oldName}Revision`, `${model.name}Revision`);
             this.alterTable(`${model.name}Revision`, () => {
               this.renameColumn(`${typeToField(get(model, 'oldName'))}Id`, `${typeToField(model.name)}Id`);
             });
           });
           down.push(() => {
-            this.renameTable(`${model.name}Revision`, `${model.oldName}Revision`);
-            this.alterTable(`${model.oldName}Revision`, () => {
+            this.renameTable(`${model.name}Revision`, `${oldName}Revision`);
+            this.alterTable(`${oldName}Revision`, () => {
               this.renameColumn(`${typeToField(model.name)}Id`, `${typeToField(get(model, 'oldName'))}Id`);
             });
           });
-          tables[tables.indexOf(`${model.oldName}Revision`)] = `${model.name}Revision`;
-          this.columns[`${model.name}Revision`] = this.columns[`${model.oldName}Revision`];
-          delete this.columns[`${model.oldName}Revision`];
+          tables[tables.indexOf(`${oldName}Revision`)] = `${model.name}Revision`;
+          this.columns[`${model.name}Revision`] = this.columns[`${oldName}Revision`];
+          delete this.columns[`${oldName}Revision`];
         }
       }
 
@@ -310,9 +311,11 @@ export class MigrationGenerator {
 
     up.push(() => {
       for (const field of fields) {
+        const oldName = get(field, 'oldName');
+
         this.alterTable(model.name, () => {
           this.renameColumn(
-            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
+            field.kind === 'relation' ? `${oldName}Id` : oldName,
             field.kind === 'relation' ? `${field.name}Id` : field.name,
           );
         });
@@ -321,17 +324,21 @@ export class MigrationGenerator {
 
     down.push(() => {
       for (const field of fields) {
+        const oldName = get(field, 'oldName');
+
         this.alterTable(model.name, () => {
           this.renameColumn(
             field.kind === 'relation' ? `${field.name}Id` : field.name,
-            field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
+            field.kind === 'relation' ? `${oldName}Id` : oldName,
           );
         });
       }
     });
 
     for (const field of fields) {
-      summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
+      const oldName = get(field, 'oldName');
+
+      summonByName(this.columns[model.name], field.kind === 'relation' ? `${oldName}Id` : oldName).name =
         field.kind === 'relation' ? `${field.name}Id` : field.name;
     }
   }

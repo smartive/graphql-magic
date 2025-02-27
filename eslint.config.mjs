@@ -4,15 +4,10 @@ import tsParser from "@typescript-eslint/parser";
 export default [
     ...config('typescript'),
     {
-        files: ['src/**/*.ts'],
         languageOptions: {
             parser: tsParser,
             ecmaVersion: 5,
             sourceType: "script",
-
-            parserOptions: {
-                project: "./tsconfig.eslint.json",
-            },
         },
 
         rules: {
@@ -37,6 +32,7 @@ export default [
             "@typescript-eslint/require-await": "off",
             "@typescript-eslint/no-unsafe-function-type": "off",
             "eqeqeq": "off",
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
         },
     },
 ];

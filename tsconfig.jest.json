@@ -1,10 +1,19 @@
 {
-  "extends": "./tsconfig.json",
-  "include": ["**/*.ts", "**/*.tsx", "**/unit/**/*.spec.ts"],
-  "exclude": ["node_modules", "dist"],
+  "extends": "./tsconfig.library.json",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/unit/**/*.spec.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
   "compilerOptions": {
     "rootDir": "./",
-    "types": ["jest"],
+    "types": [
+      "jest"
+    ],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "isolatedModules": true,
