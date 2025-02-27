@@ -1,5 +1,23 @@
 # Migration Guides
 
+## Upgrading to v18.0.0
+
+### Configuration changes
+
+- The `gqlModule` configuration property has been renamed to `gqmModule` to maintain consistency with the project naming. Please update your `.gqmrc.json` file accordingly:
+
+```diff
+{
+  "modelsPath": "path/to/models.ts",
+  "generatedFolderPath": "path/to/generated",
+  "graphqlQueriesPath": "path/to/queries",
+- "gqlModule": "../path/to/module",
++ "gqmModule": "../path/to/module",
+  "knexfilePath": "knexfile.ts",
+  "dateLibrary": "luxon"
+}
+```
+
 ## Upgrading to v17.2.0
 
 From now on, foreign keys will be indexed by default. For existing projects, you'll need to add indices manually to your existing foreign keys.
@@ -53,4 +71,3 @@ export const up = async (knex: Knex) => {`);
 };
 
 void start();
-```
