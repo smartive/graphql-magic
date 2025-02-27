@@ -5,12 +5,12 @@ import { config } from 'dotenv';
 import knex from 'knex';
 import { simpleGit } from 'simple-git';
 import {
-    MigrationGenerator,
-    generateDBModels,
-    generateKnexTables,
-    generateMutations,
-    getMigrationDate,
-    printSchemaFromModels,
+  MigrationGenerator,
+  generateDBModels,
+  generateKnexTables,
+  generateMutations,
+  getMigrationDate,
+  printSchemaFromModels,
 } from '../..';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';

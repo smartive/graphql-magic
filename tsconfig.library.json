@@ -1,0 +1,18 @@
+{
+    "extends": "./tsconfig.json",
+    "exclude": [
+        "tests",
+        "src/bin"
+    ],
+    "compilerOptions": {
+        "outDir": "./dist/esm",
+        "rootDir": "./src",
+        "sourceMap": true,
+        "declaration": true,
+        "target": "esnext",
+        "moduleResolution": "bundler",
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "allowSyntheticDefaultImports": true
+    },
+}

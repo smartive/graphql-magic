@@ -29,6 +29,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
         values.push(staticEval(value, context));
       }
     }
+
     return values;
   },
   [SyntaxKind.ObjectLiteralExpression]: (node: ObjectLiteralExpression, context) => {
@@ -36,6 +37,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
     for (const property of node.getProperties()) {
       Object.assign(result, staticEval(property, context));
     }
+
     return result;
   },
   [SyntaxKind.StringLiteral]: (node) => node.getLiteralValue(),
@@ -62,6 +64,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
     if (!definitionNodes.length) {
       throw new Error(`No definition node found for identifier ${node.getText()}.`);
     }
+
     return staticEval(definitionNodes[0], context);
   },
   [SyntaxKind.ParenthesizedExpression]: (node, context) => staticEval(node.getExpression(), context),
@@ -77,6 +80,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.CallExpression]: (node, context) => {
     const method = staticEval(node.getExpression(), context) as (...args: unknown[]) => unknown;
     const args = node.getArguments().map((arg) => staticEval(arg, context));
+
     return method(...args);
   },
   [SyntaxKind.PropertyAccessExpression]: (node, context) => {
@@ -115,6 +119,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
         parameters[parameter.getName()] = args[i];
         i++;
       }
+
       return staticEval(node.getBody(), { ...context, ...parameters });
     };
   },
@@ -129,6 +134,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       console.error(node.getText());
       throw new Error(`Can only handle code blocks with 1 statement.`);
     }
+
     return staticEval(statements[0], context);
   },
   [SyntaxKind.DefaultClause]: (node, context) => {
@@ -137,6 +143,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       console.error(node.getText());
       throw new Error(`Can only handle code blocks with exactly 1 statement.`);
     }
+
     return staticEval(statements[0], context);
   },
   [SyntaxKind.ReturnStatement]: (node, context) => {
@@ -205,6 +212,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.ElementAccessExpression]: (node: ElementAccessExpression, context) => {
     const target = staticEval(node.getExpression(), context);
     const argument = staticEval(node.getArgumentExpression(), context) as string;
+
     return target[argument];
   },
   [SyntaxKind.NoSubstitutionTemplateLiteral]: (node) => node.getLiteralValue(),

@@ -14,7 +14,7 @@ import { Knex } from 'knex';
 import { isEqual } from 'lodash';
 import { EntityField } from '..';
 import { UserInputError } from '../errors';
-import { get, it } from '../models/utils';
+import { get, it, summon } from '../models/utils';
 import { Value } from '../values';
 import { FieldResolverNode, ResolverNode } from './node';
 
@@ -205,7 +205,7 @@ export const getColumnName = (field: EntityField) =>
   field.kind === 'relation' ? field.foreignKey || `${field.name}Id` : field.name;
 
 export const getColumn = (node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>, key: string) => {
-  const field = node.model.fields.find((field) => getColumnName(field) === key)!;
+  const field = summon(node.model.fields, (field) => getColumnName(field) === key);
 
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${key}`;
 };

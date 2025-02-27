@@ -5,6 +5,8 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -27,6 +29,10 @@
     "@docusaurus/module-type-aliases": "3.7.0",
     "@docusaurus/tsconfig": "3.7.0",
     "@docusaurus/types": "3.7.0",
+    "@smartive/eslint-config": "^6.5.0",
+    "@smartive/prettier-config": "^3.1.2",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react": "^7.37.4",
     "typescript": "5.7.3"
   },
   "browserslist": {

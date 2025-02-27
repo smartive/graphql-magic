@@ -12,29 +12,17 @@ const FeatureList: FeatureItem[] = [
   {
     title: 'Model-first',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-    description: (
-      <>
-        Define your model, generate everything else.
-      </>
-    ),
+    description: <>Define your model, generate everything else.</>,
   },
   {
     title: 'CLI',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-    description: (
-      <>
-        Generate things with our cli.
-      </>
-    ),
+    description: <>Generate things with our cli.</>,
   },
   {
     title: 'Brought to you by smartive',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
-    description: (
-      <>
-        We developed this as an internal tool.
-      </>
-    ),
+    description: <>We developed this as an internal tool.</>,
   },
 ];
 

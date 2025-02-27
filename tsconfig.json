@@ -2,21 +2,11 @@
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
+    "./tests/**/*.ts",
+    "./tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "src/bin"
   ],
-  "compilerOptions": {
-    "outDir": "./dist/esm",
-    "rootDir": "./src",
-    "sourceMap": true,
-    "declaration": true,
-    "target": "esnext",
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
-    "strictNullChecks": true,
-    "allowSyntheticDefaultImports": true
-  },
 }
