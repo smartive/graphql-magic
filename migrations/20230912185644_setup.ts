@@ -31,7 +31,7 @@ export const up = async (knex: Knex) => {
   await knex.schema.createTable('SomeObject', (table) => {
     table.uuid('id').notNullable().primary();
     table.string('field', undefined).nullable();
-    table.uuid('anotherId').notNullable();
+    table.uuid('anotherId').nullable();
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.decimal('float', 1, 1).notNullable();
     table.specificType('list', '"someEnum"[]').notNullable();
@@ -54,7 +54,7 @@ export const up = async (knex: Knex) => {
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
-    table.uuid('anotherId').notNullable();
+    table.uuid('anotherId').nullable();
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.integer('xyz').notNullable();
   });

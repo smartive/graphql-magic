@@ -158,8 +158,16 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
 
     const field = node.model.getField(key);
 
+    const column = getColumn(node, key);
+
     if (field.kind === 'relation') {
       const relation = node.model.getRelation(field.name);
+
+      if (value === null) {
+        ops.push((query) => query.whereNull(column));
+        continue;
+      }
+
       const targetModel = relation.targetModel;
       const rootTableAlias = `${node.model.name}__W__${key}`;
       const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.model.name}__WS__${key}`;
@@ -173,8 +181,6 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
       applyWhere(subNode, value as Where, ops, joins);
       continue;
     }
-
-    const column = getColumn(node, key);
 
     if (Array.isArray(value)) {
       if (field && field.list) {

@@ -599,7 +599,7 @@ export enum SomeEnum {
 
 export type SomeObject = {
   __typename?: 'SomeObject';
-  another: AnotherObject;
+  another?: Maybe<AnotherObject>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
   deleted: Scalars['Boolean']['output'];
@@ -632,6 +632,7 @@ export type SomeObjectWhere = {
   OR?: InputMaybe<Array<SomeObjectWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
@@ -1134,7 +1135,7 @@ export type ReviewResolvers<ContextType = any, ParentType extends ResolversParen
 };
 
 export type SomeObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['SomeObject'] = ResolversParentTypes['SomeObject']> = {
-  another?: Resolver<ResolversTypes['AnotherObject'], ParentType, ContextType>;
+  another?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
