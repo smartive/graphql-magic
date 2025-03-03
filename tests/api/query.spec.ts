@@ -114,4 +114,74 @@ describe('query', () => {
       ).toMatchSnapshot();
     });
   });
+
+  it('filters by null values correctly', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query NullFilterQuery {
+            all: manyObjects {
+              id
+              field
+            }
+            withNullField: manyObjects(where: { field: null }) {
+              id
+              field
+            }
+            withNotNullField: manyObjects(where: { NOT: { field: null } }) {
+              id
+              field
+            }
+            withSpecificField: manyObjects(where: { field: "Some value" }) {
+              id
+              field
+            }
+            withComplexFilter: manyObjects(where: { OR: [{ field: null }, { field: "Some value" }] }) {
+              id
+              field
+            }
+            withNestedFilter: manyObjects(where: { another: { manyObjects_SOME: { field: null } } }) {
+              id
+              field
+              another {
+                manyObjects {
+                  id
+                  field
+                }
+              }
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
+
+  it('filters by null relation correctly', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query NullRelationFilterQuery {
+            all: manyObjects {
+              id
+              another {
+                id
+              }
+            }
+            withNullAnother: manyObjects(where: { another: null }) {
+              id
+              another {
+                id
+              }
+            }
+            withNotNullAnother: manyObjects(where: { NOT: { another: null } }) {
+              id
+              another {
+                id
+              }
+            }
+          }
+        `)
+      ).toMatchSnapshot();
+    });
+  });
 });

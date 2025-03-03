@@ -117,9 +117,11 @@ export const normalizeValueByTypeDefinition = (value: Value, type: Maybe<TypeDef
   if (!type || type.kind !== Kind.INPUT_OBJECT_TYPE_DEFINITION) {
     return value;
   }
-  if (!value) {
-    return;
+
+  if (value === null || value === undefined) {
+    return value;
   }
+
   const res: Record<string, Value> = {};
   for (const key of Object.keys(value)) {
     const field = summonByKey(type.fields, 'name.value', key);

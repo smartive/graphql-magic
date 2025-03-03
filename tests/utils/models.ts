@@ -70,6 +70,7 @@ const modelDefinitions: ModelDefinitions = [
       {
         name: 'field',
         searchable: true,
+        filterable: true,
         type: 'String',
       },
       {
@@ -79,7 +80,6 @@ const modelDefinitions: ModelDefinitions = [
         filterable: true,
         reverseFilterable: true,
         updatable: true,
-        nonNull: true,
       },
       {
         name: 'float',

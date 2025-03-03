@@ -204,8 +204,11 @@ export const hash = (s: any) => createHash('md5').update(JSON.stringify(s)).dige
 export const getColumnName = (field: EntityField) =>
   field.kind === 'relation' ? field.foreignKey || `${field.name}Id` : field.name;
 
-export const getColumn = (node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>, key: string) => {
-  const field = node.model.fields.find((field) => getColumnName(field) === key)!;
+export const getColumn = (
+  node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>,
+  fieldName: string,
+) => {
+  const field = node.model.fields.find((field) => field.name === fieldName)!;
 
-  return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${key}`;
+  return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${getColumnName(field)}`;
 };

@@ -19,6 +19,9 @@ exports[`query NOT works 1`] = `
     {
       "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
     },
+    {
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
   ],
 }
 `;
@@ -44,7 +47,7 @@ exports[`query can be executed 1`] = `
         "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
         "manyObjects": [
           {
-            "field": null,
+            "field": "Some value",
             "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
           },
         ],
@@ -58,14 +61,182 @@ exports[`query can be executed 1`] = `
         "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
         "manyObjects": [
           {
+            "field": "Some value",
+            "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+          },
+        ],
+      },
+      "field": "Some value",
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+      "xyz": 1,
+    },
+  ],
+}
+`;
+
+exports[`query filters by null relation correctly 1`] = `
+{
+  "all": [
+    {
+      "another": null,
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
+    {
+      "another": {
+        "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      },
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      },
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      },
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+  "withNotNullAnother": [
+    {
+      "another": {
+        "id": "ba5d94a8-0035-4e45-9258-2f7676eb8d18",
+      },
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      },
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "another": {
+        "id": "226a20e8-5c18-4423-99ca-eb0df6ff4fdd",
+      },
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+  "withNullAnother": [
+    {
+      "another": null,
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
+  ],
+}
+`;
+
+exports[`query filters by null values correctly 1`] = `
+{
+  "all": [
+    {
+      "field": null,
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
+    {
+      "field": null,
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "field": null,
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "field": "Some value",
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+  "withComplexFilter": [
+    {
+      "field": null,
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
+    {
+      "field": null,
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "field": null,
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "field": "Some value",
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+  "withNestedFilter": [
+    {
+      "another": {
+        "manyObjects": [
+          {
             "field": null,
+            "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+          },
+        ],
+      },
+      "field": null,
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "another": {
+        "manyObjects": [
+          {
+            "field": null,
+            "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+          },
+          {
+            "field": "Some value",
             "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
           },
         ],
       },
       "field": null,
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+    {
+      "another": {
+        "manyObjects": [
+          {
+            "field": null,
+            "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+          },
+          {
+            "field": "Some value",
+            "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+          },
+        ],
+      },
+      "field": "Some value",
       "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
-      "xyz": 1,
+    },
+  ],
+  "withNotNullField": [
+    {
+      "field": "Some value",
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+    },
+  ],
+  "withNullField": [
+    {
+      "field": null,
+      "id": "a80213a4-3168-4500-b559-3d9c1b469f9e",
+    },
+    {
+      "field": null,
+      "id": "37a23870-e7f5-45c8-86e5-f14d9f2405f9",
+    },
+    {
+      "field": null,
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+    },
+  ],
+  "withSpecificField": [
+    {
+      "field": "Some value",
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
     },
   ],
 }

@@ -126,6 +126,7 @@
       {
         "name": "field",
         "searchable": true,
+        "filterable": true,
         "type": "String"
       },
       {
@@ -135,7 +136,6 @@
         "filterable": true,
         "reverseFilterable": true,
         "updatable": true,
-        "nonNull": true,
         "foreignKey": "anotherId"
       },
       {

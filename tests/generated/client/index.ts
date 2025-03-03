@@ -596,7 +596,7 @@ export enum SomeEnum {
 
 export type SomeObject = {
   __typename: 'SomeObject';
-  another: AnotherObject;
+  another: Maybe<AnotherObject>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
   deleted: Scalars['Boolean']['output'];
@@ -629,6 +629,7 @@ export type SomeObjectWhere = {
   OR?: InputMaybe<Array<SomeObjectWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
@@ -874,7 +875,7 @@ export type UpdateReviewMutation = { updateReview: { __typename: 'Review', conte
 export type SomeQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, xyz: number, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } }> };
+export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, xyz: number, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } | null }> };
 
 export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -895,6 +896,16 @@ export type OrQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type OrQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+
+export type NullFilterQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NullFilterQueryQuery = { all: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNullField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNotNullField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withSpecificField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withComplexFilter: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNestedFilter: Array<{ __typename: 'SomeObject', id: string, field: string | null, another: { __typename: 'AnotherObject', manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } | null }> };
+
+export type NullRelationFilterQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NullRelationFilterQueryQuery = { all: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }>, withNullAnother: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }>, withNotNullAnother: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }> };
 
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];

@@ -69,7 +69,7 @@ export type AnotherObjectSeed = {
 export type SomeObject = {
   'id': string;
   'field': string | null;
-  'anotherId': string;
+  'anotherId': string | null;
   'float': number;
   'list': SomeEnum[];
   'xyz': number;
@@ -85,7 +85,7 @@ export type SomeObject = {
 export type SomeObjectInitializer = {
   'id': string;
   'field'?: string | null;
-  'anotherId': string;
+  'anotherId'?: string | null;
   'float': number;
   'list': SomeEnum[] | string;
   'xyz': number;
@@ -101,7 +101,7 @@ export type SomeObjectInitializer = {
 export type SomeObjectMutator = {
   'id'?: string;
   'field'?: string | null;
-  'anotherId'?: string;
+  'anotherId'?: string | null;
   'float'?: number;
   'list'?: SomeEnum[] | string;
   'xyz'?: number;
@@ -117,7 +117,7 @@ export type SomeObjectMutator = {
 export type SomeObjectSeed = {
   'id': string;
   'field'?: string | null;
-  'anotherId': string;
+  'anotherId'?: string | null;
   'float': number;
   'list': string[] | string;
   'xyz': number;

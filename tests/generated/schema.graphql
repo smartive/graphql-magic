@@ -257,7 +257,7 @@ enum SomeEnum {
 type SomeObject {
   id: ID!
   field: String
-  another: AnotherObject!
+  another: AnotherObject
   float: Float!
   list(magic: Boolean): [SomeEnum!]!
   xyz: Int!
@@ -279,6 +279,7 @@ input SomeObjectOrderBy {
 
 input SomeObjectWhere {
   id: [ID!]
+  field: [String!]
   float: [Float!]
   xyz: [Int!]
   deleted: [Boolean!]
