@@ -651,6 +651,7 @@ export class MigrationGenerator {
       case 'relation':
         col(`table.uuid('${field.foreignKey}')`);
         if (foreign && !alter) {
+          this.writer.writeLine(`table.index('${field.foreignKey}');`);
           this.writer.writeLine(
             `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('CASCADE');`,
           );

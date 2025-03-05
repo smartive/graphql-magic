@@ -21,10 +21,12 @@ export const up = async (knex: Knex) => {
     table.uuid('id').notNullable().primary();
     table.string('name', undefined).nullable();
     table.uuid('myselfId').nullable();
+    table.index('myselfId');
     table.foreign('myselfId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.boolean('deleted').notNullable().defaultTo(false);
     table.timestamp('deletedAt').nullable();
     table.uuid('deletedById').nullable();
+    table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
   });
 
@@ -32,19 +34,23 @@ export const up = async (knex: Knex) => {
     table.uuid('id').notNullable().primary();
     table.string('field', undefined).nullable();
     table.uuid('anotherId').nullable();
+    table.index('anotherId');
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.decimal('float', 1, 1).notNullable();
     table.specificType('list', '"someEnum"[]').notNullable();
     table.integer('xyz').notNullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdById').notNullable();
+    table.index('createdById');
     table.foreign('createdById').references('id').inTable('User').onDelete('CASCADE');
     table.timestamp('updatedAt').notNullable();
     table.uuid('updatedById').notNullable();
+    table.index('updatedById');
     table.foreign('updatedById').references('id').inTable('User').onDelete('CASCADE');
     table.boolean('deleted').notNullable().defaultTo(false);
     table.timestamp('deletedAt').nullable();
     table.uuid('deletedById').nullable();
+    table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
   });
 
@@ -55,6 +61,7 @@ export const up = async (knex: Knex) => {
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
     table.uuid('anotherId').nullable();
+    table.index('anotherId');
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.integer('xyz').notNullable();
   });
@@ -67,17 +74,21 @@ export const up = async (knex: Knex) => {
       enumName: 'reactionType',
     }).notNullable();
     table.uuid('parentId').nullable();
+    table.index('parentId');
     table.foreign('parentId').references('id').inTable('Reaction').onDelete('CASCADE');
     table.string('content', undefined).nullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdById').notNullable();
+    table.index('createdById');
     table.foreign('createdById').references('id').inTable('User').onDelete('CASCADE');
     table.timestamp('updatedAt').notNullable();
     table.uuid('updatedById').notNullable();
+    table.index('updatedById');
     table.foreign('updatedById').references('id').inTable('User').onDelete('CASCADE');
     table.boolean('deleted').notNullable().defaultTo(false);
     table.timestamp('deletedAt').nullable();
     table.uuid('deletedById').nullable();
+    table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
   });
 
@@ -92,6 +103,7 @@ export const up = async (knex: Knex) => {
 
   await knex.schema.createTable('Review', (table) => {
     table.uuid('id').notNullable().primary();
+    table.index('id');
     table.foreign('id').references('id').inTable('Reaction').onDelete('CASCADE');
     table.decimal('rating', undefined, undefined).nullable();
   });
