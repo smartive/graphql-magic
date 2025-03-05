@@ -2,7 +2,7 @@
 
 ## Upgrading to v17.2.0
 
-From now on, foreign keys will be indexed by default. For existing projects, you'll need to add indices manually to your existing migrations.
+From now on, foreign keys will be indexed by default. For existing projects, you'll need to add indices manually to your existing foreign keys.
 
 Here's a sample script to generate the migration:
 
