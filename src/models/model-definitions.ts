@@ -16,7 +16,7 @@ type FieldDefinitionBase2 =
       | { type: 'Boolean' }
       | {
           type: 'String';
-          stringType?: 'email' | 'url' | 'phone';
+          stringType?: 'email' | 'url' | 'phone' | 'multipleEmail' | 'richText';
           large?: true;
           maxLength?: number;
         }
