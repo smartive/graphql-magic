@@ -676,7 +676,7 @@ export class MigrationGenerator {
         this.writer.write(`table.json('${typeToField(field.type)}')`);
         break;
       case 'custom':
-        throw new Error("Custom fields aren't stored in the database");
+        throw new Error(`Can't create a column for ${name} because it's a custom field`);
       default: {
         const exhaustiveCheck: never = kind;
         throw new Error(exhaustiveCheck);
