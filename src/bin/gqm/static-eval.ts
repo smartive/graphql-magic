@@ -57,6 +57,14 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
         return Symbol;
       case 'Models':
         return Models;
+      case 'Object':
+        return Object;
+      case 'Array':
+        return Array;
+      case 'Boolean':
+        return Boolean;
+      case 'Number':
+        return Number;
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {
@@ -100,6 +108,18 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
           case 'toUpperCase':
           case 'toLowerCase':
             return target[name].bind(target);
+        }
+      } else if (typeof target === 'function') {
+        const name = node.getName();
+        if (target === Object) {
+          switch (name) {
+            case 'keys':
+            case 'values':
+            case 'entries':
+            case 'assign':
+            case 'hasOwnProperty':
+              return target[name].bind(target);
+          }
         }
       }
       throw new Error(`Cannot handle method ${node.getName()} on type ${typeof target}`);
