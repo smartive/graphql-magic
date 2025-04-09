@@ -1,4 +1,4 @@
-import { Dictionary } from 'lodash';
+import { camelCase, Dictionary, kebabCase, lowerFirst, snakeCase, startCase, upperFirst } from 'lodash';
 import {
   CaseClause,
   ElementAccessExpression,
@@ -12,7 +12,34 @@ import {
   TemplateTail,
 } from 'ts-morph';
 import { Models } from '../../models/models';
-import { Visitor, visit } from './visitor';
+import { visit, Visitor } from './visitor';
+
+const KNOWN_IDENTIFIERS: Record<string, unknown> = {
+  undefined,
+  process,
+  Symbol,
+  Models,
+  Object,
+  Array,
+  Boolean,
+  Number,
+  String,
+  Function,
+  Promise,
+  Map,
+  Set,
+  WeakMap,
+  WeakSet,
+  Date,
+  RegExp,
+  Error,
+  upperFirst,
+  lowerFirst,
+  camelCase,
+  kebabCase,
+  snakeCase,
+  startCase,
+};
 
 export const staticEval = (node: Node | undefined, context: Dictionary<unknown>) =>
   visit<unknown, Dictionary<unknown>>(node, context, VISITOR);
@@ -48,23 +75,9 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.SpreadElement]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.SpreadAssignment]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.Identifier]: (node: Identifier, context) => {
-    switch (node.getText()) {
-      case 'undefined':
-        return undefined;
-      case 'process':
-        return process;
-      case 'Symbol':
-        return Symbol;
-      case 'Models':
-        return Models;
-      case 'Object':
-        return Object;
-      case 'Array':
-        return Array;
-      case 'Boolean':
-        return Boolean;
-      case 'Number':
-        return Number;
+    const identifierName = node.getText();
+    if (identifierName in KNOWN_IDENTIFIERS) {
+      return KNOWN_IDENTIFIERS[identifierName];
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {
