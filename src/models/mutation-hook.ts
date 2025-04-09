@@ -11,4 +11,4 @@ export type MutationHook<DateType extends AnyDateType = AnyDateType> = (
   when: 'before' | 'after',
   data: { prev: Entity; input: Entity; normalizedInput: Entity; next: Entity },
   ctx: Context<DateType>,
-) => Promise<void>;
+) => Promise<void> | void;
