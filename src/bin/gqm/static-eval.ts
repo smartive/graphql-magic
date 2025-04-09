@@ -59,12 +59,12 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
         return Models;
       case 'Object':
         return Object;
-      // case 'Array':
-      //   return Array;
-      // case 'Boolean':
-      //   return Boolean;
-      // case 'Number':
-      //   return Number;
+      case 'Array':
+        return Array;
+      case 'Boolean':
+        return Boolean;
+      case 'Number':
+        return Number;
     }
     const definitionNodes = node.getDefinitionNodes();
     if (!definitionNodes.length) {
