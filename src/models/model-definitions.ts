@@ -70,17 +70,17 @@ export type EntityFieldDefinition = FieldDefinitionBase &
     queriable?:
       | boolean
       | {
-          roles?: string[];
+          roles?: readonly string[];
         };
     creatable?:
       | boolean
       | {
-          roles?: string[];
+          roles?: readonly string[];
         };
     updatable?:
       | boolean
       | {
-          roles?: string[];
+          roles?: readonly string[];
         };
     // The tooltip is "hidden" behind an icon in the admin forms
     tooltip?: string;
@@ -121,8 +121,8 @@ export type ModelDefinition = {
   description?: string;
 } & (
   | { kind: 'scalar' }
-  | { kind: 'enum'; values: string[]; deleted?: true }
-  | { kind: 'raw-enum'; values: string[] }
+  | { kind: 'enum'; values: readonly string[]; deleted?: true }
+  | { kind: 'raw-enum'; values: readonly string[] }
   | { kind: 'interface'; fields: EntityFieldDefinition[] }
   | {
       kind: 'input';
@@ -136,7 +136,7 @@ export type ModelDefinition = {
       kind: 'entity';
       root?: boolean;
       parent?: string;
-      interfaces?: string[];
+      interfaces?: readonly string[];
       queriable?: boolean;
       listQueriable?: boolean;
       creatable?: boolean | { createdBy?: Partial<RelationFieldDefinition>; createdAt?: Partial<DateTimeFieldDefinition> };
