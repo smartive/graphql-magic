@@ -224,7 +224,7 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
       .map(
         ({ name }) =>
           (query) =>
-            query.whereILike(getColumn(node, name), `%${search}%`),
+            query.whereRaw('??::text ILIKE ?', [getColumn(node, name), `%${search}%`]),
       ),
   );
 
