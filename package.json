@@ -70,7 +70,7 @@
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.16",
     "@types/luxon": "3.6.2",
-    "@types/pg": "8.11.13",
+    "@types/pg": "8.11.14",
     "@types/uuid": "10.0.0",
     "create-ts-index": "1.14.0",
     "del-cli": "6.0.0",
