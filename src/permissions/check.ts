@@ -3,7 +3,7 @@ import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { EntityModel } from '../models/models';
 import { get, isRelation } from '../models/utils';
-import { AliasGenerator, hash, ors } from '../resolvers/utils';
+import { AliasGenerator, getColumnName, hash, ors } from '../resolvers/utils';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
 export const getRole = (ctx: Pick<FullContext, 'user'>) => ctx.user?.role ?? 'UNAUTHENTICATED';
@@ -146,47 +146,54 @@ export const checkCanWrite = async (
   const query = ctx.knex.select(1 as any).first();
   let linked = false;
 
-  for (const field of model.fields
-    .filter(isRelation)
-    .filter((field) => field.generated || (action === 'CREATE' ? field.creatable : field.updatable))) {
-    const foreignKey = field.foreignKey || `${field.name}Id`;
-    const foreignId = data[foreignKey] as string;
-    if (!foreignId) {
-      continue;
-    }
-
+  for (const field of model.fields.filter(
+    (field) => field.generated || (action === 'CREATE' ? field.creatable : field.updatable),
+  )) {
     const fieldPermissions = field[action === 'CREATE' ? 'creatable' : 'updatable'];
     const role = getRole(ctx);
-    if (fieldPermissions && typeof fieldPermissions === 'object' && !fieldPermissions.roles?.includes(role)) {
+    if (
+      getColumnName(field) in data &&
+      fieldPermissions &&
+      typeof fieldPermissions === 'object' &&
+      !fieldPermissions.roles?.includes(role)
+    ) {
       throw new PermissionError(role, action, `this ${model.name}'s ${field.name}`, 'field permission not available');
     }
 
-    linked = true;
+    if (isRelation(field)) {
+      const foreignKey = field.foreignKey || `${field.name}Id`;
+      const foreignId = data[foreignKey] as string;
+      if (!foreignId) {
+        continue;
+      }
 
-    const fieldPermissionStack = getPermissionStack(ctx, field.type, 'LINK');
+      linked = true;
 
-    if (fieldPermissionStack === true) {
-      // User can link any entity from this type, just check whether it exists
+      const fieldPermissionStack = getPermissionStack(ctx, field.type, 'LINK');
 
-      query.whereExists((subQuery) => subQuery.from(`${field.type} as a`).whereRaw(`a.id = ?`, foreignId));
-      continue;
-    }
+      if (fieldPermissionStack === true) {
+        // User can link any entity from this type, just check whether it exists
 
-    if (fieldPermissionStack === false || !fieldPermissionStack.length) {
-      throw new PermissionError(
-        role,
-        action,
-        `this ${model.name}'s ${field.name}`,
-        'no applicable permissions on data to link',
+        query.whereExists((subQuery) => subQuery.from(`${field.type} as a`).whereRaw(`a.id = ?`, foreignId));
+        continue;
+      }
+
+      if (fieldPermissionStack === false || !fieldPermissionStack.length) {
+        throw new PermissionError(
+          role,
+          action,
+          `this ${model.name}'s ${field.name}`,
+          'no applicable permissions on data to link',
+        );
+      }
+
+      ors(
+        query,
+        fieldPermissionStack.map(
+          (links) => (query) => query.whereExists((subQuery) => permissionLinkQuery(ctx, subQuery, links, foreignId)),
+        ),
       );
     }
-
-    ors(
-      query,
-      fieldPermissionStack.map(
-        (links) => (query) => query.whereExists((subQuery) => permissionLinkQuery(ctx, subQuery, links, foreignId)),
-      ),
-    );
   }
 
   const role = getRole(ctx);
