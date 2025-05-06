@@ -376,6 +376,11 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
       continue;
     }
 
+    if (isEndOfMonth(field) && data[key]) {
+      data[key] = anyDateToLuxon(data[key], ctx.timeZone)!.endOf('month');
+      continue;
+    }
+
     if (field.list && field.kind === 'enum' && Array.isArray(data[key])) {
       data[key] = `{${(data[key] as string[]).join(',')}}`;
       continue;
@@ -385,3 +390,6 @@ const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
 
 const isEndOfDay = (field: EntityField) =>
   isPrimitive(field) && field.type === 'DateTime' && field?.endOfDay === true && field?.dateTimeType === 'date';
+
+const isEndOfMonth = (field: EntityField) =>
+  isPrimitive(field) && field.type === 'DateTime' && field?.endOfMonth === true && field?.dateTimeType === 'year_and_month';
