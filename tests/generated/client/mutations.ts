@@ -1,4 +1,4 @@
-import { gql } from "../../../src";
+import { gql } from "./gql";
 
 export const DELETE_ANOTHER_OBJECT = gql`
   mutation DeleteAnotherObjectMutation($id: ID!) {

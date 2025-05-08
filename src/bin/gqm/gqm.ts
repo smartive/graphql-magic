@@ -26,6 +26,14 @@ config({
   path: '.env.local',
 });
 
+const gqlTagTemplate = `// This tag does nothing (just generates a string) - it is here for the tooling (syntax highlighting, formatting and type generation)
+export const gql = (chunks: TemplateStringsArray, ...variables: (string | number | boolean)[]): string => {
+  return chunks.reduce(
+    (accumulator, chunk, index) => \`\${accumulator}\${chunk}\${index in variables ? variables[index] : ''}\`,
+    '',
+  );
+};`;
+
 program.description('The graphql-magic cli.');
 
 program
@@ -38,6 +46,7 @@ program
     const gqlModule = await getSetting('gqlModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
     writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
