@@ -4,7 +4,7 @@ import { Models } from '../models/models';
 
 const constantCase = (str: string) => upperCase(str).replace(/ /g, '_');
 
-export const generateMutations = (models: Models, gqmModule = '@smartive/graphql-magic') => {
+export const generateMutations = (models: Models) => {
   const parts: string[] = [];
   for (const { name, creatable, updatable, deletable } of models.entities.filter(not(isRootModel))) {
     if (creatable) {
@@ -38,5 +38,5 @@ export const generateMutations = (models: Models, gqmModule = '@smartive/graphql
     }
   }
 
-  return `import { gql } from "${gqmModule}";\n\n${parts.join('\n\n')}`;
+  return `import { gql } from "./gql";\n\n${parts.join('\n\n')}`;
 };
