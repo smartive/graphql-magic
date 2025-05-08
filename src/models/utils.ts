@@ -1,6 +1,7 @@
 import assert from 'assert';
-import { camelCase, startCase } from 'lodash';
+import camelCase from 'lodash/camelCase';
 import lodashGet from 'lodash/get';
+import startCase from 'lodash/startCase';
 import {
   CustomField,
   EntityField,

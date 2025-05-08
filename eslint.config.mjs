@@ -24,6 +24,24 @@ export default [
                 allow: ["info", "warn", "error", "trace", "time", "timeEnd"],
             }],
 
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'lodash',
+                            message: 'Import [module] from lodash/[module] instead',
+                        },
+                    ],
+                    patterns: [
+                        {
+                            group: ['lodash/set'],
+                            message: 'Import [module] from lodash/fp/[module] instead',
+                        },
+                    ],
+                },
+            ],
+
             // Disable rules causing the most errors
             "@typescript-eslint/no-unsafe-argument": "off",
             "@typescript-eslint/no-unsafe-assignment": "off",

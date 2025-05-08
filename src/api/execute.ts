@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { IResolvers } from '@graphql-tools/utils';
 import { GraphQLResolveInfo, Source, execute as graphqlExecute, parse } from 'graphql';
-import { merge } from 'lodash';
+import merge from 'lodash/merge';
 import { Context, generate, get, getResolvers } from '..';
 
 export const execute = async ({

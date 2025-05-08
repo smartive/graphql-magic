@@ -1,5 +1,8 @@
 import { pluralize } from 'inflection';
-import { cloneDeep, kebabCase, omit, pick } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
+import kebabCase from 'lodash/kebabCase';
+import omit from 'lodash/omit';
+import pick from 'lodash/pick';
 import { isRelation } from '.';
 import {
   CustomFieldDefinition,

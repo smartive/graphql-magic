@@ -11,7 +11,7 @@ import type {
 } from 'graphql';
 import { Kind } from 'graphql';
 import { Knex } from 'knex';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { EntityField } from '..';
 import { UserInputError } from '../errors';
 import { get, it } from '../models/utils';
