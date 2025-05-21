@@ -1,4 +1,4 @@
-import { pluralize } from 'inflection';
+import { pluralize, singularize } from 'inflection';
 import cloneDeep from 'lodash/cloneDeep';
 import kebabCase from 'lodash/kebabCase';
 import omit from 'lodash/omit';
@@ -482,12 +482,18 @@ type ModelKindToClassMapping = {
 };
 
 export abstract class Relation {
+  public searchable: boolean | undefined;
+  public label: string;
+
   constructor(
     public name: string,
     public sourceModel: EntityModel,
     public field: RelationField,
     public targetModel: EntityModel,
-  ) {}
+  ) {
+    this.searchable = targetModel.getField(targetModel.displayField || 'id').searchable;
+    this.label = getLabel(name);
+  }
 }
 
 export class NormalRelation extends Relation {
@@ -504,6 +510,9 @@ export class NormalRelation extends Relation {
 }
 
 export class ReverseRelation extends Relation {
+  public singularName: string;
+  public singularLabel: string;
+
   constructor(public reverse: NormalRelation) {
     super(
       reverse.field.reverse ||
@@ -512,11 +521,14 @@ export class ReverseRelation extends Relation {
       reverse.field,
       reverse.sourceModel,
     );
+    this.singularName = singularize(this.name);
+    this.singularLabel = getLabel(this.singularName);
   }
 }
 
 export class ManyToManyRelation {
   public name: string;
+  public label: string;
   public sourceModel: EntityModel;
   public relationFromSource: ReverseRelation;
   public relationModel: EntityModel;
@@ -525,6 +537,7 @@ export class ManyToManyRelation {
 
   constructor(relationFromSource: ReverseRelation, relationToTarget: NormalRelation) {
     this.name = relationFromSource.name;
+    this.label = relationFromSource.label;
     this.sourceModel = relationFromSource.sourceModel;
     this.relationFromSource = relationFromSource;
     this.relationModel = relationFromSource.targetModel;

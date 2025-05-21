@@ -35,6 +35,9 @@ export const getUpdateEntityQuery = (
 
 export type RelationConstraints = Record<string, (source: any) => any>;
 
+/**
+ * @deprecated Use Relation.searchable instead
+ */
 export const fieldIsSearchable = (model: EntityModel, fieldName: string) => {
   const relation = model.getRelation(fieldName);
   const targetModel = relation.targetModel;
@@ -52,7 +55,7 @@ export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames:
       .map(
         (relation) =>
           `$${relation.name}Where: ${relation.targetModel.name}Where, $${relation.name}Limit: Int${
-            fieldIsSearchable(model, relation.name) ? `, $${relation.name}Search: String` : ''
+            relation.searchable ? `, $${relation.name}Search: String` : ''
           }`,
       )
       .join(', ')}) {
@@ -67,7 +70,7 @@ export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames:
             }
           }
 
-          if (fieldIsSearchable(model, relation.name)) {
+          if (relation.searchable) {
             filters += `, search: $${relation.name}Search`;
           }
 
@@ -123,12 +126,18 @@ export const getManyToManyRelationsQuery = (
               .join(' ')}
           }`);
 
+/**
+ * @deprecated Use MUTATIONS from mutations.ts instead
+ */
 export type MutationQuery = {
   mutated: {
     id: string;
   };
 };
 
+/**
+ * @deprecated Use MUTATIONS from mutations.ts instead
+ */
 export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'delete') =>
   action === 'create'
     ? `
