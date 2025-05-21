@@ -18,7 +18,7 @@
     "generate:gqm-stuff": "npx gqm generate",
     "generate:setup-migration": "npm run build:bin && npx gqm generate-migration setup 20230912185644",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint tests/generated --fix",
+    "lint:fix": "eslint src --fix",
     "deps": "docker compose up",
     "test": "npm run lint && npm run test:all && npm run build",
     "test:all": "jest tests --no-cache --no-watchman --setupFiles dotenv/config",
