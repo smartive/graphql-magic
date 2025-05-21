@@ -1,4 +1,3 @@
-import assert from 'assert';
 import camelCase from 'lodash/camelCase';
 import lodashGet from 'lodash/get';
 import startCase from 'lodash/startCase';
@@ -161,7 +160,9 @@ export const get = <T, U extends keyof ForSure<T>>(object: T | null | undefined,
 };
 
 export const getString = (v: unknown) => {
-  assert(typeof v === 'string');
+  if (typeof v !== 'string') {
+    throw new Error(`Expected string, got ${typeof v}`);
+  }
 
   return v;
 };
