@@ -1,3 +1,4 @@
+import { IndentationText, Project } from 'ts-morph';
 import { Models } from '../models/models';
 import { isRelation } from '../models/utils';
 
@@ -40,6 +41,9 @@ export type PermissionLink = {
   where?: any;
 };
 
+/**
+ * @deprecated Use generatePermissionFile instead
+ */
 export const generatePermissions = (models: Models, config: PermissionsConfig) => {
   const permissions: Permissions = {};
   for (const [role, roleConfig] of Object.entries(config)) {
@@ -123,4 +127,23 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
       addPermissions(models, permissions, [...links, link], subBlock);
     }
   }
+};
+
+export const generatePermissionFile = (models: Models, config: PermissionsConfig) => {
+  const project = new Project({
+    manipulationSettings: {
+      indentationText: IndentationText.TwoSpaces,
+    },
+  });
+  const sourceFile = project.createSourceFile('temp.ts', '', { overwrite: true });
+  sourceFile.addImportDeclaration({
+    namedImports: ['Permissions'],
+    moduleSpecifier: '@smartive/graphql-magic',
+  });
+
+  const permissions = generatePermissions(models, config);
+
+  sourceFile.addStatements(`export const permissions = ${JSON.stringify(permissions, null, 2)} satisfies Permissions;`);
+
+  return sourceFile.getFullText();
 };

@@ -9,6 +9,7 @@ import {
   EnumModel,
   InputModel,
   InterfaceModel,
+  JsonField,
   Model,
   ObjectModel,
   PrimitiveField,
@@ -89,7 +90,9 @@ export const isCustomField = (field: EntityField): field is CustomField => field
 
 export const isVisible = ({ hidden }: EntityField) => hidden !== true;
 
-export const isSimpleField = and(not(isRelation), not(isCustomField));
+export const isJsonField = (field: EntityField): field is JsonField => field.kind === 'json';
+
+export const isSimpleField = and(not(isRelation), not(isCustomField), not(isJsonField));
 
 export const isUpdatable = ({ updatable }: EntityField) => !!updatable;
 

@@ -1036,3 +1036,171 @@ export type RestoreAnswerMutationMutationVariables = Exact<{
 
 
 export type RestoreAnswerMutationMutation = { restoreAnswer: string };
+
+export type AnotherObjectsListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: AnotherObjectWhere;
+}>;
+
+
+export type AnotherObjectsListADMINQuery = { data: Array<{ __typename: 'AnotherObject', id: string, name: string | null, deleted: boolean, deletedAt: string | null, display: string | null }> };
+
+export type AnotherObjectsListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: AnotherObjectWhere;
+}>;
+
+
+export type AnotherObjectsListUSERQuery = { data: Array<{ __typename: 'AnotherObject', id: string, name: string | null, deleted: boolean, deletedAt: string | null, display: string | null }> };
+
+export type UpdateQuerySomeObjectADMINQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQuerySomeObjectADMINQuery = { data: { __typename: 'SomeObject', id: string } };
+
+export type ManyObjectsListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: SomeObjectWhere;
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ManyObjectsListADMINQuery = { data: Array<{ __typename: 'SomeObject', id: string, field: string | null, float: number, list: Array<SomeEnum>, xyz: number, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQuerySomeObjectUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQuerySomeObjectUSERQuery = { data: { __typename: 'SomeObject', id: string } };
+
+export type ManyObjectsListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: SomeObjectWhere;
+  search?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ManyObjectsListUSERQuery = { data: Array<{ __typename: 'SomeObject', id: string, field: string | null, float: number, list: Array<SomeEnum>, xyz: number, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryReactionADMINQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReactionADMINQuery = { data: { __typename: 'Answer', id: string } | { __typename: 'Question', id: string } | { __typename: 'Review', id: string } };
+
+export type ReactionsListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: ReactionWhere;
+}>;
+
+
+export type ReactionsListADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryReactionUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReactionUSERQuery = { data: { __typename: 'Answer', id: string } | { __typename: 'Question', id: string } | { __typename: 'Review', id: string } };
+
+export type ReactionsListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: ReactionWhere;
+}>;
+
+
+export type ReactionsListUSERQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryReviewADMINQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReviewADMINQuery = { data: { __typename: 'Review', id: string } };
+
+export type ReviewsListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: ReviewWhere;
+}>;
+
+
+export type ReviewsListADMINQuery = { data: Array<{ __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null, rating: number | null }> };
+
+export type UpdateQueryReviewUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReviewUSERQuery = { data: { __typename: 'Review', id: string } };
+
+export type ReviewsListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: ReviewWhere;
+}>;
+
+
+export type ReviewsListUSERQuery = { data: Array<{ __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null, rating: number | null }> };
+
+export type UpdateQueryQuestionADMINQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryQuestionADMINQuery = { data: { __typename: 'Question', id: string } };
+
+export type QuestionsListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: QuestionWhere;
+}>;
+
+
+export type QuestionsListADMINQuery = { data: Array<{ __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryQuestionUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryQuestionUSERQuery = { data: { __typename: 'Question', id: string } };
+
+export type QuestionsListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: QuestionWhere;
+}>;
+
+
+export type QuestionsListUSERQuery = { data: Array<{ __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryAnswerADMINQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryAnswerADMINQuery = { data: { __typename: 'Answer', id: string } };
+
+export type AnswersListADMINQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: AnswerWhere;
+}>;
+
+
+export type AnswersListADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type UpdateQueryAnswerUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryAnswerUSERQuery = { data: { __typename: 'Answer', id: string } };
+
+export type AnswersListUSERQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  where: AnswerWhere;
+}>;
+
+
+export type AnswersListUSERQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };

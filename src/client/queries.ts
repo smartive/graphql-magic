@@ -1,4 +1,5 @@
-import { ManyToManyRelation, ReverseRelation } from '..';
+import { IndentationText, Project } from 'ts-morph';
+import { constantCase, ManyToManyRelation, ReverseRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
 import {
   and,
@@ -17,7 +18,7 @@ export const getUpdateEntityQuery = (
   role: string,
   fields?: string[],
   additionalFields = '',
-) => `query Update${model.name}Fields ($id: ID!) {
+) => `query UpdateQuery${model.name}${role} ($id: ID!) {
   data: ${typeToField(model.name)}(where: { id: $id }) {
     id
     ${model.fields
@@ -167,13 +168,16 @@ export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
 
+/**
+ * @deprecated Use LIST_ queries from queries.ts instead
+ */
 export const getEntityListQuery = (
   model: EntityModel,
   role: string,
   relations?: string[],
   fragment = '',
   reverseRelation?: ReverseRelation,
-) => `query ${model.plural}List(
+) => `query ${model.plural}List${role}(
   ${reverseRelation ? '$id: ID!,' : ''}
   $limit: Int!,
   $where: ${model.name}Where!,
@@ -216,7 +220,10 @@ export const getEntityQuery = (model: EntityModel, role: string, relations?: str
   }
 }`;
 
-export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}($where: ${
+/**
+ * @deprecated Use FIND_ queries from queries.ts instead
+ */
+export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}${role}($where: ${
   model.name
 }Where!, $orderBy: [${model.name}OrderBy!]) {
   data: ${model.pluralField}(limit: 1, where: $where, orderBy: $orderBy) {
@@ -233,3 +240,86 @@ export const queryRelations = (models: Models, relations: Relation[]) =>
         }`,
     )
     .join('\n');
+
+export const generateQueries = (models: Models) => {
+  const project = new Project({
+    manipulationSettings: {
+      indentationText: IndentationText.TwoSpaces,
+    },
+  });
+
+  const sourceFile = project.createSourceFile('temp.ts', '', { overwrite: true });
+  sourceFile.addImportDeclaration({
+    namedImports: ['gql'],
+    moduleSpecifier: './gql',
+  });
+
+  const roles = models.getModel('Role', 'enum').values;
+
+  for (const model of models.entities) {
+    for (const role of roles) {
+      if (model.queriable) {
+        if (model.updatable) {
+          sourceFile.addStatements(
+            `export const UPDATE_QUERY_${constantCase(model.name)}_${role} = gql\`\n${getUpdateEntityQuery(model, role, ['id'], '')}\n\`;`,
+          );
+        }
+      }
+
+      if (model.listQueriable) {
+        sourceFile.addStatements(
+          `export const FIND_${constantCase(model.name)}_${role} = gql\`\n${getFindEntityQuery(model, role)}\n\`;`,
+        );
+        sourceFile.addStatements(
+          `export const ${constantCase(model.name)}_LIST_${role} = gql\`\n${getEntityListQuery(model, role, ['id'], '')}\n\`;`,
+        );
+      }
+    }
+  }
+
+  sourceFile.addStatements((writer) =>
+    writer
+      .write(`export const UPDATE_QUERIES = `)
+      .block(() => {
+        for (const model of models.entities) {
+          if (model.updatable) {
+            writer
+              .write(`${model.name}: `)
+              .block(() => {
+                for (const role of roles) {
+                  writer.write(`${role}: UPDATE_QUERY_${constantCase(model.name)}_${role},`).newLine();
+                }
+              })
+              .write(',')
+              .newLine();
+          }
+        }
+      })
+      .write(';')
+      .newLine(),
+  );
+
+  sourceFile.addStatements((writer) =>
+    writer
+      .write(`export const FIND_QUERIES = `)
+      .block(() => {
+        for (const model of models.entities) {
+          if (model.listQueriable) {
+            writer
+              .write(`${model.name}: `)
+              .block(() => {
+                for (const role of roles) {
+                  writer.write(`${role}: FIND_${constantCase(model.name)}_${role},`).newLine();
+                }
+              })
+              .write(',')
+              .newLine();
+          }
+        }
+      })
+      .write(';')
+      .newLine(),
+  );
+
+  return sourceFile.getFullText();
+};

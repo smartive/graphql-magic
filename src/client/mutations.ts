@@ -1,9 +1,6 @@
-import upperCase from 'lodash/upperCase';
 import { IndentationText, Project } from 'ts-morph';
-import { isRootModel, not } from '..';
+import { constantCase, isRootModel, not } from '..';
 import { Models } from '../models/models';
-
-const constantCase = (str: string) => upperCase(str).replace(/ /g, '_');
 
 export const generateMutations = (models: Models) => {
   const project = new Project({

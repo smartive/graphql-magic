@@ -4,3 +4,4 @@ export * from './gql';
 export * from './models';
 export * from './mutations';
 export * from './queries';
+export * from './utils';

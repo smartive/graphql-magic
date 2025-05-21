@@ -17,6 +17,13 @@ const modelDefinitions: ModelDefinitions = [
 export const models = new Models(modelDefinitions);
 `;
 
+export const EMPTY_PERMISSIONS = `import { PermissionsConfig } from '@smartive/graphql-magic';
+
+const permissionsConfig: PermissionsConfig = {
+  ADMIN: true,
+};
+`;
+
 export const KNEXFILE = `
 import { types } from 'pg';
 
