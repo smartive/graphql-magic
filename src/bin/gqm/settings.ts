@@ -58,7 +58,7 @@ const DEFAULTS = {
       ensureFileExists(`${path}/execute.ts`, EXECUTE);
     },
   },
-  gqlModule: {
+  gqmModule: {
     defaultValue: '@smartive/graphql-magic',
   },
   dateLibrary: {
@@ -111,7 +111,7 @@ const initSettings = async () => {
 };
 
 const saveSettings = (settings: Settings) => {
-  writeToFile(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+  writeToFile(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n');
 };
 
 export const getSettings = async (): Promise<Settings> => {
