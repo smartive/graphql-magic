@@ -9,6 +9,8 @@ import {
   generateDBModels,
   generateKnexTables,
   generateMutations,
+  generatePermissionFile,
+  generateQueries,
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
@@ -16,6 +18,7 @@ import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
+import { parsePermissions } from './parse-permissions';
 import { readLine } from './readline';
 import { getSetting, writeToFile } from './settings';
 
@@ -42,11 +45,13 @@ program
   .action(async () => {
     await getSetting('knexfilePath');
     const models = await parseModels();
+    const permissionsConfig = await parsePermissions();
     const generatedFolderPath = await getSetting('generatedFolderPath');
-    const gqlModule = await getSetting('gqlModule');
     writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models, gqlModule));
+    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models));
+    writeToFile(`${generatedFolderPath}/client/queries.ts`, generateQueries(models));
     writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
+    writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionFile(models, permissionsConfig));
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));

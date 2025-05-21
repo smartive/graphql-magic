@@ -4,6 +4,7 @@ import { DateLibrary } from '../../utils/dates';
 import { readLine } from './readline';
 import {
   EMPTY_MODELS,
+  EMPTY_PERMISSIONS,
   EXECUTE,
   GET_ME,
   GITIGNORE,
@@ -37,6 +38,13 @@ const DEFAULTS = {
     defaultValue: 'src/config/models.ts',
     init: (path: string) => {
       ensureFileExists(path, EMPTY_MODELS);
+    },
+  },
+  permissionsPath: {
+    question: 'What is the permissions path?',
+    defaultValue: 'src/config/permissions.ts',
+    init: (path: string) => {
+      ensureFileExists(path, EMPTY_PERMISSIONS);
     },
   },
   generatedFolderPath: {
