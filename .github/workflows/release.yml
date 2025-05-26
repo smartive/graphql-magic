@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - 'main'
-      - 'feat/*'
+      - 'next'
+      - 'alpha/*'
 
 jobs:
   release:
