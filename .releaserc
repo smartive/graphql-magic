@@ -7,8 +7,7 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "alpha",
-      "channel": "alpha"
+      "prerelease": true
     }
   ],
   "plugins": [
