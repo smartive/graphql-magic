@@ -2,9 +2,9 @@ import { IndentationText, Project } from 'ts-morph';
 import { Models } from '../models/models';
 import { isRelation } from '../models/utils';
 
-export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
+const ACTIONS = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'] as const;
 
-const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'];
+export type PermissionAction = (typeof ACTIONS)[number];
 
 /**
  * Initial representation (tree structure, as defined by user).
@@ -136,11 +136,22 @@ export const generatePermissionFile = (models: Models, config: PermissionsConfig
     },
   });
   const sourceFile = project.createSourceFile('temp.ts', '', { overwrite: true });
-  sourceFile.addImportDeclaration({
-    namedImports: ['Permissions'],
-    moduleSpecifier: '@smartive/graphql-magic',
-  });
 
+  sourceFile.addStatements(`export const ACTIONS = [${ACTIONS.map((action) => `'${action}'`).join(', ')}] as const;`);
+  sourceFile.addStatements(`export type PermissionAction = (typeof ACTIONS)[number];`);
+  sourceFile.addStatements(`export type PermissionLink = {
+    type: string;
+    foreignKey?: string;
+    reverse?: boolean;
+    me?: boolean;
+    where?: any;
+  };`);
+  sourceFile.addStatements('export type PermissionChain = PermissionLink[];');
+  sourceFile.addStatements('export type PermissionStack = PermissionChain[];');
+  sourceFile.addStatements(
+    'export type RolePermissions = Record<string, Partial<Record<PermissionAction, true | PermissionStack>>>;',
+  );
+  sourceFile.addStatements('export type Permissions = Record<string, true | RolePermissions>;');
   const permissions = generatePermissions(models, config);
 
   sourceFile.addStatements(`export const permissions = ${JSON.stringify(permissions, null, 2)} satisfies Permissions;`);

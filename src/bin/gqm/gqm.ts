@@ -8,6 +8,7 @@ import {
   MigrationGenerator,
   generateDBModels,
   generateKnexTables,
+  generateModelsFiles,
   generateMutations,
   generatePermissionFile,
   generateQueries,
@@ -52,6 +53,9 @@ program
     writeToFile(`${generatedFolderPath}/client/queries.ts`, generateQueries(models));
     writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
     writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionFile(models, permissionsConfig));
+    for (const [name, content] of Object.entries(generateModelsFiles(models.definitions))) {
+      writeToFile(`${generatedFolderPath}/models/${name}`, content);
+    }
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));

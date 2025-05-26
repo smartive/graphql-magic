@@ -1,0 +1,66 @@
+export const UserIdField = {
+  kind: 'primitive',
+  name: 'id',
+  type: 'ID',
+  description: undefined,
+  list: false,
+  nonNull: true,
+  defaultValue: undefined,
+  args: [undefined],
+  directives: [undefined],
+} as const;
+export const UserUsernameField = {
+  kind: 'primitive',
+  name: 'username',
+  type: 'String',
+  description: undefined,
+  list: false,
+  nonNull: false,
+  defaultValue: undefined,
+  args: [undefined],
+  directives: [undefined],
+} as const;
+export const UserRoleField = {
+  kind: 'enum',
+  name: 'role',
+  type: 'Role',
+  description: undefined,
+  list: false,
+  nonNull: true,
+  defaultValue: undefined,
+  args: [undefined],
+  directives: [undefined],
+} as const;
+export const UserModel = {
+  kind: 'entity',
+  name: 'User',
+  plural: 'Users',
+  description: undefined,
+  root: false,
+  parent: undefined,
+  interfaces: [undefined],
+  queriable: false,
+  listQueriable: false,
+  creatable: false,
+  updatable: false,
+  deletable: false,
+  displayField: undefined,
+  defaultOrderBy: undefined,
+  deleted: false,
+  oldName: undefined,
+  pluralField: 'users',
+  slug: 'users',
+  labelPlural: 'Users',
+  label: 'User',
+  fields: [UserIdField, UserUsernameField, UserRoleField],
+  fieldsByName: {
+    id: UserIdField,
+    username: UserUsernameField,
+    role: UserRoleField,
+  },
+  relations: [],
+  relationsByName: {
+  }
+  ,
+} as const;
+

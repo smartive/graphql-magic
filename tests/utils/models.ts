@@ -1,5 +1,5 @@
 import { ModelDefinitions, Models } from '../../src/models';
-import { PermissionsConfig, generatePermissions } from '../../src/permissions/generate';
+import { PermissionsConfig } from '../../src/permissions/generate';
 
 const modelDefinitions: ModelDefinitions = [
   {
@@ -163,8 +163,6 @@ const modelDefinitions: ModelDefinitions = [
 
 export const models = new Models(modelDefinitions);
 
-const permissionsConfig: PermissionsConfig = {
+export const permissionsConfig: PermissionsConfig = {
   ADMIN: true,
 };
-
-export const permissions = generatePermissions(models, permissionsConfig);

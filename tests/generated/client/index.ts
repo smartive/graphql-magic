@@ -1037,6 +1037,22 @@ export type RestoreAnswerMutationMutationVariables = Exact<{
 
 export type RestoreAnswerMutationMutation = { restoreAnswer: string };
 
+export type FindAnotherObjectADMINQueryVariables = Exact<{
+  where: AnotherObjectWhere;
+  orderBy?: InputMaybe<Array<AnotherObjectOrderBy> | AnotherObjectOrderBy>;
+}>;
+
+
+export type FindAnotherObjectADMINQuery = { data: Array<{ __typename: 'AnotherObject', id: string, name: string | null, deleted: boolean, deletedAt: string | null }> };
+
+export type FindAnotherObjectUSERQueryVariables = Exact<{
+  where: AnotherObjectWhere;
+  orderBy?: InputMaybe<Array<AnotherObjectOrderBy> | AnotherObjectOrderBy>;
+}>;
+
+
+export type FindAnotherObjectUSERQuery = { data: Array<{ __typename: 'AnotherObject', id: string, name: string | null, deleted: boolean, deletedAt: string | null }> };
+
 export type AnotherObjectsListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: AnotherObjectWhere;
@@ -1060,6 +1076,29 @@ export type UpdateQuerySomeObjectADMINQueryVariables = Exact<{
 
 export type UpdateQuerySomeObjectADMINQuery = { data: { __typename: 'SomeObject', id: string } };
 
+export type UpdateQuerySomeObjectUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQuerySomeObjectUSERQuery = { data: { __typename: 'SomeObject', id: string } };
+
+export type FindSomeObjectADMINQueryVariables = Exact<{
+  where: SomeObjectWhere;
+  orderBy?: InputMaybe<Array<SomeObjectOrderBy> | SomeObjectOrderBy>;
+}>;
+
+
+export type FindSomeObjectADMINQuery = { data: Array<{ __typename: 'SomeObject', id: string, field: string | null, float: number, list: Array<SomeEnum>, xyz: number, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type FindSomeObjectUSERQueryVariables = Exact<{
+  where: SomeObjectWhere;
+  orderBy?: InputMaybe<Array<SomeObjectOrderBy> | SomeObjectOrderBy>;
+}>;
+
+
+export type FindSomeObjectUSERQuery = { data: Array<{ __typename: 'SomeObject', id: string, field: string | null, float: number, list: Array<SomeEnum>, xyz: number, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
 export type ManyObjectsListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: SomeObjectWhere;
@@ -1068,13 +1107,6 @@ export type ManyObjectsListADMINQueryVariables = Exact<{
 
 
 export type ManyObjectsListADMINQuery = { data: Array<{ __typename: 'SomeObject', id: string, field: string | null, float: number, list: Array<SomeEnum>, xyz: number, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
-
-export type UpdateQuerySomeObjectUSERQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UpdateQuerySomeObjectUSERQuery = { data: { __typename: 'SomeObject', id: string } };
 
 export type ManyObjectsListUSERQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1092,6 +1124,29 @@ export type UpdateQueryReactionADMINQueryVariables = Exact<{
 
 export type UpdateQueryReactionADMINQuery = { data: { __typename: 'Answer', id: string } | { __typename: 'Question', id: string } | { __typename: 'Review', id: string } };
 
+export type UpdateQueryReactionUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReactionUSERQuery = { data: { __typename: 'Answer', id: string } | { __typename: 'Question', id: string } | { __typename: 'Review', id: string } };
+
+export type FindReactionADMINQueryVariables = Exact<{
+  where: ReactionWhere;
+  orderBy?: InputMaybe<Array<ReactionOrderBy> | ReactionOrderBy>;
+}>;
+
+
+export type FindReactionADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type FindReactionUSERQueryVariables = Exact<{
+  where: ReactionWhere;
+  orderBy?: InputMaybe<Array<ReactionOrderBy> | ReactionOrderBy>;
+}>;
+
+
+export type FindReactionUSERQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
 export type ReactionsListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: ReactionWhere;
@@ -1099,13 +1154,6 @@ export type ReactionsListADMINQueryVariables = Exact<{
 
 
 export type ReactionsListADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null } | { __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
-
-export type UpdateQueryReactionUSERQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UpdateQueryReactionUSERQuery = { data: { __typename: 'Answer', id: string } | { __typename: 'Question', id: string } | { __typename: 'Review', id: string } };
 
 export type ReactionsListUSERQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1122,6 +1170,29 @@ export type UpdateQueryReviewADMINQueryVariables = Exact<{
 
 export type UpdateQueryReviewADMINQuery = { data: { __typename: 'Review', id: string } };
 
+export type UpdateQueryReviewUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryReviewUSERQuery = { data: { __typename: 'Review', id: string } };
+
+export type FindReviewADMINQueryVariables = Exact<{
+  where: ReviewWhere;
+  orderBy?: InputMaybe<Array<ReviewOrderBy> | ReviewOrderBy>;
+}>;
+
+
+export type FindReviewADMINQuery = { data: Array<{ __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null, rating: number | null }> };
+
+export type FindReviewUSERQueryVariables = Exact<{
+  where: ReviewWhere;
+  orderBy?: InputMaybe<Array<ReviewOrderBy> | ReviewOrderBy>;
+}>;
+
+
+export type FindReviewUSERQuery = { data: Array<{ __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null, rating: number | null }> };
+
 export type ReviewsListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: ReviewWhere;
@@ -1129,13 +1200,6 @@ export type ReviewsListADMINQueryVariables = Exact<{
 
 
 export type ReviewsListADMINQuery = { data: Array<{ __typename: 'Review', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null, rating: number | null }> };
-
-export type UpdateQueryReviewUSERQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UpdateQueryReviewUSERQuery = { data: { __typename: 'Review', id: string } };
 
 export type ReviewsListUSERQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1152,6 +1216,29 @@ export type UpdateQueryQuestionADMINQueryVariables = Exact<{
 
 export type UpdateQueryQuestionADMINQuery = { data: { __typename: 'Question', id: string } };
 
+export type UpdateQueryQuestionUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryQuestionUSERQuery = { data: { __typename: 'Question', id: string } };
+
+export type FindQuestionADMINQueryVariables = Exact<{
+  where: QuestionWhere;
+  orderBy?: InputMaybe<Array<QuestionOrderBy> | QuestionOrderBy>;
+}>;
+
+
+export type FindQuestionADMINQuery = { data: Array<{ __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type FindQuestionUSERQueryVariables = Exact<{
+  where: QuestionWhere;
+  orderBy?: InputMaybe<Array<QuestionOrderBy> | QuestionOrderBy>;
+}>;
+
+
+export type FindQuestionUSERQuery = { data: Array<{ __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
 export type QuestionsListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: QuestionWhere;
@@ -1159,13 +1246,6 @@ export type QuestionsListADMINQueryVariables = Exact<{
 
 
 export type QuestionsListADMINQuery = { data: Array<{ __typename: 'Question', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
-
-export type UpdateQueryQuestionUSERQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UpdateQueryQuestionUSERQuery = { data: { __typename: 'Question', id: string } };
 
 export type QuestionsListUSERQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1182,6 +1262,29 @@ export type UpdateQueryAnswerADMINQueryVariables = Exact<{
 
 export type UpdateQueryAnswerADMINQuery = { data: { __typename: 'Answer', id: string } };
 
+export type UpdateQueryAnswerUSERQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateQueryAnswerUSERQuery = { data: { __typename: 'Answer', id: string } };
+
+export type FindAnswerADMINQueryVariables = Exact<{
+  where: AnswerWhere;
+  orderBy?: InputMaybe<Array<AnswerOrderBy> | AnswerOrderBy>;
+}>;
+
+
+export type FindAnswerADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
+export type FindAnswerUSERQueryVariables = Exact<{
+  where: AnswerWhere;
+  orderBy?: InputMaybe<Array<AnswerOrderBy> | AnswerOrderBy>;
+}>;
+
+
+export type FindAnswerUSERQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
+
 export type AnswersListADMINQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
   where: AnswerWhere;
@@ -1189,13 +1292,6 @@ export type AnswersListADMINQueryVariables = Exact<{
 
 
 export type AnswersListADMINQuery = { data: Array<{ __typename: 'Answer', id: string, type: ReactionType, content: string | null, createdAt: string, updatedAt: string, deleted: boolean, deletedAt: string | null }> };
-
-export type UpdateQueryAnswerUSERQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UpdateQueryAnswerUSERQuery = { data: { __typename: 'Answer', id: string } };
 
 export type AnswersListUSERQueryVariables = Exact<{
   limit: Scalars['Int']['input'];

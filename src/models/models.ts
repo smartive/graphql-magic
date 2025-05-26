@@ -50,6 +50,153 @@ export type EnumField = EnumFieldDefinition;
 export type CustomField = CustomFieldDefinition;
 export type RelationField = Omit<RelationFieldDefinition, 'foreignKey'> & { foreignKey: string };
 
+export const getFullDefinitions = (modelDefinitions: ModelDefinitions) => {
+  const definitions = cloneDeep(modelDefinitions);
+  definitions.push(
+    {
+      kind: 'scalar',
+      name: 'DateTime',
+    },
+    { kind: 'scalar', name: 'Upload' },
+    {
+      kind: 'raw-enum',
+      name: 'Order',
+      values: ['ASC', 'DESC'],
+    },
+  );
+  const entities = definitions.filter(isEntityModelDefinition);
+
+  for (const entity of entities) {
+    if (entity.root) {
+      definitions.push({
+        kind: 'enum',
+        name: `${entity.name}Type`,
+        values: entities.filter((subModel) => subModel.parent === entity.name).map((subModel) => subModel.name),
+      });
+    }
+
+    entity.fields = [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+        unique: true,
+        primary: true,
+        generated: true,
+      },
+      ...(entity.root
+        ? [
+            {
+              name: 'type',
+              kind: 'enum',
+              type: `${entity.name}Type`,
+              nonNull: true,
+              generated: true,
+            } satisfies EntityFieldDefinition,
+          ]
+        : []),
+      ...entity.fields,
+      ...(entity.creatable
+        ? [
+            {
+              name: 'createdAt',
+              type: 'DateTime',
+              nonNull: true,
+              orderable: true,
+              generated: true,
+              ...(typeof entity.creatable === 'object' && entity.creatable.createdAt),
+            } satisfies DateTimeFieldDefinition,
+            {
+              name: 'createdBy',
+              kind: 'relation',
+              type: 'User',
+              nonNull: true,
+              reverse: `created${getModelPlural(entity)}`,
+              generated: true,
+              ...(typeof entity.creatable === 'object' && entity.creatable.createdBy),
+            } satisfies RelationFieldDefinition,
+          ]
+        : []),
+      ...(entity.updatable
+        ? [
+            {
+              name: 'updatedAt',
+              type: 'DateTime',
+              nonNull: true,
+              orderable: true,
+              generated: true,
+              ...(typeof entity.updatable === 'object' && entity.updatable.updatedAt),
+            } satisfies DateTimeFieldDefinition,
+            {
+              name: 'updatedBy',
+              kind: 'relation',
+              type: 'User',
+              nonNull: true,
+              reverse: `updated${getModelPlural(entity)}`,
+              generated: true,
+              ...(typeof entity.updatable === 'object' && entity.updatable.updatedBy),
+            } satisfies RelationFieldDefinition,
+          ]
+        : []),
+      ...(entity.deletable
+        ? [
+            {
+              name: 'deleted',
+              type: 'Boolean',
+              nonNull: true,
+              defaultValue: false,
+              filterable: { default: false },
+              generated: true,
+              ...(typeof entity.deletable === 'object' && entity.deletable.deleted),
+            } satisfies BooleanFieldDefinition,
+            {
+              name: 'deletedAt',
+              type: 'DateTime',
+              orderable: true,
+              generated: true,
+              ...(typeof entity.deletable === 'object' && entity.deletable.deletedAt),
+            } satisfies DateTimeFieldDefinition,
+            {
+              name: 'deletedBy',
+              kind: 'relation',
+              type: 'User',
+              reverse: `deleted${getModelPlural(entity)}`,
+              generated: true,
+              ...(typeof entity.deletable === 'object' && entity.deletable.deletedBy),
+            } satisfies RelationFieldDefinition,
+          ]
+        : []),
+    ];
+
+    for (const field of entity.fields) {
+      if (field.kind === 'relation') {
+        field.foreignKey = field.foreignKey || `${field.name}Id`;
+      }
+    }
+  }
+
+  for (const model of entities) {
+    if (model.parent) {
+      const parent = summonByName(entities, model.parent);
+      const INHERITED_FIELDS = ['queriable', 'listQueriable', 'creatable', 'updatable', 'deletable'];
+      Object.assign(model, pick(parent, INHERITED_FIELDS), pick(model, INHERITED_FIELDS));
+
+      model.fields = [
+        ...parent.fields.map((field) => ({
+          ...field,
+          ...(field.kind === 'relation' &&
+            field.reverse && { reverse: field.reverse.replace(getModelPlural(parent), getModelPlural(model)) }),
+          ...model.fields.find((childField) => childField.name === field.name),
+          inherited: true,
+        })),
+        ...model.fields.filter((field) => !parent.fields.some((parentField) => parentField.name === field.name)),
+      ];
+    }
+  }
+
+  return definitions;
+};
+
 export class Models {
   public models: Model[];
   private modelsByName: Record<string, Model> = {};
@@ -63,148 +210,7 @@ export class Models {
   public definitions: ModelDefinitions;
 
   constructor(definitions: ModelDefinitions) {
-    this.definitions = cloneDeep(definitions);
-    this.definitions.push(
-      {
-        kind: 'scalar',
-        name: 'DateTime',
-      },
-      { kind: 'scalar', name: 'Upload' },
-      {
-        kind: 'raw-enum',
-        name: 'Order',
-        values: ['ASC', 'DESC'],
-      },
-    );
-    const entities = this.definitions.filter(isEntityModelDefinition);
-
-    for (const entity of entities) {
-      if (entity.root) {
-        this.definitions.push({
-          kind: 'enum',
-          name: `${entity.name}Type`,
-          values: entities.filter((subModel) => subModel.parent === entity.name).map((subModel) => subModel.name),
-        });
-      }
-
-      entity.fields = [
-        {
-          name: 'id',
-          type: 'ID',
-          nonNull: true,
-          unique: true,
-          primary: true,
-          generated: true,
-        },
-        ...(entity.root
-          ? [
-              {
-                name: 'type',
-                kind: 'enum',
-                type: `${entity.name}Type`,
-                nonNull: true,
-                generated: true,
-              } satisfies EntityFieldDefinition,
-            ]
-          : []),
-        ...entity.fields,
-        ...(entity.creatable
-          ? [
-              {
-                name: 'createdAt',
-                type: 'DateTime',
-                nonNull: true,
-                orderable: true,
-                generated: true,
-                ...(typeof entity.creatable === 'object' && entity.creatable.createdAt),
-              } satisfies DateTimeFieldDefinition,
-              {
-                name: 'createdBy',
-                kind: 'relation',
-                type: 'User',
-                nonNull: true,
-                reverse: `created${getModelPlural(entity)}`,
-                generated: true,
-                ...(typeof entity.creatable === 'object' && entity.creatable.createdBy),
-              } satisfies RelationFieldDefinition,
-            ]
-          : []),
-        ...(entity.updatable
-          ? [
-              {
-                name: 'updatedAt',
-                type: 'DateTime',
-                nonNull: true,
-                orderable: true,
-                generated: true,
-                ...(typeof entity.updatable === 'object' && entity.updatable.updatedAt),
-              } satisfies DateTimeFieldDefinition,
-              {
-                name: 'updatedBy',
-                kind: 'relation',
-                type: 'User',
-                nonNull: true,
-                reverse: `updated${getModelPlural(entity)}`,
-                generated: true,
-                ...(typeof entity.updatable === 'object' && entity.updatable.updatedBy),
-              } satisfies RelationFieldDefinition,
-            ]
-          : []),
-        ...(entity.deletable
-          ? [
-              {
-                name: 'deleted',
-                type: 'Boolean',
-                nonNull: true,
-                defaultValue: false,
-                filterable: { default: false },
-                generated: true,
-                ...(typeof entity.deletable === 'object' && entity.deletable.deleted),
-              } satisfies BooleanFieldDefinition,
-              {
-                name: 'deletedAt',
-                type: 'DateTime',
-                orderable: true,
-                generated: true,
-                ...(typeof entity.deletable === 'object' && entity.deletable.deletedAt),
-              } satisfies DateTimeFieldDefinition,
-              {
-                name: 'deletedBy',
-                kind: 'relation',
-                type: 'User',
-                reverse: `deleted${getModelPlural(entity)}`,
-                generated: true,
-                ...(typeof entity.deletable === 'object' && entity.deletable.deletedBy),
-              } satisfies RelationFieldDefinition,
-            ]
-          : []),
-      ];
-
-      for (const field of entity.fields) {
-        if (field.kind === 'relation') {
-          field.foreignKey = field.foreignKey || `${field.name}Id`;
-        }
-      }
-    }
-
-    for (const model of entities) {
-      if (model.parent) {
-        const parent = summonByName(entities, model.parent);
-        const INHERITED_FIELDS = ['queriable', 'listQueriable', 'creatable', 'updatable', 'deletable'];
-        Object.assign(model, pick(parent, INHERITED_FIELDS), pick(model, INHERITED_FIELDS));
-
-        model.fields = [
-          ...parent.fields.map((field) => ({
-            ...field,
-            ...(field.kind === 'relation' &&
-              field.reverse && { reverse: field.reverse.replace(getModelPlural(parent), getModelPlural(model)) }),
-            ...model.fields.find((childField) => childField.name === field.name),
-            inherited: true,
-          })),
-          ...model.fields.filter((field) => !parent.fields.some((parentField) => parentField.name === field.name)),
-        ];
-      }
-    }
+    this.definitions = getFullDefinitions(definitions);
 
     this.models = this.definitions.map(
       (definition) => new (MODEL_KIND_TO_CLASS_MAPPING[definition.kind] as any)(this, definition),

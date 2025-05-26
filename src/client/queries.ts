@@ -36,9 +36,6 @@ export const getUpdateEntityQuery = (
 
 export type RelationConstraints = Record<string, (source: any) => any>;
 
-/**
- * @deprecated Use Relation.searchable instead
- */
 export const fieldIsSearchable = (model: EntityModel, fieldName: string) => {
   const relation = model.getRelation(fieldName);
   const targetModel = relation.targetModel;
@@ -127,18 +124,12 @@ export const getManyToManyRelationsQuery = (
               .join(' ')}
           }`);
 
-/**
- * @deprecated Use MUTATIONS from mutations.ts instead
- */
 export type MutationQuery = {
   mutated: {
     id: string;
   };
 };
 
-/**
- * @deprecated Use MUTATIONS from mutations.ts instead
- */
 export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'delete') =>
   action === 'create'
     ? `
@@ -168,9 +159,6 @@ export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
 
-/**
- * @deprecated Use LIST_ queries from queries.ts instead
- */
 export const getEntityListQuery = (
   model: EntityModel,
   role: string,
@@ -220,9 +208,6 @@ export const getEntityQuery = (model: EntityModel, role: string, relations?: str
   }
 }`;
 
-/**
- * @deprecated Use FIND_ queries from queries.ts instead
- */
 export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}${role}($where: ${
   model.name
 }Where!, $orderBy: [${model.name}OrderBy!]) {
@@ -257,23 +242,60 @@ export const generateQueries = (models: Models) => {
   const roles = models.getModel('Role', 'enum').values;
 
   for (const model of models.entities) {
-    for (const role of roles) {
-      if (model.queriable) {
-        if (model.updatable) {
+    if (model.queriable) {
+      if (model.updatable) {
+        for (const role of roles) {
           sourceFile.addStatements(
             `export const UPDATE_QUERY_${constantCase(model.name)}_${role} = gql\`\n${getUpdateEntityQuery(model, role, ['id'], '')}\n\`;`,
           );
         }
+        sourceFile.addStatements((writer) =>
+          writer
+            .write(`export const UPDATE_QUERIES_${constantCase(model.name)} = `)
+            .block(() => {
+              for (const role of roles) {
+                writer.write(`${role}: UPDATE_QUERY_${constantCase(model.name)}_${role},`).newLine();
+              }
+            })
+            .write(';')
+            .newLine(),
+        );
       }
+    }
 
-      if (model.listQueriable) {
+    if (model.listQueriable) {
+      for (const role of roles) {
         sourceFile.addStatements(
           `export const FIND_${constantCase(model.name)}_${role} = gql\`\n${getFindEntityQuery(model, role)}\n\`;`,
         );
+      }
+      sourceFile.addStatements((writer) =>
+        writer
+          .write(`export const FIND_${constantCase(model.name)} = `)
+          .block(() => {
+            for (const role of roles) {
+              writer.write(`${role}: FIND_${constantCase(model.name)}_${role},`).newLine();
+            }
+          })
+          .write(';')
+          .newLine(),
+      );
+      for (const role of roles) {
         sourceFile.addStatements(
-          `export const ${constantCase(model.name)}_LIST_${role} = gql\`\n${getEntityListQuery(model, role, ['id'], '')}\n\`;`,
+          `export const LIST_${constantCase(model.name)}_${role} = gql\`\n${getEntityListQuery(model, role, ['id'], '')}\n\`;`,
         );
       }
+      sourceFile.addStatements((writer) =>
+        writer
+          .write(`export const LIST_QUERIES_${constantCase(model.name)} = `)
+          .block(() => {
+            for (const role of roles) {
+              writer.write(`${role}: LIST_${constantCase(model.name)}_${role},`).newLine();
+            }
+          })
+          .write(';')
+          .newLine(),
+      );
     }
   }
 
@@ -305,15 +327,7 @@ export const generateQueries = (models: Models) => {
       .block(() => {
         for (const model of models.entities) {
           if (model.listQueriable) {
-            writer
-              .write(`${model.name}: `)
-              .block(() => {
-                for (const role of roles) {
-                  writer.write(`${role}: FIND_${constantCase(model.name)}_${role},`).newLine();
-                }
-              })
-              .write(',')
-              .newLine();
+            writer.write(`${model.name}: FIND_${constantCase(model.name)},`).newLine();
           }
         }
       })
