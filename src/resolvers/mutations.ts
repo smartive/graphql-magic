@@ -179,7 +179,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
         deleted: true,
         deletedAt: ctx.now,
         deletedById: ctx.user?.id,
-        deleteRootType: model.name,
+        deleteRootType: rootModel.name,
         deleteRootId: entity.id,
       };
       const next = { ...currentEntity, ...normalizedInput };
@@ -312,9 +312,9 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     throw new ForbiddenError('Entity is not deleted.');
   }
 
-  if (entity.deleteRootTypeId !== entity.id) {
+  if (!(entity.deleteRootType === rootModel.name && entity.deleteRootId === entity.id)) {
     throw new ForbiddenError(
-      `Can't restore ${model.name} directly. Please restore ${entity.deleteRootType} ${entity.deleteRootId} instead.`,
+      `Can't restore ${model.rootModel.name} directly. Please restore ${entity.deleteRootType} ${entity.deleteRootId} instead.`,
     );
   }
 
