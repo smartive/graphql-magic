@@ -194,6 +194,8 @@ export class MigrationGenerator {
                           writer.writeLine(`createdById: row.updatedById || row.createdById,`);
                           if (model.deletable) {
                             writer.writeLine(`deleted: row.deleted,`);
+                            writer.writeLine(`deleteRootType: row.deleteRootType,`);
+                            writer.writeLine(`deleteRootId: row.deleteRootId,`);
                           }
 
                           for (const { name, kind } of model.fields.filter(isUpdatableField)) {
@@ -450,6 +452,8 @@ export class MigrationGenerator {
         writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
         if (model.deletable) {
           writer.writeLine(`table.boolean('deleted').notNullable();`);
+          writer.writeLine(`table.string('deleteRootType');`);
+          writer.writeLine(`table.uuid('deleteRootId');`);
         }
       }
 
@@ -653,7 +657,7 @@ export class MigrationGenerator {
         if (foreign && !alter) {
           this.writer.writeLine(`table.index('${field.foreignKey}');`);
           this.writer.writeLine(
-            `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('CASCADE');`,
+            `table.foreign('${field.foreignKey}').references('id').inTable('${field.type}').onDelete('${field.onDelete?.toUpperCase() ?? 'CASCADE'}');`,
           );
         }
         break;
