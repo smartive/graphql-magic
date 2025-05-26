@@ -148,36 +148,50 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       }
     >
   > = {};
+  const restricted: Record<
+    string,
+    Record<
+      string,
+      {
+        display: string;
+        fields: string[];
+      }
+    >
+  > = {};
 
   const beforeHooks: Callbacks = [];
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const deleteCascade = async (currentModel: EntityModel, entity: Entity) => {
-    if (entity.deleted) {
-      return;
-    }
-
+  const mutationHook = ctx.mutationHook;
+  const deleteCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
     if (!(currentModel.name in toDelete)) {
       toDelete[currentModel.name] = {};
     }
-    if ((entity.id as string) in toDelete[currentModel.name]) {
+    if ((currentEntity.id as string) in toDelete[currentModel.name]) {
       return;
     }
-    toDelete[currentModel.name][entity.id as string] = (entity[currentModel.displayField || 'id'] || entity.id) as string;
+    toDelete[currentModel.name][currentEntity.id as string] = (currentEntity[currentModel.displayField || 'id'] ||
+      currentEntity.id) as string;
 
     if (!dryRun) {
-      const normalizedInput = { deleted: true, deletedAt: ctx.now, deletedById: ctx.user?.id };
-      const data = { prev: entity, input: {}, normalizedInput, next: { ...entity, ...normalizedInput } };
-      const mutationHook = ctx.mutationHook;
+      const normalizedInput = {
+        deleted: true,
+        deletedAt: ctx.now,
+        deletedById: ctx.user?.id,
+        deleteRootType: rootModel.name,
+        deleteRootId: entity.id,
+      };
+      const next = { ...currentEntity, ...normalizedInput };
+      const data = { prev: currentEntity, input: {}, normalizedInput, next };
       if (mutationHook) {
         beforeHooks.push(async () => {
           await mutationHook(currentModel, 'delete', 'before', data, ctx);
         });
       }
       mutations.push(async () => {
-        await ctx.knex(currentModel.name).where({ id: entity.id }).update(normalizedInput);
-        await createRevision(currentModel, { ...entity, deleted: true }, ctx);
+        await ctx.knex(currentModel.name).where({ id: currentEntity.id }).update(normalizedInput);
+        await createRevision(currentModel, next, ctx);
       });
       if (mutationHook) {
         afterHooks.push(async () => {
@@ -190,7 +204,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       targetModel: descendantModel,
       field: { name, foreignKey, onDelete },
     } of currentModel.reverseRelations.filter((reverseRelation) => !reverseRelation.field.inherited)) {
-      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: entity.id });
+      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: false });
       switch (onDelete) {
         case 'set-null': {
           const descendants = await query;
@@ -201,20 +215,51 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               }
               if (!toUnlink[descendantModel.name][descendant.id]) {
                 toUnlink[descendantModel.name][descendant.id] = {
-                  display: descendant[descendantModel.displayField || 'id'] || entity.id,
+                  display: descendant[descendantModel.displayField || 'id'] || currentEntity.id,
                   fields: [],
                 };
               }
               toUnlink[descendantModel.name][descendant.id].fields.push(name);
             } else {
+              const normalizedInput = { [`${name}Id`]: null };
+              const next = { ...descendant, ...normalizedInput };
+              const data = { prev: descendant, input: {}, normalizedInput, next };
+              if (mutationHook) {
+                beforeHooks.push(async () => {
+                  await mutationHook(descendantModel, 'update', 'before', data, ctx);
+                });
+              }
               mutations.push(async () => {
-                await ctx
-                  .knex(descendantModel.name)
-                  .where({ id: descendant.id })
-                  .update({
-                    [`${name}Id`]: null,
-                  });
+                await ctx.knex(descendantModel.name).where({ id: descendant.id }).update(normalizedInput);
+                await createRevision(descendantModel, next, ctx);
               });
+              if (mutationHook) {
+                afterHooks.push(async () => {
+                  await mutationHook(descendantModel, 'update', 'after', data, ctx);
+                });
+              }
+            }
+          }
+          break;
+        }
+        case 'restrict': {
+          const descendants = await query;
+          if (descendants.length) {
+            if (dryRun) {
+              if (!restricted[descendantModel.name]) {
+                restricted[descendantModel.name] = {};
+              }
+              for (const descendant of descendants) {
+                if (!restricted[descendantModel.name][descendant.id]) {
+                  restricted[descendantModel.name][descendant.id] = {
+                    display: descendant[descendantModel.displayField || 'id'] || currentEntity.id,
+                    fields: [name],
+                  };
+                }
+                restricted[descendantModel.name][descendant.id].fields.push(name);
+              }
+            } else {
+              throw new ForbiddenError(`This ${model.name} cannot be deleted because it has ${descendantModel.plural}.`);
             }
           }
           break;
@@ -265,20 +310,24 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     throw new ForbiddenError('Entity is not deleted.');
   }
 
+  if (!(entity.deleteRootType === rootModel.name && entity.deleteRootId === entity.id)) {
+    throw new ForbiddenError(
+      `Can't restore ${model.rootModel.name} directly. Please restore ${entity.deleteRootType} ${entity.deleteRootId} instead.`,
+    );
+  }
+
   const beforeHooks: Callbacks = [];
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
   const restoreCascade = async (currentModel: EntityModel, relatedEntity: Entity) => {
-    if (
-      !relatedEntity.deleted ||
-      !relatedEntity.deletedAt ||
-      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
-    ) {
-      return;
-    }
-
-    const normalizedInput: Entity = { deleted: false, deletedAt: null, deletedById: null };
+    const normalizedInput: Entity = {
+      deleted: false,
+      deletedAt: null,
+      deletedById: null,
+      deleteRootType: null,
+      deleteRootId: null,
+    };
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {

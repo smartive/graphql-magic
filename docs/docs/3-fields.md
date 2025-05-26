@@ -8,12 +8,12 @@ const modelDefinitions: ModelDefinitions = [
     kind: 'entity',
     name: 'User',
     fields: [
-        // Fields
-    ]
+      // Fields
+    ],
   },
-]
+];
 
-export const models = new Models(modelDefinitions)
+export const models = new Models(modelDefinitions);
 ```
 
 ## Kinds
@@ -24,12 +24,12 @@ Fields can have various kinds, based on the field `kind`:
 
 Primitive fields are fields where `kind` is either undefined or set to `'primitive'`. They can have the following `type`:
 
-* `ID`
-* `Boolean`
-* `String` with optional fields `stringType` and `maxLength`
-* `Int` with optional fields `intType`
-* `Float` with optional fields `floatType`, `double`, `precision`, `scale`
-* `Upload`
+- `ID`
+- `Boolean`
+- `String` with optional fields `stringType` and `maxLength`
+- `Int` with optional fields `intType`
+- `Float` with optional fields `floatType`, `double`, `precision`, `scale`
+- `Upload`
 
 Examples:
 
@@ -75,11 +75,11 @@ Fields generally have the following options:
 
 Fields can have various kinds, which affect other available options. Available kinds:
 
-* `undefined` or `'primitive'`
-* `'enum'`
-* `'custom'`
-* `'json'`
-* `'relation'`
+- `undefined` or `'primitive'`
+- `'enum'`
+- `'custom'`
+- `'json'`
+- `'relation'`
 
 For more details, see section on [kinds](#kinds) below.
 
@@ -142,9 +142,9 @@ this becomes possible:
 
 ```graphql
 query {
-    posts(where: { name: "Hello World" }) {
-        title
-    }
+  posts(where: { name: "Hello World" }) {
+    title
+  }
 }
 ```
 
@@ -168,12 +168,11 @@ this becomes possible:
 
 ```graphql
 query {
-    comments(where: { post: { name: "Hello World" } }) {
-        content
-    }
+  comments(where: { post: { name: "Hello World" } }) {
+    content
+  }
 }
 ```
-
 
 ### `reverseFilterable`
 
@@ -198,9 +197,9 @@ this becomes possible:
 
 ```graphql
 query {
-    posts(where: { comments_SOME: { name: "Hello World" } }) {
-        title
-    }
+  posts(where: { comments_SOME: { name: "Hello World" } }) {
+    title
+  }
 }
 ```
 
@@ -235,9 +234,9 @@ this becomes possible:
 
 ```graphql
 query {
-    posts(search: "Hello") {
-        title
-    }
+  posts(search: "Hello") {
+    title
+  }
 }
 ```
 
@@ -264,12 +263,11 @@ this becomes possible:
 
 ```graphql
 query {
-    posts(orderBy: [{ title: DESC }]) {
-        title
-    }
+  posts(orderBy: [{ title: DESC }]) {
+    title
+  }
 }
 ```
-
 
 ### `comparable`
 
@@ -302,10 +300,10 @@ query {
 
 Available postfixes are:
 
-* `_GT`: greater than
-* `_GTE`: greater than or equal
-* `_LT`: less than
-* `_LTE`: less than or equal
+- `_GT`: greater than
+- `_GTE`: greater than or equal
+- `_LT`: less than
+- `_LTE`: less than or equal
 
 ### `queriable`
 
@@ -350,4 +348,4 @@ the reverse relation will automatically be `Post.comments`. With `reverse` this 
 
 ### `onDelete`
 
-Only available on relation fields. Can be `"cascade"` (default) or `"set-null"`.
+Only available on relation fields. Can be `"cascade"` (default), `"restrict"` or `"set-null"`.

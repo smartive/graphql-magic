@@ -10,6 +10,7 @@ import {
   SyntaxKind,
   TemplateExpression,
   TemplateTail,
+  ts,
 } from 'ts-morph';
 import { Models } from '../../models/models';
 import { visit, Visitor } from './visitor';
@@ -200,16 +201,21 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   },
   [SyntaxKind.Parameter]: (node, context) => context[node.getName()],
   [SyntaxKind.BinaryExpression]: (node, context) => {
-    switch (node.getOperatorToken().getKind()) {
-      case SyntaxKind.EqualsEqualsEqualsToken:
-        return staticEval(node.getLeft(), context) === staticEval(node.getRight(), context);
-      case SyntaxKind.ExclamationEqualsEqualsToken:
-        return staticEval(node.getLeft(), context) !== staticEval(node.getRight(), context);
-      case SyntaxKind.BarBarToken:
-        return staticEval(node.getLeft(), context) || staticEval(node.getRight(), context);
-      default:
-        throw new Error(`Cannot handle operator of kind ${node.getOperatorToken().getKindName()}`);
+    const mapping: Partial<Record<ts.BinaryOperator, (left: unknown, right: () => unknown) => unknown>> = {
+      [SyntaxKind.EqualsEqualsEqualsToken]: (left: unknown, right: () => unknown) => left === right(),
+      [SyntaxKind.ExclamationEqualsEqualsToken]: (left: unknown, right: () => unknown) => left !== right(),
+      [SyntaxKind.BarBarToken]: (left: unknown, right: () => unknown) => left || right(),
+      [SyntaxKind.AmpersandAmpersandToken]: (left: unknown, right: () => unknown) => left && right(),
+      [SyntaxKind.EqualsEqualsToken]: (left: unknown, right: () => unknown) => left == right(),
+      [SyntaxKind.ExclamationEqualsToken]: (left: unknown, right: () => unknown) => left != right(),
+    };
+    if (node.getOperatorToken().getKind() in mapping) {
+      return mapping[node.getOperatorToken().getKind()](staticEval(node.getLeft(), context), () =>
+        staticEval(node.getRight(), context),
+      );
     }
+
+    throw new Error(`Cannot handle operator of kind ${node.getOperatorToken().getKindName()}`);
   },
   [SyntaxKind.SatisfiesExpression]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.TemplateExpression]: (node: TemplateExpression, context) =>
@@ -244,4 +250,5 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.NullKeyword]: () => null,
   [SyntaxKind.NewExpression]: (node, context) =>
     new (staticEval(node.getExpression(), context))(...node.getArguments().map((arg) => staticEval(arg, context))),
+  [SyntaxKind.TypeOfExpression]: (node, context) => typeof staticEval(node.getExpression(), context),
 };
