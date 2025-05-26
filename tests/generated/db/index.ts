@@ -37,6 +37,8 @@ export type AnotherObject = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
 }
 
 export type AnotherObjectInitializer = {
@@ -46,6 +48,8 @@ export type AnotherObjectInitializer = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type AnotherObjectMutator = {
@@ -55,6 +59,8 @@ export type AnotherObjectMutator = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type AnotherObjectSeed = {
@@ -64,6 +70,8 @@ export type AnotherObjectSeed = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type SomeObject = {
@@ -80,6 +88,8 @@ export type SomeObject = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
 }
 
 export type SomeObjectInitializer = {
@@ -96,6 +106,8 @@ export type SomeObjectInitializer = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type SomeObjectMutator = {
@@ -112,6 +124,8 @@ export type SomeObjectMutator = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type SomeObjectSeed = {
@@ -128,6 +142,8 @@ export type SomeObjectSeed = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type Reaction = {
@@ -142,6 +158,8 @@ export type Reaction = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
 }
 
 export type ReactionInitializer = {
@@ -156,6 +174,8 @@ export type ReactionInitializer = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type ReactionMutator = {
@@ -170,6 +190,8 @@ export type ReactionMutator = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type Review = {
@@ -184,6 +206,8 @@ export type Review = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
   'rating': number | null;
 }
 
@@ -208,6 +232,8 @@ export type ReviewSeed = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
   'rating'?: number | null;
 }
 
@@ -223,6 +249,8 @@ export type Question = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
 }
 
 export type QuestionInitializer = {
@@ -244,6 +272,8 @@ export type QuestionSeed = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type Answer = {
@@ -258,6 +288,8 @@ export type Answer = {
   'deleted': boolean;
   'deletedAt': DateTime | null;
   'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
 }
 
 export type AnswerInitializer = {
@@ -279,6 +311,8 @@ export type AnswerSeed = {
   'deleted'?: boolean;
   'deletedAt'?: (DateTime | string) | null;
   'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
 }
 
 export type SeedData = {

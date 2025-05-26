@@ -5,6 +5,8 @@ type AnotherObject {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
   self(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): AnotherObject
   manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
 }
@@ -40,6 +42,8 @@ type Answer implements Reaction {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
   childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
   childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
   childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
@@ -136,6 +140,8 @@ type Question implements Reaction {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
   childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
   childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
   childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
@@ -172,6 +178,8 @@ interface Reaction {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
   childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
   childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
   childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
@@ -214,6 +222,8 @@ type Review implements Reaction {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
   rating: Float
   childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
   childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
@@ -268,6 +278,8 @@ type SomeObject {
   deleted: Boolean!
   deletedAt: DateTime
   deletedBy: User
+  deleteRootType: String
+  deleteRootId: ID
 }
 
 input SomeObjectOrderBy {
