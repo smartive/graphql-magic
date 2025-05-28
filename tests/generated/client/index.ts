@@ -18,6 +18,8 @@ export type Scalars = {
 
 export type AnotherObject = {
   __typename: 'AnotherObject';
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;
@@ -73,6 +75,8 @@ export type Answer = Reaction & {
   content: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;
@@ -375,6 +379,8 @@ export type Question = Reaction & {
   content: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;
@@ -443,6 +449,8 @@ export type Reaction = {
   content: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;
@@ -518,6 +526,8 @@ export type Review = Reaction & {
   content: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;
@@ -599,6 +609,8 @@ export type SomeObject = {
   another: Maybe<AnotherObject>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId: Maybe<Scalars['ID']['output']>;
+  deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt: Maybe<Scalars['DateTime']['output']>;
   deletedBy: Maybe<User>;

@@ -1,4 +1,4 @@
-# graphql-magic
+# graphql-magic!
 
 Welcome to `graphql-magic`, a revolutionary library that transforms the way of working with GraphQL and databases in TypeScript projects. This library aims to streamline the development process, enhancing speed, efficiency, and type safety.
 

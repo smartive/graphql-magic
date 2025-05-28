@@ -101,6 +101,16 @@
         "reverse": "deletedAnotherObjects",
         "generated": true,
         "foreignKey": "deletedById"
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true
       }
     ]
   },
@@ -224,6 +234,16 @@
         "reverse": "deletedManyObjects",
         "generated": true,
         "foreignKey": "deletedById"
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true
       }
     ]
   },
@@ -320,6 +340,16 @@
         "reverse": "deletedReactions",
         "generated": true,
         "foreignKey": "deletedById"
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true
       }
     ]
   },
@@ -421,6 +451,18 @@
         "reverse": "deletedReviews",
         "generated": true,
         "foreignKey": "deletedById",
+        "inherited": true
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true,
         "inherited": true
       },
       {
@@ -536,6 +578,18 @@
         "generated": true,
         "foreignKey": "deletedById",
         "inherited": true
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true,
+        "inherited": true
       }
     ],
     "queriable": true,
@@ -642,6 +696,18 @@
         "reverse": "deletedAnswers",
         "generated": true,
         "foreignKey": "deletedById",
+        "inherited": true
+      },
+      {
+        "name": "deleteRootType",
+        "type": "String",
+        "generated": true,
+        "inherited": true
+      },
+      {
+        "name": "deleteRootId",
+        "type": "ID",
+        "generated": true,
         "inherited": true
       }
     ],

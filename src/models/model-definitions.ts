@@ -54,7 +54,7 @@ export type EntityFieldDefinition = FieldDefinitionBase &
         toOne?: boolean;
         reverse?: string;
         foreignKey?: string;
-        onDelete?: 'cascade' | 'set-null';
+        onDelete?: 'cascade' | 'restrict' | 'set-null';
       }
   ) & {
     primary?: boolean;

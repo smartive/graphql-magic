@@ -176,6 +176,17 @@ export class Models {
                 generated: true,
                 ...(typeof entity.deletable === 'object' && entity.deletable.deletedBy),
               } satisfies RelationFieldDefinition,
+              {
+                name: 'deleteRootType',
+                type: 'String',
+                generated: true,
+              } satisfies StringFieldDefinition,
+
+              {
+                name: 'deleteRootId',
+                type: 'ID',
+                generated: true,
+              } satisfies IDFieldDefinition,
             ]
           : []),
       ];

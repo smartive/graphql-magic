@@ -21,6 +21,8 @@ export type Scalars = {
 
 export type AnotherObject = {
   __typename?: 'AnotherObject';
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -76,6 +78,8 @@ export type Answer = Reaction & {
   content?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -378,6 +382,8 @@ export type Question = Reaction & {
   content?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -446,6 +452,8 @@ export type Reaction = {
   content?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -521,6 +529,8 @@ export type Review = Reaction & {
   content?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -602,6 +612,8 @@ export type SomeObject = {
   another?: Maybe<AnotherObject>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
+  deleteRootId?: Maybe<Scalars['ID']['output']>;
+  deleteRootType?: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
   deletedAt?: Maybe<Scalars['DateTime']['output']>;
   deletedBy?: Maybe<User>;
@@ -1006,6 +1018,8 @@ export type ResolversParentTypes = {
 };
 
 export type AnotherObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['AnotherObject'] = ResolversParentTypes['AnotherObject']> = {
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -1025,6 +1039,8 @@ export type AnswerResolvers<ContextType = any, ParentType extends ResolversParen
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -1084,6 +1100,8 @@ export type QuestionResolvers<ContextType = any, ParentType extends ResolversPar
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -1104,6 +1122,8 @@ export type ReactionResolvers<ContextType = any, ParentType extends ResolversPar
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -1122,6 +1142,8 @@ export type ReviewResolvers<ContextType = any, ParentType extends ResolversParen
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
@@ -1138,6 +1160,8 @@ export type SomeObjectResolvers<ContextType = any, ParentType extends ResolversP
   another?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;

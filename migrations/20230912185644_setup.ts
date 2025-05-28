@@ -28,6 +28,8 @@ export const up = async (knex: Knex) => {
     table.uuid('deletedById').nullable();
     table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
+    table.string('deleteRootType', undefined).nullable();
+    table.uuid('deleteRootId').nullable();
   });
 
   await knex.schema.createTable('SomeObject', (table) => {
@@ -52,6 +54,8 @@ export const up = async (knex: Knex) => {
     table.uuid('deletedById').nullable();
     table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
+    table.string('deleteRootType', undefined).nullable();
+    table.uuid('deleteRootId').nullable();
   });
 
   await knex.schema.createTable('SomeObjectRevision', (table) => {
@@ -60,6 +64,8 @@ export const up = async (knex: Knex) => {
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
+    table.string('deleteRootType');
+    table.uuid('deleteRootId');
     table.uuid('anotherId').nullable();
     table.index('anotherId');
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
@@ -90,6 +96,8 @@ export const up = async (knex: Knex) => {
     table.uuid('deletedById').nullable();
     table.index('deletedById');
     table.foreign('deletedById').references('id').inTable('User').onDelete('CASCADE');
+    table.string('deleteRootType', undefined).nullable();
+    table.uuid('deleteRootId').nullable();
   });
 
   await knex.schema.createTable('ReactionRevision', (table) => {
@@ -98,6 +106,8 @@ export const up = async (knex: Knex) => {
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
+    table.string('deleteRootType');
+    table.uuid('deleteRootId');
     table.string('content', undefined).nullable();
   });
 
