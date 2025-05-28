@@ -291,6 +291,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       code: 'DELETE_DRY_RUN',
       toDelete,
       toUnlink,
+      restricted,
     });
   }
 
@@ -308,12 +309,6 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
 
   if (!entity.deleted) {
     throw new ForbiddenError('Entity is not deleted.');
-  }
-
-  if (!(entity.deleteRootType === rootModel.name && entity.deleteRootId === entity.id)) {
-    throw new ForbiddenError(
-      `Can't restore ${model.rootModel.name} directly. Please restore ${entity.deleteRootType} ${entity.deleteRootId} instead.`,
-    );
   }
 
   const beforeHooks: Callbacks = [];
