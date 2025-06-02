@@ -1,6 +1,6 @@
 # Migration Guides
 
-## Upgrading to v18.0.0
+## Upgrading to v19.0.0
 
 ### Configuration changes
 
@@ -42,24 +42,15 @@ New fields have been added to deletable entities to track deletion context:
 - `deleteRootType`: Stores the type of the root entity that initiated the deletion
 - `deleteRootId`: Stores the ID of the root entity that initiated the deletion
 
-These fields help track cascading deletions and enable more sophisticated restore operations.
+Generate a migration to add these fields:
 
-#### Migration requirements
-
-For existing projects, you'll need to add the new deletion tracking fields to your deletable entities. Generate a migration to add these fields:
-
-```sql
-ALTER TABLE your_table_name ADD COLUMN deleteRootType VARCHAR(255);
-ALTER TABLE your_table_name ADD COLUMN deleteRootId UUID;
+```bash
+npx gqm generate-migration
 ```
 
-#### Restore behavior changes
+## Upgrading to v18.0.0
 
-The restore functionality has been enhanced:
-
-- Entities can only be restored from their root deletion point
-- If you try to restore a child entity that was deleted as part of a cascade, you'll get an error directing you to restore the root entity instead
-- This ensures consistency in the deletion/restoration process
+This was a dummy release, nothing to do here.
 
 ## Upgrading to v17.2.0
 
