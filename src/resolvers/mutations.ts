@@ -316,6 +316,14 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
   const afterHooks: Callbacks = [];
 
   const restoreCascade = async (currentModel: EntityModel, relatedEntity: Entity) => {
+    if (
+      !relatedEntity.deleted ||
+      !relatedEntity.deletedAt ||
+      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
+    ) {
+      return;
+    }
+
     const normalizedInput: Entity = {
       deleted: false,
       deletedAt: null,
