@@ -99,11 +99,11 @@ export const getEntityToMutate = async (
 
   if (!entity) {
     console.error(
-      `Not found: ${Object.entries(where)
+      `${model.name} to ${action.toLowerCase()} not found: ${Object.entries(where)
         .map(([key, value]) => `${key}: ${value}`)
         .join(', ')}`,
     );
-    throw new NotFoundError(`Entity to ${action.toLowerCase()}`);
+    throw new NotFoundError(`${model.name} to ${action.toLowerCase()}`);
   }
 
   applyPermissions(ctx, model.name, model.name, query, action);

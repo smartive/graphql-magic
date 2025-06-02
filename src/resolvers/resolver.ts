@@ -10,7 +10,18 @@ import { PermissionStack } from '../permissions/generate';
 import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
-import { AliasGenerator, Entry, ID_ALIAS, Joins, applyJoins, getColumn, getNameOrAlias, hydrate, isListType } from './utils';
+import {
+  AliasGenerator,
+  Entry,
+  ID_ALIAS,
+  Joins,
+  applyJoins,
+  getColumn,
+  getNameOrAlias,
+  getTechnicalDisplay,
+  hydrate,
+  isListType,
+} from './utils';
 
 export const queryResolver = (_parent: any, _args: any, ctx: Context, info: GraphQLResolveInfo) =>
   resolve({ ...ctx, info, aliases: new AliasGenerator() });
@@ -55,8 +66,8 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   }
 
   if (!res[0]) {
-    console.error('Entity not found', query.toString());
-    throw new NotFoundError('Entity not found');
+    console.error(`${getTechnicalDisplay(node.rootModel, { id })} not found`, query.toString());
+    throw new NotFoundError(`${getTechnicalDisplay(node.rootModel, { id })} not found`);
   }
 
   return res[0];

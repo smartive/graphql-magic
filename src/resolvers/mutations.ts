@@ -134,7 +134,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
   const entity = await getEntityToMutate(ctx, rootModel, where, 'DELETE');
 
   if (entity.deleted) {
-    throw new ForbiddenError('Entity is already deleted.');
+    throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is already deleted.`);
   }
 
   const toDelete: Record<string, Record<string, string>> = {};
@@ -312,7 +312,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
   const entity = await getEntityToMutate(ctx, rootModel, where, 'RESTORE');
 
   if (!entity.deleted) {
-    throw new ForbiddenError('Entity is not deleted.');
+    throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is not deleted.`);
   }
 
   const beforeHooks: Callbacks = [];
