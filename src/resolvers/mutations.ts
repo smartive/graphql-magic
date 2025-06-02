@@ -8,7 +8,7 @@ import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
-import { AliasGenerator, getDisplay } from './utils';
+import { AliasGenerator, getTechnicalDisplay } from './utils';
 
 export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) => {
   return await partialCtx.knex.transaction(async (knex) => {
@@ -260,7 +260,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               }
             } else {
               throw new ForbiddenError(
-                `This ${model.name} cannot be deleted because it has ${descendantModel.name} ${getDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
+                `${getTechnicalDisplay(model, entity)} cannot be deleted because it has ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
               );
             }
           }
@@ -272,7 +272,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
           const descendants = await query;
           if (descendants.length && !descendantModel.deletable) {
             throw new ForbiddenError(
-              `This ${model.name} depends on ${descendantModel.name} ${getDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
+              `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
             );
           }
           for (const descendant of descendants) {

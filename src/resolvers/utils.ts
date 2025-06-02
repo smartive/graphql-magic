@@ -213,4 +213,5 @@ export const getColumn = (
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${getColumnName(field)}`;
 };
 
-export const getDisplay = (model: EntityModel, entity: Entity) => entity[model.displayField || 'id'];
+export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
+  model.displayField ? `${model.name} "${entity[model.displayField]}" (${entity.id})` : `${model.name} ${entity.id}`;
