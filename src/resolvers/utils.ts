@@ -216,4 +216,6 @@ export const getColumn = (
 export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
   model.displayField && entity[model.displayField]
     ? `${model.name} "${entity[model.displayField]}" (${entity.id})`
-    : `${model.name} ${entity.id}`;
+    : entity.id
+      ? `${model.name} ${entity.id}`
+      : model.name;
