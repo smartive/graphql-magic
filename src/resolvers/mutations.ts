@@ -259,7 +259,9 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
                 restricted[descendantModel.name][descendant.id].fields.push(name);
               }
             } else {
-              throw new ForbiddenError(`This ${model.name} cannot be deleted because it has ${descendantModel.plural}.`);
+              throw new ForbiddenError(
+                `This ${model.name} cannot be deleted because it has ${descendantModel.name} ${descendants[0].id}${descendants.length > 1 ? ` (among others)` : ''}.`,
+              );
             }
           }
           break;
@@ -269,7 +271,9 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
           applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'DELETE');
           const descendants = await query;
           if (descendants.length && !descendantModel.deletable) {
-            throw new ForbiddenError(`This ${model.name} depends on a ${descendantModel.name} which cannot be deleted.`);
+            throw new ForbiddenError(
+              `This ${model.name} depends on ${descendantModel.name} ${descendants[0].id}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
+            );
           }
           for (const descendant of descendants) {
             await deleteCascade(descendantModel, descendant);
