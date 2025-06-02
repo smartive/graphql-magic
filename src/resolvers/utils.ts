@@ -12,7 +12,7 @@ import type {
 import { Kind } from 'graphql';
 import { Knex } from 'knex';
 import isEqual from 'lodash/isEqual';
-import { EntityField } from '..';
+import { Entity, EntityField, EntityModel } from '..';
 import { UserInputError } from '../errors';
 import { get, it } from '../models/utils';
 import { Value } from '../values';
@@ -212,3 +212,10 @@ export const getColumn = (
 
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${getColumnName(field)}`;
 };
+
+export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
+  model.displayField && entity[model.displayField]
+    ? `${model.name} "${entity[model.displayField]}" (${entity.id})`
+    : entity.id
+      ? `${model.name} ${entity.id}`
+      : model.name;
