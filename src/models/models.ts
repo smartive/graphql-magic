@@ -425,6 +425,7 @@ export class EntityModel extends Model {
 
   public get isManyToManyRelation() {
     const nonGeneratedFields = this.fields.filter((field) => field.generated === false);
+
     return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
   }
 
