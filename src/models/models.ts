@@ -348,6 +348,7 @@ export class EntityModel extends Model {
   private _reverseRelationsByName: Record<string, ReverseRelation>;
   private _manyToManyRelations: ManyToManyRelation[];
   private _manyToManyRelationsByName: Record<string, ManyToManyRelation>;
+  private _manyToManyRelation: ManyToManyRelation;
   public pluralField: string;
   public slug: string;
   public labelPlural: string;
@@ -420,6 +421,24 @@ export class EntityModel extends Model {
 
   public getReverseRelation(name: string) {
     return get(this.reverseRelationsByName, name);
+  }
+
+  public get isManyToManyRelation() {
+    const nonGeneratedFields = this.fields.filter((field) => !field.generated);
+
+    return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
+  }
+
+  public get asManyToManyRelation() {
+    if (!this._manyToManyRelation) {
+      if (!this.isManyToManyRelation) {
+        throw new Error(`${this.name} is not a many-to-many relation.`);
+      }
+
+      this._manyToManyRelation = new ManyToManyRelation(this.relations[0].reverse, this.relations[1]);
+    }
+
+    return this._manyToManyRelation;
   }
 
   public get manyToManyRelations() {
@@ -503,6 +522,7 @@ export abstract class Relation {
 
 export class NormalRelation extends Relation {
   public reverse: ReverseRelation;
+  public isReverse = false as const;
 
   constructor(
     sourceModel: EntityModel,
@@ -515,6 +535,8 @@ export class NormalRelation extends Relation {
 }
 
 export class ReverseRelation extends Relation {
+  public isReverse = true as const;
+
   constructor(public reverse: NormalRelation) {
     super(
       reverse.field.reverse ||

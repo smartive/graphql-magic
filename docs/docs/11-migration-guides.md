@@ -48,6 +48,23 @@ Generate a migration to add these fields:
 npx gqm generate-migration
 ```
 
+### Mutation hook signature changes
+
+The `MutationHook` function signature has been updated to use object destructuring for better maintainability and extensibility. Update your mutation hook implementations:
+
+```diff
+- export const mutationHook: MutationHook = (model, action, when, data, ctx) => {
++ export const mutationHook: MutationHook = ({ model, action, trigger, when, data, ctx }) => {
+    // Your implementation
+}
+```
+
+The new signature includes a `trigger` parameter that indicates how the mutation was initiated:
+
+- `'mutation'`: Direct GraphQL mutation
+- `'cascade'`: Triggered by cascading delete
+- `'set-null'`: Triggered by setting foreign key to null
+
 ## Upgrading to v18.0.0
 
 This was a dummy release, nothing to do here.
