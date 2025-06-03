@@ -5,18 +5,17 @@
 `graphql-magic` generates an `execute.ts` file for you, with this structure:
 
 ```ts
-import knexConfig from "@/knexfile";
-import { Context, User, execute } from "@smartive/graphql-magic";
-import { randomUUID } from "crypto";
+import knexConfig from '@/knexfile';
+import { Context, User, execute } from '@smartive/graphql-magic';
+import { randomUUID } from 'crypto';
 import { knex } from 'knex';
-import { models } from "../config/models";
+import { models } from '../config/models';
 
-export const executeGraphql = async <T, V = undefined>(
-  body: {
-    query: string;
-    operationName?: string;
-    variables?: V;
-    options?: { email?: string };
+export const executeGraphql = async <T, V = undefined>(body: {
+  query: string;
+  operationName?: string;
+  variables?: V;
+  options?: { email?: string };
 }): Promise<{ data: T }> => {
   const db = knex(knexConfig);
   let user: User | undefined;
@@ -36,14 +35,14 @@ export const executeGraphql = async <T, V = undefined>(
 
   // https://github.com/vercel/next.js/issues/47447#issuecomment-1500371732
   return JSON.parse(JSON.stringify(result)) as { data: T };
-}
+};
 ```
 
 This is where you can set up your GraphQL server with
 
-* user authentication (see the [Tutorial](./tutorial) for an example with auth0)
-* custom resolvers (see [Custom resolvers](#custom-resolvers))
-* mutation hooks (see [Mutation hooks](#mutation-hooks))
+- user authentication (see the [Tutorial](./tutorial) for an example with auth0)
+- custom resolvers (see [Custom resolvers](#custom-resolvers))
+- mutation hooks (see [Mutation hooks](#mutation-hooks))
 
 ## Graphql API
 
@@ -52,8 +51,8 @@ If you need client side querying, use `executeGraphql` to create a GraphQL endpo
 
 ```ts
 export const POST = (req) => {
-    return await executeGraphql(req.body)
-}
+  return await executeGraphql(req.body);
+};
 ```
 
 ## Custom resolvers
@@ -62,17 +61,16 @@ Sometimes you'll need a custom resolver, at the level of root queries, mutations
 
 ```ts
 export const additionalResolvers = {
-    // custom resolvers go here
-}
+  // custom resolvers go here
+};
 ```
 
 Then feed it to `graphql-magic`'s `execute` function:
 
 ```ts
 const result = await execute({
-    ...
-    additionalResolvers
-})
+  ...additionalResolvers,
+});
 ```
 
 ### Custom queries
@@ -112,12 +110,12 @@ then implement the custom resolver as usual:
 
 ```ts
 const additionalResolvers = {
-    Query: {
-        stats: (parent, args, ctx, schema) => {
-            // Implement custom resolver here
-        }
-    }
-}
+  Query: {
+    stats: (parent, args, ctx, schema) => {
+      // Implement custom resolver here
+    },
+  },
+};
 ```
 
 ### Custom mutations
@@ -161,12 +159,12 @@ then implement the custom resolver as usual:
 
 ```ts
 const additionalResolvers = {
-    Mutation: {
-        bulkDelete: (parent, args, ctx, schema) => {
-            // Implement custom resolver here
-        }
-    }
-}
+  Mutation: {
+    bulkDelete: (parent, args, ctx, schema) => {
+      // Implement custom resolver here
+    },
+  },
+};
 ```
 
 ### Custom model resolvers
@@ -188,17 +186,16 @@ Sometimes you need to add a custom field to an existing model. For that, add a f
 }
 ```
 
-
 then implement the custom resolver as usual:
 
 ```ts
 const additionalResolvers = {
-    User: {
-        isAdmin: (parent, args, ctx, schema) => {
-            // Implement custom resolver here
-        }
-    }
-}
+  User: {
+    isAdmin: (parent, args, ctx, schema) => {
+      // Implement custom resolver here
+    },
+  },
+};
 ```
 
 ## Mutation hooks
@@ -210,31 +207,34 @@ For this we can implement a global `mutationHook` function that will be called f
 ```ts
 import { MutationHook } from '@smartive/graphql-magic';
 
-export const mutationHook: MutationHook = (model, action, when, data: { prev, input, normalizedInput, next }, ctx) => {
-    switch (model.name) {
-        // perform model specific tasks
-    }
+export const mutationHook: MutationHook = ({ model, action, trigger, when, data, ctx }) => {
+  switch (
+    model.name
+    // perform model specific tasks
+  ) {
+  }
 
-    // perform global tasks
-}
+  // perform global tasks
+};
 ```
 
 Then feed it to `graphql-magic`'s `execute` function:
 
 ```ts
 const result = await execute({
-    ...
-    mutationHook
-})
+  ...mutationHook,
+});
 ```
 
 The mutation hook function takes the following arguments:
 
-* `model` the model for the entity being mutated
-* `action`: can be `'create'`, `'update'`, `'delete'` or `'restore'`
-* `when`: either `"before"` or `"after"` the mutation is committed to the database
-* `data` containing the entity in various states:
-    * `prev`: the previous entity (undefined in creation mutations)
-    * `input`: input from the user
-    * `normalizedInput`: input to feed to the database (e.g. including generated values such as `id`, `createdAt`...)
-    * `next`: the full next entity after changes are applied
+- `model` the model for the entity being mutated
+- `action`: can be `'create'`, `'update'`, `'delete'` or `'restore'`
+- `trigger`: indicates how the mutation was initiated - `'mutation'` (direct GraphQL mutation), `'cascade'` (cascading delete), or `'set-null'` (foreign key nullification)
+- `when`: either `"before"` or `"after"` the mutation is committed to the database
+- `data` containing the entity in various states:
+  - `prev`: the previous entity (undefined in creation mutations)
+  - `input`: input from the user
+  - `normalizedInput`: input to feed to the database (e.g. including generated values such as `id`, `createdAt`...)
+  - `next`: the full next entity after changes are applied
+- `ctx`: the GraphQL context

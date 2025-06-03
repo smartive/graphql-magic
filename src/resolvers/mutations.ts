@@ -42,7 +42,7 @@ const create = async (model: EntityModel, { data: input }: { data: any }, ctx: F
   await ctx.handleUploads?.(normalizedInput);
 
   const data = { prev: {}, input, normalizedInput, next: normalizedInput };
-  await ctx.mutationHook?.(model, 'create', 'before', data, ctx);
+  await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'before', data, ctx });
   if (model.parent) {
     const rootInput = {};
     const childInput = { id: normalizedInput.id };
@@ -62,7 +62,7 @@ const create = async (model: EntityModel, { data: input }: { data: any }, ctx: F
     await ctx.knex(model.name).insert(normalizedInput);
   }
   await createRevision(model, normalizedInput, ctx);
-  await ctx.mutationHook?.(model, 'create', 'after', data, ctx);
+  await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'after', data, ctx });
 
   return await resolve(ctx, normalizedInput.id);
 };
@@ -91,7 +91,7 @@ const update = async (model: EntityModel, { where, data: input }: { where: any; 
 
     const next = { ...prev, ...normalizedInput };
     const data = { prev, input, normalizedInput, next };
-    await ctx.mutationHook?.(model, 'update', 'before', data, ctx);
+    await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'before', data, ctx });
 
     if (model.parent) {
       const rootInput = {};
@@ -117,7 +117,7 @@ const update = async (model: EntityModel, { where, data: input }: { where: any; 
     }
 
     await createRevision(model, next, ctx);
-    await ctx.mutationHook?.(model, 'update', 'after', data, ctx);
+    await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'after', data, ctx });
   }
 
   return await resolve(ctx);
@@ -172,6 +172,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       return;
     }
     toDelete[currentModel.name][currentEntity.id as string] = await fetchDisplay(ctx.knex, currentModel, currentEntity);
+    const trigger = currentModel.name === rootModel.name && currentEntity.id === entity.id ? 'mutation' : 'cascade';
 
     if (!dryRun) {
       const normalizedInput = {
@@ -185,7 +186,14 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       const data = { prev: currentEntity, input: {}, normalizedInput, next };
       if (mutationHook) {
         beforeHooks.push(async () => {
-          await mutationHook(currentModel, 'delete', 'before', data, ctx);
+          await mutationHook({
+            model: currentModel,
+            action: 'delete',
+            trigger,
+            when: 'before',
+            data,
+            ctx,
+          });
         });
       }
       mutations.push(async () => {
@@ -194,7 +202,14 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       });
       if (mutationHook) {
         afterHooks.push(async () => {
-          await mutationHook(currentModel, 'delete', 'after', data, ctx);
+          await mutationHook({
+            model: currentModel,
+            action: 'delete',
+            trigger,
+            when: 'after',
+            data,
+            ctx,
+          });
         });
       }
     }
@@ -225,7 +240,14 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               const data = { prev: descendant, input: {}, normalizedInput, next };
               if (mutationHook) {
                 beforeHooks.push(async () => {
-                  await mutationHook(descendantModel, 'update', 'before', data, ctx);
+                  await mutationHook({
+                    model: descendantModel,
+                    action: 'update',
+                    trigger: 'set-null',
+                    when: 'before',
+                    data,
+                    ctx,
+                  });
                 });
               }
               mutations.push(async () => {
@@ -234,7 +256,14 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               });
               if (mutationHook) {
                 afterHooks.push(async () => {
-                  await mutationHook(descendantModel, 'update', 'after', data, ctx);
+                  await mutationHook({
+                    model: descendantModel,
+                    action: 'update',
+                    trigger: 'set-null',
+                    when: 'after',
+                    data,
+                    ctx,
+                  });
                 });
               }
             }
@@ -337,7 +366,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook!(currentModel, 'restore', 'before', data, ctx);
+        await ctx.mutationHook!({ model: currentModel, action: 'restore', trigger: 'mutation', when: 'before', data, ctx });
       });
     }
     mutations.push(async () => {
@@ -346,7 +375,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook!(currentModel, 'restore', 'after', data, ctx);
+        await ctx.mutationHook!({ model: currentModel, action: 'restore', trigger: 'mutation', when: 'after', data, ctx });
       });
     }
 
