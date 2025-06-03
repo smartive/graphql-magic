@@ -12,7 +12,7 @@ import type {
 import { Kind } from 'graphql';
 import { Knex } from 'knex';
 import isEqual from 'lodash/isEqual';
-import { Entity, EntityField, EntityModel } from '..';
+import { Entity, EntityField, EntityModel, ManyToManyRelation } from '..';
 import { UserInputError } from '../errors';
 import { get, it } from '../models/utils';
 import { Value } from '../values';
@@ -219,3 +219,35 @@ export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
     : entity.id
       ? `${model.name} ${entity.id}`
       : model.name;
+
+export const fetchDisplay = async (knex: Knex, model: EntityModel, entity: Entity) => {
+  if (model.isManyToManyRelation) {
+    return fetchManyToManyDisplay(knex, model, entity);
+  }
+
+  return getDisplay(model, entity);
+};
+
+export const getDisplay = (model: EntityModel, entity: Entity) =>
+  (entity[model.displayField || 'id'] || entity.id) as string;
+
+export const fetchManyToManyDisplay = async (knex: Knex, model: EntityModel, entity: Entity) => {
+  const manyToManyRelation = model.asManyToManyRelation;
+  const leftEntity = await knex
+    .from(manyToManyRelation.sourceModel.name)
+    .where({ id: entity[manyToManyRelation.relationFromSource.field.foreignKey] })
+    .first();
+  const rightEntity = await knex
+    .from(manyToManyRelation.targetModel.name)
+    .where({ id: entity[manyToManyRelation.relationToTarget.field.foreignKey] })
+    .first();
+
+  return getManyToManyDisplay(manyToManyRelation, leftEntity, rightEntity);
+};
+
+export const getManyToManyDisplay = async (
+  manyToManyRelation: ManyToManyRelation,
+  sourceEntity: Entity,
+  targetEntity: Entity,
+) =>
+  `${getDisplay(manyToManyRelation.sourceModel, sourceEntity)} ↔ ${getDisplay(manyToManyRelation.targetModel, targetEntity)}`;

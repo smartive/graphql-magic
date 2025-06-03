@@ -8,7 +8,7 @@ import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
-import { AliasGenerator, getTechnicalDisplay } from './utils';
+import { AliasGenerator, fetchDisplay, getTechnicalDisplay } from './utils';
 
 export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) => {
   return await partialCtx.knex.transaction(async (knex) => {
@@ -171,8 +171,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
     if ((currentEntity.id as string) in toDelete[currentModel.name]) {
       return;
     }
-    toDelete[currentModel.name][currentEntity.id as string] = (currentEntity[currentModel.displayField || 'id'] ||
-      currentEntity.id) as string;
+    toDelete[currentModel.name][currentEntity.id as string] = await fetchDisplay(ctx.knex, currentModel, currentEntity);
 
     if (!dryRun) {
       const normalizedInput = {
@@ -215,7 +214,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               }
               if (!toUnlink[descendantModel.name][descendant.id]) {
                 toUnlink[descendantModel.name][descendant.id] = {
-                  display: descendant[descendantModel.displayField || 'id'] || currentEntity.id,
+                  display: await fetchDisplay(ctx.knex, descendantModel, descendant),
                   fields: [],
                 };
               }
@@ -252,7 +251,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               for (const descendant of descendants) {
                 if (!restricted[descendantModel.name][descendant.id]) {
                   restricted[descendantModel.name][descendant.id] = {
-                    display: descendant[descendantModel.displayField || 'id'] || currentEntity.id,
+                    display: await fetchDisplay(ctx.knex, descendantModel, descendant),
                     fields: [name],
                   };
                 }
