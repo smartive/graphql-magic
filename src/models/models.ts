@@ -424,7 +424,7 @@ export class EntityModel extends Model {
   }
 
   public get isManyToManyRelation() {
-    const nonGeneratedFields = this.fields.filter((field) => field.generated === false);
+    const nonGeneratedFields = this.fields.filter((field) => !field.generated);
 
     return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
   }
@@ -435,7 +435,7 @@ export class EntityModel extends Model {
         throw new Error(`${this.name} is not a many-to-many relation.`);
       }
 
-      this._manyToManyRelation = new ManyToManyRelation(this.relations[0].reverse, this.relations[1].reverse);
+      this._manyToManyRelation = new ManyToManyRelation(this.relations[0].reverse, this.relations[1]);
     }
 
     return this._manyToManyRelation;
@@ -522,6 +522,7 @@ export abstract class Relation {
 
 export class NormalRelation extends Relation {
   public reverse: ReverseRelation;
+  public isReverse = false as const;
 
   constructor(
     sourceModel: EntityModel,
@@ -534,6 +535,8 @@ export class NormalRelation extends Relation {
 }
 
 export class ReverseRelation extends Relation {
+  public isReverse = true as const;
+
   constructor(public reverse: NormalRelation) {
     super(
       reverse.field.reverse ||
@@ -559,6 +562,7 @@ export class ManyToManyRelation {
     this.relationFromSource = relationFromSource;
     this.relationModel = relationFromSource.targetModel;
     if (this.relationModel !== relationToTarget.sourceModel) {
+      console.log(relationFromSource, relationToTarget);
       throw new Error(`Relation model is ambiguous.`);
     }
     this.relationToTarget = relationToTarget;
