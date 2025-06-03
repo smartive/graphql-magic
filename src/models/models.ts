@@ -562,7 +562,6 @@ export class ManyToManyRelation {
     this.relationFromSource = relationFromSource;
     this.relationModel = relationFromSource.targetModel;
     if (this.relationModel !== relationToTarget.sourceModel) {
-      console.log(relationFromSource, relationToTarget);
       throw new Error(`Relation model is ambiguous.`);
     }
     this.relationToTarget = relationToTarget;
