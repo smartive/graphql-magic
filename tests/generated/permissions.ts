@@ -9,9 +9,6 @@ export type PermissionsBlock = true | {
   Question?: QuestionPermissions,
   Answer?: AnswerPermissions,
 }
-type SomeEnum = 'A' | 'B' | 'C';
-type Role = 'ADMIN' | 'USER';
-type ReactionType = 'Review' | 'Question' | 'Answer';
 export type UserWhere = {
 }
 export type UserPermissions = {
@@ -169,3 +166,4 @@ export type AnswerPermissions = {
     childAnswers?: AnswerPermissions,
   }
 }
+type Role = 'ADMIN' | 'USER';

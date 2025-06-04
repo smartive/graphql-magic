@@ -25,9 +25,7 @@ export const generatePermissionTypes = (models: Models) => {
     }),
   );
 
-  for (const enm of models.enums) {
-    sourceFile.addStatements((writer) => writer.write(`type ${enm.name} = ${enm.values.map((v) => `'${v}'`).join(' | ')};`));
-  }
+  const usedEnums = new Set<string>(['Role']);
 
   for (const model of models.entities) {
     sourceFile.addStatements((writer) =>
@@ -38,6 +36,9 @@ export const generatePermissionTypes = (models: Models) => {
           } else if (!field.kind || field.kind === 'primitive') {
             writer.writeLine(`${field.name}?: ${PRIMITIVE_TYPES[field.type]} | ${PRIMITIVE_TYPES[field.type]}[],`);
           } else {
+            if (field.kind === 'enum') {
+              usedEnums.add(field.type);
+            }
             writer.writeLine(`${field.name}?: ${field.type} | ${field.type}[],`);
           }
         }
@@ -59,6 +60,17 @@ export const generatePermissionTypes = (models: Models) => {
           });
         }
       }),
+    );
+  }
+
+  for (const name of usedEnums) {
+    sourceFile.addStatements((writer) =>
+      writer.write(
+        `type ${name} = ${models
+          .getModel(name, 'enum')
+          .values.map((v) => `'${v}'`)
+          .join(' | ')};`,
+      ),
     );
   }
 
