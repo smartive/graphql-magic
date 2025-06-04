@@ -3,7 +3,7 @@ import { EntityField, get, getColumnName, isCustomField, isInTable, isRootModel,
 import { Models } from '../models/models';
 import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../utils/dates';
 
-const PRIMITIVE_TYPES = {
+export const PRIMITIVE_TYPES = {
   ID: 'string',
   Boolean: 'boolean',
   Upload: 'string',
