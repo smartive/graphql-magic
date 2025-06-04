@@ -3,18 +3,10 @@ import { Knex } from 'knex';
 export const up = async (knex: Knex) => {
   await knex.raw(`CREATE TYPE "someEnum" AS ENUM ('A','B','C')`);
 
-  await knex.raw(`CREATE TYPE "role" AS ENUM ('ADMIN','USER')`);
-
   await knex.raw(`CREATE TYPE "reactionType" AS ENUM ('Review','Question','Answer')`);
 
-  await knex.schema.createTable('User', (table) => {
-    table.uuid('id').notNullable().primary();
-    table.string('username', undefined).nullable();
-    table.enum('role', null, {
-      useNative: true,
-      existingType: true,
-      enumName: 'role',
-    }).notNullable();
+  await knex.schema.alterTable('User', (table) => {
+    table.string('username', undefined);
   });
 
   await knex.schema.createTable('AnotherObject', (table) => {
@@ -123,9 +115,29 @@ export const up = async (knex: Knex) => {
     table.decimal('rating', undefined, undefined).nullable();
   });
 
+  await knex.schema.alterTable('User', (table) => {
+    table.dropColumn('createdAt');
+    table.dropColumn('updatedAt');
+  });
+
 };
 
 export const down = async (knex: Knex) => {
+  await knex.schema.alterTable('User', (table) => {
+    table.timestamp('createdAt');
+    table.timestamp('updatedAt');
+  });
+
+  await knex('User').update({
+    createdAt: 'TODO',
+    updatedAt: 'TODO',
+  });
+
+  await knex.schema.alterTable('User', (table) => {
+    table.timestamp('createdAt').notNullable().alter();
+    table.timestamp('updatedAt').notNullable().alter();
+  });
+
   await knex.schema.dropTable('ReviewRevision');
 
   await knex.schema.dropTable('Review');
@@ -140,10 +152,11 @@ export const down = async (knex: Knex) => {
 
   await knex.schema.dropTable('AnotherObject');
 
-  await knex.schema.dropTable('User');
+  await knex.schema.alterTable('User', (table) => {
+    table.dropColumn('username');
+  });
 
   await knex.raw('DROP TYPE "reactionType"');
-  await knex.raw('DROP TYPE "role"');
   await knex.raw('DROP TYPE "someEnum"');
 };
 

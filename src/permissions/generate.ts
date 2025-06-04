@@ -3,7 +3,7 @@ import { isRelation } from '../models/utils';
 
 export type PermissionAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LINK';
 
-const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'];
+export const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'LINK'];
 
 /**
  * Initial representation (tree structure, as defined by user).

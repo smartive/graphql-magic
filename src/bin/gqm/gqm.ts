@@ -12,6 +12,7 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
+import { generatePermissionTypes } from '../../permissions/generate-types';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
@@ -49,6 +50,7 @@ program
     const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
     writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
     writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
+    writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionTypes(models));
     await generateGraphqlApiTypes(dateLibrary);
     await generateGraphqlClientTypes();
   });
