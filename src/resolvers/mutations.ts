@@ -219,60 +219,58 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       field: { name, foreignKey, onDelete },
     } of currentModel.reverseRelations.filter((reverseRelation) => !reverseRelation.field.inherited)) {
       const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: false });
-      switch (onDelete) {
-        case 'set-null': {
-          const descendants = await query;
-          for (const descendant of descendants) {
-            if (dryRun) {
-              if (!toUnlink[descendantModel.name]) {
-                toUnlink[descendantModel.name] = {};
-              }
-              if (!toUnlink[descendantModel.name][descendant.id]) {
-                toUnlink[descendantModel.name][descendant.id] = {
-                  display: await fetchDisplay(ctx.knex, descendantModel, descendant),
-                  fields: [],
-                };
-              }
-              toUnlink[descendantModel.name][descendant.id].fields.push(name);
-            } else {
-              const normalizedInput = { [`${name}Id`]: null };
-              const next = { ...descendant, ...normalizedInput };
-              const data = { prev: descendant, input: {}, normalizedInput, next };
-              if (mutationHook) {
-                beforeHooks.push(async () => {
-                  await mutationHook({
-                    model: descendantModel,
-                    action: 'update',
-                    trigger: 'set-null',
-                    when: 'before',
-                    data,
-                    ctx,
+      const descendants = await query;
+      if (descendants.length) {
+        switch (onDelete) {
+          case 'set-null':
+            for (const descendant of descendants) {
+              if (dryRun) {
+                if (!toUnlink[descendantModel.name]) {
+                  toUnlink[descendantModel.name] = {};
+                }
+                if (!toUnlink[descendantModel.name][descendant.id]) {
+                  toUnlink[descendantModel.name][descendant.id] = {
+                    display: await fetchDisplay(ctx.knex, descendantModel, descendant),
+                    fields: [],
+                  };
+                }
+                toUnlink[descendantModel.name][descendant.id].fields.push(name);
+              } else {
+                const normalizedInput = { [`${name}Id`]: null };
+                const next = { ...descendant, ...normalizedInput };
+                const data = { prev: descendant, input: {}, normalizedInput, next };
+                if (mutationHook) {
+                  beforeHooks.push(async () => {
+                    await mutationHook({
+                      model: descendantModel,
+                      action: 'update',
+                      trigger: 'set-null',
+                      when: 'before',
+                      data,
+                      ctx,
+                    });
                   });
+                }
+                mutations.push(async () => {
+                  await ctx.knex(descendantModel.name).where({ id: descendant.id }).update(normalizedInput);
+                  await createRevision(descendantModel, next, ctx);
                 });
-              }
-              mutations.push(async () => {
-                await ctx.knex(descendantModel.name).where({ id: descendant.id }).update(normalizedInput);
-                await createRevision(descendantModel, next, ctx);
-              });
-              if (mutationHook) {
-                afterHooks.push(async () => {
-                  await mutationHook({
-                    model: descendantModel,
-                    action: 'update',
-                    trigger: 'set-null',
-                    when: 'after',
-                    data,
-                    ctx,
+                if (mutationHook) {
+                  afterHooks.push(async () => {
+                    await mutationHook({
+                      model: descendantModel,
+                      action: 'update',
+                      trigger: 'set-null',
+                      when: 'after',
+                      data,
+                      ctx,
+                    });
                   });
-                });
+                }
               }
             }
-          }
-          break;
-        }
-        case 'restrict': {
-          const descendants = await query;
-          if (descendants.length) {
+            break;
+          case 'restrict':
             if (dryRun) {
               if (!restricted[descendantModel.name]) {
                 restricted[descendantModel.name] = {};
@@ -291,22 +289,28 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
                 `${getTechnicalDisplay(model, entity)} cannot be deleted because it has ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
               );
             }
-          }
-          break;
-        }
-        case 'cascade':
-        default: {
-          applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'DELETE');
-          const descendants = await query;
-          if (descendants.length && !descendantModel.deletable) {
-            throw new ForbiddenError(
-              `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
+            break;
+          case 'cascade':
+          default:
+            if (!descendantModel.deletable) {
+              throw new ForbiddenError(
+                `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
+              );
+            }
+            applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'DELETE');
+            const deletableDescendants = await query;
+            const notDeletableDescendants = descendants.filter(
+              (descendant) => !deletableDescendants.some((d) => d.id === descendant.id),
             );
-          }
-          for (const descendant of descendants) {
-            await deleteCascade(descendantModel, descendant);
-          }
-          break;
+            if (notDeletableDescendants.length) {
+              throw new ForbiddenError(
+                `${getTechnicalDisplay(model, entity)} depends on ${descendantModel.labelPlural} which you have no permissions to delete.`,
+              );
+            }
+            for (const descendant of descendants) {
+              await deleteCascade(descendantModel, descendant);
+            }
+            break;
         }
       }
     }
