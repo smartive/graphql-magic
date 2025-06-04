@@ -12,11 +12,11 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
-import { generatePermissionTypes } from '../../permissions/generate-types';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
+import { generatePermissionTypes } from './permissions';
 import { readLine } from './readline';
 import { getSetting, writeToFile } from './settings';
 
