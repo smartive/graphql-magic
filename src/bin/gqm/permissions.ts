@@ -1,7 +1,7 @@
 import { IndentationText, Project } from 'ts-morph';
-import { PRIMITIVE_TYPES } from '../db/generate';
-import { Models } from '../models';
-import { ACTIONS } from './generate';
+import { PRIMITIVE_TYPES } from '../../db/generate';
+import { Models } from '../../models';
+import { ACTIONS } from '../../permissions';
 
 export const generatePermissionTypes = (models: Models) => {
   const project = new Project({
