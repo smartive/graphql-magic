@@ -1,20 +1,20 @@
 export type PermissionsConfig = Record<Role, PermissionsBlock>;
 export type PermissionsBlock = true | {
-  me?: UserPermissionsBlock,
-  User?: UserPermissionsBlock,
-  AnotherObject?: AnotherObjectPermissionsBlock,
-  SomeObject?: SomeObjectPermissionsBlock,
-  Reaction?: ReactionPermissionsBlock,
-  Review?: ReviewPermissionsBlock,
-  Question?: QuestionPermissionsBlock,
-  Answer?: AnswerPermissionsBlock,
+  me?: UserPermissions,
+  User?: UserPermissions,
+  AnotherObject?: AnotherObjectPermissions,
+  SomeObject?: SomeObjectPermissions,
+  Reaction?: ReactionPermissions,
+  Review?: ReviewPermissions,
+  Question?: QuestionPermissions,
+  Answer?: AnswerPermissions,
 }
 type SomeEnum = 'A' | 'B' | 'C';
 type Role = 'ADMIN' | 'USER';
 type ReactionType = 'Review' | 'Question' | 'Answer';
 export type UserWhere = {
 }
-export type UserPermissionsBlock = {
+export type UserPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -23,28 +23,28 @@ export type UserPermissionsBlock = {
   LINK?: true,
   WHERE?: UserWhere,
   RELATIONS?: {
-    deletedAnotherObjects?: AnotherObjectPermissionsBlock,
-    createdManyObjects?: SomeObjectPermissionsBlock,
-    updatedManyObjects?: SomeObjectPermissionsBlock,
-    deletedManyObjects?: SomeObjectPermissionsBlock,
-    createdReactions?: ReactionPermissionsBlock,
-    updatedReactions?: ReactionPermissionsBlock,
-    deletedReactions?: ReactionPermissionsBlock,
-    createdReviews?: ReviewPermissionsBlock,
-    updatedReviews?: ReviewPermissionsBlock,
-    deletedReviews?: ReviewPermissionsBlock,
-    createdQuestions?: QuestionPermissionsBlock,
-    updatedQuestions?: QuestionPermissionsBlock,
-    deletedQuestions?: QuestionPermissionsBlock,
-    createdAnswers?: AnswerPermissionsBlock,
-    updatedAnswers?: AnswerPermissionsBlock,
-    deletedAnswers?: AnswerPermissionsBlock,
+    deletedAnotherObjects?: AnotherObjectPermissions,
+    createdManyObjects?: SomeObjectPermissions,
+    updatedManyObjects?: SomeObjectPermissions,
+    deletedManyObjects?: SomeObjectPermissions,
+    createdReactions?: ReactionPermissions,
+    updatedReactions?: ReactionPermissions,
+    deletedReactions?: ReactionPermissions,
+    createdReviews?: ReviewPermissions,
+    updatedReviews?: ReviewPermissions,
+    deletedReviews?: ReviewPermissions,
+    createdQuestions?: QuestionPermissions,
+    updatedQuestions?: QuestionPermissions,
+    deletedQuestions?: QuestionPermissions,
+    createdAnswers?: AnswerPermissions,
+    updatedAnswers?: AnswerPermissions,
+    deletedAnswers?: AnswerPermissions,
   }
 }
 export type AnotherObjectWhere = {
   deleted?: boolean | boolean[],
 }
-export type AnotherObjectPermissionsBlock = {
+export type AnotherObjectPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -53,10 +53,10 @@ export type AnotherObjectPermissionsBlock = {
   LINK?: true,
   WHERE?: AnotherObjectWhere,
   RELATIONS?: {
-    myself?: AnotherObjectPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
-    self?: AnotherObjectPermissionsBlock,
-    manyObjects?: SomeObjectPermissionsBlock,
+    myself?: AnotherObjectPermissions,
+    deletedBy?: UserPermissions,
+    self?: AnotherObjectPermissions,
+    manyObjects?: SomeObjectPermissions,
   }
 }
 export type SomeObjectWhere = {
@@ -66,7 +66,7 @@ export type SomeObjectWhere = {
   xyz?: number | number[],
   deleted?: boolean | boolean[],
 }
-export type SomeObjectPermissionsBlock = {
+export type SomeObjectPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -75,16 +75,16 @@ export type SomeObjectPermissionsBlock = {
   LINK?: true,
   WHERE?: SomeObjectWhere,
   RELATIONS?: {
-    another?: AnotherObjectPermissionsBlock,
-    createdBy?: UserPermissionsBlock,
-    updatedBy?: UserPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
+    another?: AnotherObjectPermissions,
+    createdBy?: UserPermissions,
+    updatedBy?: UserPermissions,
+    deletedBy?: UserPermissions,
   }
 }
 export type ReactionWhere = {
   deleted?: boolean | boolean[],
 }
-export type ReactionPermissionsBlock = {
+export type ReactionPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -93,20 +93,20 @@ export type ReactionPermissionsBlock = {
   LINK?: true,
   WHERE?: ReactionWhere,
   RELATIONS?: {
-    parent?: ReactionPermissionsBlock,
-    createdBy?: UserPermissionsBlock,
-    updatedBy?: UserPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
-    childReactions?: ReactionPermissionsBlock,
-    childReviews?: ReviewPermissionsBlock,
-    childQuestions?: QuestionPermissionsBlock,
-    childAnswers?: AnswerPermissionsBlock,
+    parent?: ReactionPermissions,
+    createdBy?: UserPermissions,
+    updatedBy?: UserPermissions,
+    deletedBy?: UserPermissions,
+    childReactions?: ReactionPermissions,
+    childReviews?: ReviewPermissions,
+    childQuestions?: QuestionPermissions,
+    childAnswers?: AnswerPermissions,
   }
 }
 export type ReviewWhere = {
   deleted?: boolean | boolean[],
 }
-export type ReviewPermissionsBlock = {
+export type ReviewPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -115,20 +115,20 @@ export type ReviewPermissionsBlock = {
   LINK?: true,
   WHERE?: ReviewWhere,
   RELATIONS?: {
-    parent?: ReactionPermissionsBlock,
-    createdBy?: UserPermissionsBlock,
-    updatedBy?: UserPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
-    childReactions?: ReactionPermissionsBlock,
-    childReviews?: ReviewPermissionsBlock,
-    childQuestions?: QuestionPermissionsBlock,
-    childAnswers?: AnswerPermissionsBlock,
+    parent?: ReactionPermissions,
+    createdBy?: UserPermissions,
+    updatedBy?: UserPermissions,
+    deletedBy?: UserPermissions,
+    childReactions?: ReactionPermissions,
+    childReviews?: ReviewPermissions,
+    childQuestions?: QuestionPermissions,
+    childAnswers?: AnswerPermissions,
   }
 }
 export type QuestionWhere = {
   deleted?: boolean | boolean[],
 }
-export type QuestionPermissionsBlock = {
+export type QuestionPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -137,20 +137,20 @@ export type QuestionPermissionsBlock = {
   LINK?: true,
   WHERE?: QuestionWhere,
   RELATIONS?: {
-    parent?: ReactionPermissionsBlock,
-    createdBy?: UserPermissionsBlock,
-    updatedBy?: UserPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
-    childReactions?: ReactionPermissionsBlock,
-    childReviews?: ReviewPermissionsBlock,
-    childQuestions?: QuestionPermissionsBlock,
-    childAnswers?: AnswerPermissionsBlock,
+    parent?: ReactionPermissions,
+    createdBy?: UserPermissions,
+    updatedBy?: UserPermissions,
+    deletedBy?: UserPermissions,
+    childReactions?: ReactionPermissions,
+    childReviews?: ReviewPermissions,
+    childQuestions?: QuestionPermissions,
+    childAnswers?: AnswerPermissions,
   }
 }
 export type AnswerWhere = {
   deleted?: boolean | boolean[],
 }
-export type AnswerPermissionsBlock = {
+export type AnswerPermissions = {
   READ?: true,
   CREATE?: true,
   UPDATE?: true,
@@ -159,13 +159,13 @@ export type AnswerPermissionsBlock = {
   LINK?: true,
   WHERE?: AnswerWhere,
   RELATIONS?: {
-    parent?: ReactionPermissionsBlock,
-    createdBy?: UserPermissionsBlock,
-    updatedBy?: UserPermissionsBlock,
-    deletedBy?: UserPermissionsBlock,
-    childReactions?: ReactionPermissionsBlock,
-    childReviews?: ReviewPermissionsBlock,
-    childQuestions?: QuestionPermissionsBlock,
-    childAnswers?: AnswerPermissionsBlock,
+    parent?: ReactionPermissions,
+    createdBy?: UserPermissions,
+    updatedBy?: UserPermissions,
+    deletedBy?: UserPermissions,
+    childReactions?: ReactionPermissions,
+    childReviews?: ReviewPermissions,
+    childQuestions?: QuestionPermissions,
+    childAnswers?: AnswerPermissions,
   }
 }

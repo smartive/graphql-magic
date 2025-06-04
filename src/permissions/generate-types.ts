@@ -18,9 +18,9 @@ export const generatePermissionTypes = (models: Models) => {
 
   sourceFile.addStatements((writer) =>
     writer.write(`export type PermissionsBlock = true | `).inlineBlock(() => {
-      writer.writeLine(`me?: UserPermissionsBlock,`);
+      writer.writeLine(`me?: UserPermissions,`);
       for (const model of models.entities) {
-        writer.writeLine(`${model.name}?: ${model.name}PermissionsBlock,`);
+        writer.writeLine(`${model.name}?: ${model.name}Permissions,`);
       }
     }),
   );
@@ -45,7 +45,7 @@ export const generatePermissionTypes = (models: Models) => {
     );
 
     sourceFile.addStatements((writer) =>
-      writer.write(`export type ${model.name}PermissionsBlock = `).inlineBlock(() => {
+      writer.write(`export type ${model.name}Permissions = `).inlineBlock(() => {
         for (const action of ACTIONS) {
           writer.writeLine(`${action}?: true,`);
         }
@@ -54,7 +54,7 @@ export const generatePermissionTypes = (models: Models) => {
         if (relations.length > 0) {
           writer.write(`RELATIONS?: `).inlineBlock(() => {
             for (const relation of relations) {
-              writer.writeLine(`${relation.name}?: ${relation.targetModel.name}PermissionsBlock,`);
+              writer.writeLine(`${relation.name}?: ${relation.targetModel.name}Permissions,`);
             }
           });
         }
