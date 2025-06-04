@@ -222,7 +222,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
       const descendants = await query;
       if (descendants.length) {
         switch (onDelete) {
-          case 'set-null': {
+          case 'set-null':
             for (const descendant of descendants) {
               if (dryRun) {
                 if (!toUnlink[descendantModel.name]) {
@@ -270,32 +270,28 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               }
             }
             break;
-          }
-          case 'restrict': {
-            if (descendants.length) {
-              if (dryRun) {
-                if (!restricted[descendantModel.name]) {
-                  restricted[descendantModel.name] = {};
-                }
-                for (const descendant of descendants) {
-                  if (!restricted[descendantModel.name][descendant.id]) {
-                    restricted[descendantModel.name][descendant.id] = {
-                      display: await fetchDisplay(ctx.knex, descendantModel, descendant),
-                      fields: [name],
-                    };
-                  }
-                  restricted[descendantModel.name][descendant.id].fields.push(name);
-                }
-              } else {
-                throw new ForbiddenError(
-                  `${getTechnicalDisplay(model, entity)} cannot be deleted because it has ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
-                );
+          case 'restrict':
+            if (dryRun) {
+              if (!restricted[descendantModel.name]) {
+                restricted[descendantModel.name] = {};
               }
+              for (const descendant of descendants) {
+                if (!restricted[descendantModel.name][descendant.id]) {
+                  restricted[descendantModel.name][descendant.id] = {
+                    display: await fetchDisplay(ctx.knex, descendantModel, descendant),
+                    fields: [name],
+                  };
+                }
+                restricted[descendantModel.name][descendant.id].fields.push(name);
+              }
+            } else {
+              throw new ForbiddenError(
+                `${getTechnicalDisplay(model, entity)} cannot be deleted because it has ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
+              );
             }
             break;
-          }
           case 'cascade':
-          default: {
+          default:
             if (!descendantModel.deletable) {
               throw new ForbiddenError(
                 `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
@@ -315,7 +311,6 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               await deleteCascade(descendantModel, descendant);
             }
             break;
-          }
         }
       }
     }
