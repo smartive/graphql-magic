@@ -291,7 +291,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
             }
             break;
           case 'cascade':
-          default:
+          default: {
             if (!descendantModel.deletable) {
               throw new ForbiddenError(
                 `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
@@ -311,6 +311,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
               await deleteCascade(descendantModel, descendant);
             }
             break;
+          }
         }
       }
     }
@@ -347,17 +348,48 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is not deleted.`);
   }
 
+  if (entity.deleteRootId) {
+    if (!(entity.deleteRootType === rootModel.name && entity.deleteRootId === entity.id)) {
+      throw new ForbiddenError(
+        `Can't restore ${getTechnicalDisplay(model, entity)} directly. To restore it, restore ${entity.deleteRootType} ${entity.deleteRootId}.`,
+      );
+    }
+  }
+
+  const toRestore: Record<string, Set<string>> = {};
+
   const beforeHooks: Callbacks = [];
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const restoreCascade = async (currentModel: EntityModel, relatedEntity: Entity) => {
+  const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
     if (
-      !relatedEntity.deleted ||
-      !relatedEntity.deletedAt ||
-      !anyDateToLuxon(relatedEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
+      !currentEntity.deleted ||
+      !currentEntity.deletedAt ||
+      !anyDateToLuxon(currentEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
     ) {
       return;
+    }
+
+    if (!(currentModel.name in toRestore)) {
+      toRestore[currentModel.name] = new Set();
+    }
+    toRestore[currentModel.name].add(currentEntity.id as string);
+
+    for (const relation of currentModel.relations) {
+      const parentId = entity[relation.field.foreignKey];
+      if (!parentId) {
+        continue;
+      }
+      if (toRestore[relation.targetModel.name].has(parentId)) {
+        continue;
+      }
+      const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
+      if (parent?.deleted) {
+        throw new ForbiddenError(
+          `Can't restore ${getTechnicalDisplay(currentModel, currentEntity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
+        );
+      }
     }
 
     const normalizedInput: Entity = {
@@ -367,15 +399,15 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
       deleteRootType: null,
       deleteRootId: null,
     };
-    const data = { prev: relatedEntity, input: {}, normalizedInput, next: { ...relatedEntity, ...normalizedInput } };
+    const data = { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
         await ctx.mutationHook!({ model: currentModel, action: 'restore', trigger: 'mutation', when: 'before', data, ctx });
       });
     }
     mutations.push(async () => {
-      await ctx.knex(currentModel.name).where({ id: relatedEntity.id }).update(normalizedInput);
-      await createRevision(currentModel, { ...relatedEntity, deleted: false }, ctx);
+      await ctx.knex(currentModel.name).where({ id: currentEntity.id }).update(normalizedInput);
+      await createRevision(currentModel, { ...currentEntity, deleted: false }, ctx);
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
@@ -389,7 +421,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     } of currentModel.reverseRelations
       .filter((reverseRelation) => !reverseRelation.field.inherited)
       .filter(({ targetModel: { deletable } }) => deletable)) {
-      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: relatedEntity.id });
+      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id });
       applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'RESTORE');
       const descendants = await query;
       for (const descendant of descendants) {
