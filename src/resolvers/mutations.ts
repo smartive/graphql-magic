@@ -363,9 +363,13 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
   const afterHooks: Callbacks = [];
 
   const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
-    if (
-      !currentEntity.deleted ||
-      !currentEntity.deletedAt ||
+    if (entity.deleteRootId) {
+      if (!(currentEntity.deleteRootType === currentModel.name && currentEntity.deleteRootId === entity.id)) {
+        return;
+      }
+
+      // Legacy heuristic
+    } else if (
       !anyDateToLuxon(currentEntity.deletedAt, ctx.timeZone)!.equals(anyDateToLuxon(entity.deletedAt, ctx.timeZone)!)
     ) {
       return;
@@ -381,7 +385,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
       if (!parentId) {
         continue;
       }
-      if (toRestore[relation.targetModel.name].has(parentId)) {
+      if (toRestore[relation.targetModel.name]?.has(parentId)) {
         continue;
       }
       const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
@@ -421,10 +425,19 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     } of currentModel.reverseRelations
       .filter((reverseRelation) => !reverseRelation.field.inherited)
       .filter(({ targetModel: { deletable } }) => deletable)) {
-      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id });
+      const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: true });
+      const deletedDescendants = await query;
       applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'RESTORE');
-      const descendants = await query;
-      for (const descendant of descendants) {
+      const restorableDescendants = await query;
+      const notRestorableDescendants = deletedDescendants.filter(
+        (descendant) => !restorableDescendants.some((d) => d.id === descendant.id),
+      );
+      if (notRestorableDescendants.length) {
+        throw new ForbiddenError(
+          `${getTechnicalDisplay(currentModel, currentEntity)} depends on ${descendantModel.labelPlural} which you have no permissions to restore.`,
+        );
+      }
+      for (const descendant of deletedDescendants) {
         await restoreCascade(descendantModel, descendant);
       }
     }
