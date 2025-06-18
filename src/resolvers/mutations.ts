@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { Context } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
-import { Entity, MutationContext } from '../models/mutation-hook';
+import { Entity, MutationContext, Trigger } from '../models/mutation-hook';
 import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
@@ -17,7 +17,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
     const model = ctx.models.getModel(modelName, 'entity');
     switch (mutation) {
       case 'create': {
-        const id = await createEntity(model, args.data, ctx);
+        const id = await createEntity(model, args.data, ctx, 'mutation');
 
         return await resolve(ctx, id);
       }
@@ -31,17 +31,27 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'delete': {
         const id = args.where.id;
 
-        await deleteEntity(model, id, args.dryRun, model.rootModel.name, id, ctx);
+        await deleteEntity(model, id, args.dryRun, model.rootModel.name, id, ctx, 'mutation');
 
-        return await resolve(ctx, id);
+        return id;
       }
-      case 'restore':
-        return await restoreEntity(model, args.where.id, ctx);
+      case 'restore': {
+        const id = args.where.id;
+
+        await restoreEntity(model, id, ctx, 'mutation');
+
+        return id;
+      }
     }
   });
 };
 
-export const createEntity = async (model: EntityModel, input: Entity, ctx: MutationContext) => {
+export const createEntity = async (
+  model: EntityModel,
+  input: Entity,
+  ctx: MutationContext,
+  trigger: Trigger = 'direct-call',
+) => {
   const normalizedInput = { ...input };
   if (!normalizedInput.id) {
     normalizedInput.id = uuid();
@@ -62,30 +72,28 @@ export const createEntity = async (model: EntityModel, input: Entity, ctx: Mutat
   await ctx.handleUploads?.(normalizedInput);
 
   const data = { prev: {}, input, normalizedInput, next: normalizedInput };
-  await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'before', data, ctx });
-
-  await createEntity(model, normalizedInput, ctx);
+  await ctx.mutationHook?.({ model, action: 'create', trigger, when: 'before', data, ctx });
 
   if (model.parent) {
     const rootInput = {};
     const childInput = { id };
     for (const field of model.fields) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
-      if (columnName in data) {
+      if (columnName in normalizedInput) {
         if (field.inherited) {
-          rootInput[columnName] = data[columnName];
+          rootInput[columnName] = normalizedInput[columnName];
         } else {
-          childInput[columnName] = data[columnName];
+          childInput[columnName] = normalizedInput[columnName];
         }
       }
     }
     await ctx.knex(model.parent).insert(rootInput);
     await ctx.knex(model.name).insert(childInput);
   } else {
-    await ctx.knex(model.name).insert(data);
+    await ctx.knex(model.name).insert(normalizedInput);
   }
-  await createRevision(model, data, ctx);
-  await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'after', data, ctx });
+  await createRevision(model, normalizedInput, ctx);
+  await ctx.mutationHook?.({ model, action: 'create', trigger, when: 'after', data, ctx });
 
   return normalizedInput.id as string;
 };
@@ -102,16 +110,22 @@ export const updateEntities = async (
   }
 };
 
-export const updateEntity = async (model: EntityModel, id: string, input: Entity, ctx: MutationContext) => {
+export const updateEntity = async (
+  model: EntityModel,
+  id: string,
+  input: Entity,
+  ctx: MutationContext,
+  trigger: Trigger = 'direct-call',
+) => {
   const normalizedInput = { ...input };
 
   sanitize(ctx, model, normalizedInput);
 
-  const prev = await getEntityToMutate(ctx, model, { id }, 'UPDATE');
+  const currentEntity = await getEntityToMutate(ctx, model, { id }, 'UPDATE');
 
   // Remove data that wouldn't mutate given that it's irrelevant for permissions
   for (const key of Object.keys(normalizedInput)) {
-    if (normalizedInput[key] === prev[key]) {
+    if (normalizedInput[key] === currentEntity[key]) {
       delete normalizedInput[key];
     }
   }
@@ -120,12 +134,23 @@ export const updateEntity = async (model: EntityModel, id: string, input: Entity
     await checkCanWrite(ctx, model, normalizedInput, 'UPDATE');
     await ctx.handleUploads?.(normalizedInput);
 
-    const next = { ...prev, ...normalizedInput };
-    const data = { prev, input, normalizedInput, next };
-    await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'before', data, ctx });
-
-    await doUpdate(model, normalizedInput, next, ctx);
-    await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'after', data, ctx });
+    await ctx.mutationHook?.({
+      model,
+      action: 'update',
+      trigger,
+      when: 'before',
+      data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+      ctx,
+    });
+    await doUpdate(model, currentEntity, normalizedInput, ctx);
+    await ctx.mutationHook?.({
+      model,
+      action: 'update',
+      trigger,
+      when: 'after',
+      data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+      ctx,
+    });
   }
 };
 
@@ -134,8 +159,8 @@ type Callbacks = (() => Promise<void>)[];
 export const deleteEntities = async (
   model: EntityModel,
   where: Record<string, unknown>,
-  deleteRootType: string,
-  deleteRootId: string,
+  deleteRootType: string | undefined,
+  deleteRootId: string | undefined,
   ctx: MutationContext,
 ) => {
   const entities = await ctx.knex(model.name).where(where).select('id');
@@ -148,9 +173,10 @@ export const deleteEntity = async (
   model: EntityModel,
   id: string,
   dryRun: boolean,
-  deleteRootType: string,
-  deleteRootId: string,
+  deleteRootType: string | undefined = model.rootModel.name,
+  deleteRootId: string | undefined = id,
   ctx: MutationContext,
+  trigger: Trigger = 'direct-call',
 ) => {
   const rootModel = model.rootModel;
   const entity = await getEntityToMutate(ctx, rootModel, { id }, 'DELETE');
@@ -186,7 +212,7 @@ export const deleteEntity = async (
   const afterHooks: Callbacks = [];
 
   const mutationHook = ctx.mutationHook;
-  const deleteCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
+  const deleteCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
     if (!(currentModel.name in toDelete)) {
       toDelete[currentModel.name] = {};
     }
@@ -194,7 +220,6 @@ export const deleteEntity = async (
       return;
     }
     toDelete[currentModel.name][currentEntity.id as string] = await fetchDisplay(ctx.knex, currentModel, currentEntity);
-    const trigger = currentModel.name === rootModel.name && currentEntity.id === entity.id ? 'mutation' : 'cascade';
 
     if (!dryRun) {
       const normalizedInput = {
@@ -204,31 +229,29 @@ export const deleteEntity = async (
         deleteRootType,
         deleteRootId,
       };
-      const next = { ...currentEntity, ...normalizedInput };
-      const data = { prev: currentEntity, input: {}, normalizedInput, next };
       if (mutationHook) {
         beforeHooks.push(async () => {
           await mutationHook({
             model: currentModel,
             action: 'delete',
-            trigger,
+            trigger: currentTrigger,
             when: 'before',
-            data,
+            data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
             ctx,
           });
         });
       }
       mutations.push(async () => {
-        await doUpdate(currentModel, normalizedInput, next, ctx);
+        await doUpdate(currentModel, currentEntity, normalizedInput, ctx);
       });
       if (mutationHook) {
         afterHooks.push(async () => {
           await mutationHook({
             model: currentModel,
             action: 'delete',
-            trigger,
+            trigger: currentTrigger,
             when: 'after',
-            data,
+            data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
             ctx,
           });
         });
@@ -258,8 +281,6 @@ export const deleteEntity = async (
                 toUnlink[descendantModel.name][descendant.id].fields.push(name);
               } else {
                 const normalizedInput = { [`${name}Id`]: null };
-                const next = { ...descendant, ...normalizedInput };
-                const data = { prev: descendant, input: {}, normalizedInput, next };
                 if (mutationHook) {
                   beforeHooks.push(async () => {
                     await mutationHook({
@@ -267,13 +288,13 @@ export const deleteEntity = async (
                       action: 'update',
                       trigger: 'set-null',
                       when: 'before',
-                      data,
+                      data: { prev: descendant, input: {}, normalizedInput, next: { ...descendant, ...normalizedInput } },
                       ctx,
                     });
                   });
                 }
                 mutations.push(async () => {
-                  await doUpdate(descendantModel, normalizedInput, next, ctx);
+                  await doUpdate(descendantModel, descendant, normalizedInput, ctx);
                 });
                 if (mutationHook) {
                   afterHooks.push(async () => {
@@ -282,7 +303,7 @@ export const deleteEntity = async (
                       action: 'update',
                       trigger: 'set-null',
                       when: 'after',
-                      data,
+                      data: { prev: descendant, input: {}, normalizedInput, next: { ...descendant, ...normalizedInput } },
                       ctx,
                     });
                   });
@@ -328,7 +349,7 @@ export const deleteEntity = async (
               );
             }
             for (const descendant of descendants) {
-              await deleteCascade(descendantModel, descendant);
+              await deleteCascade(descendantModel, descendant, 'cascade');
             }
             break;
           }
@@ -337,7 +358,7 @@ export const deleteEntity = async (
     }
   };
 
-  await deleteCascade(rootModel, entity);
+  await deleteCascade(rootModel, entity, trigger);
 
   for (const callback of [...beforeHooks, ...mutations, ...afterHooks]) {
     await callback();
@@ -351,11 +372,14 @@ export const deleteEntity = async (
       restricted,
     });
   }
-
-  return entity.id;
 };
 
-const restoreEntity = async (model: EntityModel, id: string, ctx: MutationContext) => {
+export const restoreEntity = async (
+  model: EntityModel,
+  id: string,
+  ctx: MutationContext,
+  trigger: Trigger = 'direct-call',
+) => {
   const rootModel = model.rootModel;
 
   const entity = await getEntityToMutate(ctx, rootModel, { id }, 'RESTORE');
@@ -378,7 +402,7 @@ const restoreEntity = async (model: EntityModel, id: string, ctx: MutationContex
   const mutations: Callbacks = [];
   const afterHooks: Callbacks = [];
 
-  const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
+  const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
     if (entity.deleteRootId) {
       if (!(currentEntity.deleteRootType === model.name && currentEntity.deleteRootId === entity.id)) {
         return;
@@ -422,15 +446,29 @@ const restoreEntity = async (model: EntityModel, id: string, ctx: MutationContex
     const data = { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
-        await ctx.mutationHook!({ model: currentModel, action: 'restore', trigger: 'mutation', when: 'before', data, ctx });
+        await ctx.mutationHook!({
+          model: currentModel,
+          action: 'restore',
+          trigger: currentTrigger,
+          when: 'before',
+          data,
+          ctx,
+        });
       });
     }
     mutations.push(async () => {
-      await doUpdate(currentModel, normalizedInput, data.next, ctx);
+      await doUpdate(currentModel, currentEntity, normalizedInput, ctx);
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
-        await ctx.mutationHook!({ model: currentModel, action: 'restore', trigger: 'mutation', when: 'after', data, ctx });
+        await ctx.mutationHook!({
+          model: currentModel,
+          action: 'restore',
+          trigger: currentTrigger,
+          when: 'after',
+          data,
+          ctx,
+        });
       });
     }
 
@@ -453,18 +491,16 @@ const restoreEntity = async (model: EntityModel, id: string, ctx: MutationContex
         );
       }
       for (const descendant of deletedDescendants) {
-        await restoreCascade(descendantModel, descendant);
+        await restoreCascade(descendantModel, descendant, 'cascade');
       }
     }
   };
 
-  await restoreCascade(rootModel, entity);
+  await restoreCascade(rootModel, entity, trigger);
 
   for (const callback of [...beforeHooks, ...mutations, ...afterHooks]) {
     await callback();
   }
-
-  return id;
 };
 
 export const createRevision = async (model: EntityModel, data: Entity, ctx: MutationContext) => {
@@ -546,13 +582,13 @@ const isEndOfDay = (field: EntityField) =>
 const isEndOfMonth = (field: EntityField) =>
   isPrimitive(field) && field.type === 'DateTime' && field?.endOfMonth === true && field?.dateTimeType === 'year_and_month';
 
-const doUpdate = async (model: EntityModel, updateFields: Entity, allFields: Entity, ctx: MutationContext) => {
+const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entity, ctx: MutationContext) => {
   if (model.updatable) {
-    if (!updateFields.updatedAt) {
-      updateFields.updatedAt = ctx.now;
+    if (!update.updatedAt) {
+      update.updatedAt = ctx.now;
     }
-    if (!updateFields.updatedById) {
-      updateFields.updatedById = ctx.user?.id;
+    if (!update.updatedById) {
+      update.updatedById = ctx.user?.id;
     }
   }
   if (model.parent) {
@@ -560,22 +596,22 @@ const doUpdate = async (model: EntityModel, updateFields: Entity, allFields: Ent
     const childInput = {};
     for (const field of model.fields) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
-      if (columnName in updateFields) {
+      if (columnName in update) {
         if (field.inherited) {
-          rootInput[columnName] = updateFields[columnName];
+          rootInput[columnName] = update[columnName];
         } else {
-          childInput[columnName] = updateFields[columnName];
+          childInput[columnName] = update[columnName];
         }
       }
     }
     if (Object.keys(rootInput).length) {
-      await ctx.knex(model.parent).where({ id: allFields.id }).update(rootInput);
+      await ctx.knex(model.parent).where({ id: currentEntity.id }).update(rootInput);
     }
     if (Object.keys(childInput).length) {
-      await ctx.knex(model.name).where({ id: allFields.id }).update(childInput);
+      await ctx.knex(model.name).where({ id: currentEntity.id }).update(childInput);
     }
   } else {
-    await ctx.knex(model.name).where({ id: allFields.id }).update(updateFields);
+    await ctx.knex(model.name).where({ id: currentEntity.id }).update(update);
   }
-  await createRevision(model, allFields, ctx);
+  await createRevision(model, { ...currentEntity, ...update }, ctx);
 };

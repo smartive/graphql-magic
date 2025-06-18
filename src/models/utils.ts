@@ -153,6 +153,7 @@ export const get = <T, U extends keyof ForSure<T>>(object: T | null | undefined,
   if (value === undefined || value === null) {
     const error = new Error(`Object doesn't have ${String(key)}`);
     console.warn(error);
+    console.trace();
     throw error;
   }
 
