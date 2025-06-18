@@ -1,9 +1,9 @@
 import { GraphQLResolveInfo } from 'graphql';
 import { v4 as uuid } from 'uuid';
-import { Context, FullContext } from '../context';
+import { Context } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
-import { Entity } from '../models/mutation-hook';
+import { Entity, MutationContext } from '../models/mutation-hook';
 import { get, isPrimitive, it, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
@@ -16,23 +16,43 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
     const ctx = { ...partialCtx, knex, info, aliases: new AliasGenerator() };
     const model = ctx.models.getModel(modelName, 'entity');
     switch (mutation) {
-      case 'create':
-        return await create(model, args, ctx);
-      case 'update':
-        return await update(model, args, ctx);
-      case 'delete':
-        return await del(model, args, ctx);
+      case 'create': {
+        const id = await createEntity(model, args.data, ctx);
+
+        return await resolve(ctx, id);
+      }
+      case 'update': {
+        const id = args.where.id;
+
+        await updateEntity(model, id, args.data, ctx);
+
+        return await resolve(ctx, id);
+      }
+      case 'delete': {
+        const id = args.where.id;
+
+        await deleteEntity(model, id, args.dryRun, model.rootModel.name, id, ctx);
+
+        return await resolve(ctx, id);
+      }
       case 'restore':
-        return await restore(model, args, ctx);
+        return await restoreEntity(model, args.where.id, ctx);
     }
   });
 };
 
-const create = async (model: EntityModel, { data: input }: { data: any }, ctx: FullContext) => {
+export const createEntity = async (model: EntityModel, input: Entity, ctx: MutationContext) => {
   const normalizedInput = { ...input };
-  normalizedInput.id = uuid();
-  normalizedInput.createdAt = ctx.now;
-  normalizedInput.createdById = ctx.user?.id;
+  if (!normalizedInput.id) {
+    normalizedInput.id = uuid();
+  }
+  const id = normalizedInput.id as string;
+  if (!normalizedInput.createdAt) {
+    normalizedInput.createdAt = ctx.now;
+  }
+  if (!normalizedInput.createdById) {
+    normalizedInput.createdById = ctx.user?.id;
+  }
   if (model.parent) {
     normalizedInput.type = model.name;
   }
@@ -43,40 +63,51 @@ const create = async (model: EntityModel, { data: input }: { data: any }, ctx: F
 
   const data = { prev: {}, input, normalizedInput, next: normalizedInput };
   await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'before', data, ctx });
+
+  await createEntity(model, normalizedInput, ctx);
+
   if (model.parent) {
     const rootInput = {};
-    const childInput = { id: normalizedInput.id };
+    const childInput = { id };
     for (const field of model.fields) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
-      if (columnName in normalizedInput) {
+      if (columnName in data) {
         if (field.inherited) {
-          rootInput[columnName] = normalizedInput[columnName];
+          rootInput[columnName] = data[columnName];
         } else {
-          childInput[columnName] = normalizedInput[columnName];
+          childInput[columnName] = data[columnName];
         }
       }
     }
     await ctx.knex(model.parent).insert(rootInput);
     await ctx.knex(model.name).insert(childInput);
   } else {
-    await ctx.knex(model.name).insert(normalizedInput);
+    await ctx.knex(model.name).insert(data);
   }
-  await createRevision(model, normalizedInput, ctx);
+  await createRevision(model, data, ctx);
   await ctx.mutationHook?.({ model, action: 'create', trigger: 'mutation', when: 'after', data, ctx });
 
-  return await resolve(ctx, normalizedInput.id);
+  return normalizedInput.id as string;
 };
 
-const update = async (model: EntityModel, { where, data: input }: { where: any; data: any }, ctx: FullContext) => {
-  if (Object.keys(where).length === 0) {
-    throw new Error(`No ${model.name} specified.`);
+export const updateEntities = async (
+  model: EntityModel,
+  where: Record<string, unknown>,
+  updateFields: Entity,
+  ctx: MutationContext,
+) => {
+  const entities = await ctx.knex(model.name).where(where).select('id');
+  for (const entity of entities) {
+    await updateEntity(model, entity.id, updateFields, ctx);
   }
+};
 
+export const updateEntity = async (model: EntityModel, id: string, input: Entity, ctx: MutationContext) => {
   const normalizedInput = { ...input };
 
   sanitize(ctx, model, normalizedInput);
 
-  const prev = await getEntityToMutate(ctx, model, where, 'UPDATE');
+  const prev = await getEntityToMutate(ctx, model, { id }, 'UPDATE');
 
   // Remove data that wouldn't mutate given that it's irrelevant for permissions
   for (const key of Object.keys(normalizedInput)) {
@@ -93,45 +124,36 @@ const update = async (model: EntityModel, { where, data: input }: { where: any; 
     const data = { prev, input, normalizedInput, next };
     await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'before', data, ctx });
 
-    if (model.parent) {
-      const rootInput = {};
-      const childInput = {};
-      for (const field of model.fields) {
-        const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
-        if (columnName in normalizedInput) {
-          if (field.inherited) {
-            rootInput[columnName] = normalizedInput[columnName];
-          } else {
-            childInput[columnName] = normalizedInput[columnName];
-          }
-        }
-      }
-      if (Object.keys(rootInput).length) {
-        await ctx.knex(model.parent).where({ id: prev.id }).update(rootInput);
-      }
-      if (Object.keys(childInput).length) {
-        await ctx.knex(model.name).where({ id: prev.id }).update(childInput);
-      }
-    } else {
-      await ctx.knex(model.name).where({ id: prev.id }).update(normalizedInput);
-    }
-
-    await createRevision(model, next, ctx);
+    await doUpdate(model, normalizedInput, next, ctx);
     await ctx.mutationHook?.({ model, action: 'update', trigger: 'mutation', when: 'after', data, ctx });
   }
-
-  return await resolve(ctx);
 };
 
 type Callbacks = (() => Promise<void>)[];
 
-const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: boolean }, ctx: FullContext) => {
-  if (Object.keys(where).length === 0) {
-    throw new Error(`No ${model.name} specified.`);
+export const deleteEntities = async (
+  model: EntityModel,
+  where: Record<string, unknown>,
+  deleteRootType: string,
+  deleteRootId: string,
+  ctx: MutationContext,
+) => {
+  const entities = await ctx.knex(model.name).where(where).select('id');
+  for (const entity of entities) {
+    await deleteEntity(model, entity.id, false, deleteRootType, deleteRootId, ctx);
   }
+};
 
+export const deleteEntity = async (
+  model: EntityModel,
+  id: string,
+  dryRun: boolean,
+  deleteRootType: string,
+  deleteRootId: string,
+  ctx: MutationContext,
+) => {
   const rootModel = model.rootModel;
-  const entity = await getEntityToMutate(ctx, rootModel, where, 'DELETE');
+  const entity = await getEntityToMutate(ctx, rootModel, { id }, 'DELETE');
 
   if (entity.deleted) {
     throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is already deleted.`);
@@ -179,8 +201,8 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
         deleted: true,
         deletedAt: ctx.now,
         deletedById: ctx.user?.id,
-        deleteRootType: rootModel.name,
-        deleteRootId: entity.id,
+        deleteRootType,
+        deleteRootId,
       };
       const next = { ...currentEntity, ...normalizedInput };
       const data = { prev: currentEntity, input: {}, normalizedInput, next };
@@ -197,8 +219,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
         });
       }
       mutations.push(async () => {
-        await ctx.knex(currentModel.name).where({ id: currentEntity.id }).update(normalizedInput);
-        await createRevision(currentModel, next, ctx);
+        await doUpdate(currentModel, normalizedInput, next, ctx);
       });
       if (mutationHook) {
         afterHooks.push(async () => {
@@ -252,8 +273,7 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
                   });
                 }
                 mutations.push(async () => {
-                  await ctx.knex(descendantModel.name).where({ id: descendant.id }).update(normalizedInput);
-                  await createRevision(descendantModel, next, ctx);
+                  await doUpdate(descendantModel, normalizedInput, next, ctx);
                 });
                 if (mutationHook) {
                   afterHooks.push(async () => {
@@ -335,14 +355,10 @@ const del = async (model: EntityModel, { where, dryRun }: { where: any; dryRun: 
   return entity.id;
 };
 
-const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullContext) => {
-  if (Object.keys(where).length === 0) {
-    throw new Error(`No ${model.name} specified.`);
-  }
-
+const restoreEntity = async (model: EntityModel, id: string, ctx: MutationContext) => {
   const rootModel = model.rootModel;
 
-  const entity = await getEntityToMutate(ctx, rootModel, where, 'RESTORE');
+  const entity = await getEntityToMutate(ctx, rootModel, { id }, 'RESTORE');
 
   if (!entity.deleted) {
     throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is not deleted.`);
@@ -364,7 +380,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
 
   const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity) => {
     if (entity.deleteRootId) {
-      if (!(currentEntity.deleteRootType === currentModel.name && currentEntity.deleteRootId === entity.id)) {
+      if (!(currentEntity.deleteRootType === model.name && currentEntity.deleteRootId === entity.id)) {
         return;
       }
 
@@ -381,7 +397,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     toRestore[currentModel.name].add(currentEntity.id as string);
 
     for (const relation of currentModel.relations) {
-      const parentId = entity[relation.field.foreignKey];
+      const parentId = currentEntity[relation.field.foreignKey] as string | undefined;
       if (!parentId) {
         continue;
       }
@@ -410,8 +426,7 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
       });
     }
     mutations.push(async () => {
-      await ctx.knex(currentModel.name).where({ id: currentEntity.id }).update(normalizedInput);
-      await createRevision(currentModel, { ...currentEntity, deleted: false }, ctx);
+      await doUpdate(currentModel, normalizedInput, data.next, ctx);
     });
     if (ctx.mutationHook) {
       afterHooks.push(async () => {
@@ -449,10 +464,10 @@ const restore = async (model: EntityModel, { where }: { where: any }, ctx: FullC
     await callback();
   }
 
-  return entity.id;
+  return id;
 };
 
-export const createRevision = async (model: EntityModel, data: Entity, ctx: Pick<Context, 'knex' | 'now' | 'user'>) => {
+export const createRevision = async (model: EntityModel, data: Entity, ctx: MutationContext) => {
   if (model.updatable) {
     const revisionId = uuid();
     const rootRevisionData: Entity = {
@@ -491,10 +506,14 @@ export const createRevision = async (model: EntityModel, data: Entity, ctx: Pick
   }
 };
 
-const sanitize = (ctx: FullContext, model: EntityModel, data: Entity) => {
+const sanitize = (ctx: MutationContext, model: EntityModel, data: Entity) => {
   if (model.updatable) {
-    data.updatedAt = ctx.now;
-    data.updatedById = ctx.user?.id;
+    if (!data.updatedAt) {
+      data.updatedAt = ctx.now;
+    }
+    if (!data.updatedById) {
+      data.updatedById = ctx.user?.id;
+    }
   }
 
   for (const key of Object.keys(data)) {
@@ -526,3 +545,37 @@ const isEndOfDay = (field: EntityField) =>
 
 const isEndOfMonth = (field: EntityField) =>
   isPrimitive(field) && field.type === 'DateTime' && field?.endOfMonth === true && field?.dateTimeType === 'year_and_month';
+
+const doUpdate = async (model: EntityModel, updateFields: Entity, allFields: Entity, ctx: MutationContext) => {
+  if (model.updatable) {
+    if (!updateFields.updatedAt) {
+      updateFields.updatedAt = ctx.now;
+    }
+    if (!updateFields.updatedById) {
+      updateFields.updatedById = ctx.user?.id;
+    }
+  }
+  if (model.parent) {
+    const rootInput = {};
+    const childInput = {};
+    for (const field of model.fields) {
+      const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
+      if (columnName in updateFields) {
+        if (field.inherited) {
+          rootInput[columnName] = updateFields[columnName];
+        } else {
+          childInput[columnName] = updateFields[columnName];
+        }
+      }
+    }
+    if (Object.keys(rootInput).length) {
+      await ctx.knex(model.parent).where({ id: allFields.id }).update(rootInput);
+    }
+    if (Object.keys(childInput).length) {
+      await ctx.knex(model.name).where({ id: allFields.id }).update(childInput);
+    }
+  } else {
+    await ctx.knex(model.name).where({ id: allFields.id }).update(updateFields);
+  }
+  await createRevision(model, allFields, ctx);
+};
