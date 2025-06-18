@@ -14,31 +14,30 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
   return await partialCtx.knex.transaction(async (knex) => {
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     const ctx = { ...partialCtx, knex, info, aliases: new AliasGenerator() };
-    const model = ctx.models.getModel(modelName, 'entity');
     switch (mutation) {
       case 'create': {
-        const id = await createEntity(model, args.data, ctx, 'mutation');
+        const id = await createEntity(modelName, args.data, ctx, 'mutation');
 
         return await resolve(ctx, id);
       }
       case 'update': {
         const id = args.where.id;
 
-        await updateEntity(model, id, args.data, ctx);
+        await updateEntity(modelName, id, args.data, ctx);
 
         return await resolve(ctx, id);
       }
       case 'delete': {
         const id = args.where.id;
 
-        await deleteEntity(model, id, args.dryRun, model.rootModel.name, id, ctx, 'mutation');
+        await deleteEntity(modelName, id, args.dryRun, undefined, undefined, ctx, 'mutation');
 
         return id;
       }
       case 'restore': {
         const id = args.where.id;
 
-        await restoreEntity(model, id, ctx, 'mutation');
+        await restoreEntity(modelName, id, ctx, 'mutation');
 
         return id;
       }
@@ -47,11 +46,12 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
 };
 
 export const createEntity = async (
-  model: EntityModel,
+  modelName: string,
   input: Entity,
   ctx: MutationContext,
   trigger: Trigger = 'direct-call',
 ) => {
+  const model = ctx.models.getModel(modelName, 'entity');
   const normalizedInput = { ...input };
   if (!normalizedInput.id) {
     normalizedInput.id = uuid();
@@ -99,24 +99,25 @@ export const createEntity = async (
 };
 
 export const updateEntities = async (
-  model: EntityModel,
+  modelName: string,
   where: Record<string, unknown>,
   updateFields: Entity,
   ctx: MutationContext,
 ) => {
-  const entities = await ctx.knex(model.name).where(where).select('id');
+  const entities = await ctx.knex(modelName).where(where).select('id');
   for (const entity of entities) {
-    await updateEntity(model, entity.id, updateFields, ctx);
+    await updateEntity(modelName, entity.id, updateFields, ctx);
   }
 };
 
 export const updateEntity = async (
-  model: EntityModel,
+  modelName: string,
   id: string,
   input: Entity,
   ctx: MutationContext,
   trigger: Trigger = 'direct-call',
 ) => {
+  const model = ctx.models.getModel(modelName, 'entity');
   const normalizedInput = { ...input };
 
   sanitize(ctx, model, normalizedInput);
@@ -157,28 +158,32 @@ export const updateEntity = async (
 type Callbacks = (() => Promise<void>)[];
 
 export const deleteEntities = async (
-  model: EntityModel,
+  modelName: string,
   where: Record<string, unknown>,
   deleteRootType: string | undefined,
   deleteRootId: string | undefined,
   ctx: MutationContext,
 ) => {
-  const entities = await ctx.knex(model.name).where(where).select('id');
+  const entities = await ctx.knex(modelName).where(where).select('id');
   for (const entity of entities) {
-    await deleteEntity(model, entity.id, false, deleteRootType, deleteRootId, ctx);
+    await deleteEntity(modelName, entity.id, false, deleteRootType, deleteRootId, ctx);
   }
 };
 
 export const deleteEntity = async (
-  model: EntityModel,
+  modelName: string,
   id: string,
   dryRun: boolean,
-  deleteRootType: string | undefined = model.rootModel.name,
+  deleteRootType: string | undefined,
   deleteRootId: string | undefined = id,
   ctx: MutationContext,
   trigger: Trigger = 'direct-call',
 ) => {
+  const model = ctx.models.getModel(modelName, 'entity');
   const rootModel = model.rootModel;
+  if (!deleteRootType) {
+    deleteRootType = rootModel.name;
+  }
   const entity = await getEntityToMutate(ctx, rootModel, { id }, 'DELETE');
 
   if (entity.deleted) {
@@ -375,11 +380,12 @@ export const deleteEntity = async (
 };
 
 export const restoreEntity = async (
-  model: EntityModel,
+  modelName: string,
   id: string,
   ctx: MutationContext,
   trigger: Trigger = 'direct-call',
 ) => {
+  const model = ctx.models.getModel(modelName, 'entity');
   const rootModel = model.rootModel;
 
   const entity = await getEntityToMutate(ctx, rootModel, { id }, 'RESTORE');
