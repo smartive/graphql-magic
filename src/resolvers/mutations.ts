@@ -71,8 +71,14 @@ export const createEntity = async (
   await checkCanWrite(ctx, model, normalizedInput, 'CREATE');
   await ctx.handleUploads?.(normalizedInput);
 
-  const data = { prev: {}, input, normalizedInput, next: normalizedInput };
-  await ctx.mutationHook?.({ model, action: 'create', trigger, when: 'before', data, ctx });
+  await ctx.mutationHook?.({
+    model,
+    action: 'create',
+    trigger,
+    when: 'before',
+    data: { prev: {}, input, normalizedInput, next: normalizedInput },
+    ctx,
+  });
 
   if (model.parent) {
     const rootInput = {};
@@ -93,7 +99,14 @@ export const createEntity = async (
     await ctx.knex(model.name).insert(normalizedInput);
   }
   await createRevision(model, normalizedInput, ctx);
-  await ctx.mutationHook?.({ model, action: 'create', trigger, when: 'after', data, ctx });
+  await ctx.mutationHook?.({
+    model,
+    action: 'create',
+    trigger,
+    when: 'after',
+    data: { prev: {}, input, normalizedInput, next: normalizedInput },
+    ctx,
+  });
 
   return normalizedInput.id as string;
 };
@@ -449,7 +462,6 @@ export const restoreEntity = async (
       deleteRootType: null,
       deleteRootId: null,
     };
-    const data = { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } };
     if (ctx.mutationHook) {
       beforeHooks.push(async () => {
         await ctx.mutationHook!({
@@ -457,7 +469,7 @@ export const restoreEntity = async (
           action: 'restore',
           trigger: currentTrigger,
           when: 'before',
-          data,
+          data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
           ctx,
         });
       });
@@ -472,7 +484,7 @@ export const restoreEntity = async (
           action: 'restore',
           trigger: currentTrigger,
           when: 'after',
-          data,
+          data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
           ctx,
         });
       });
