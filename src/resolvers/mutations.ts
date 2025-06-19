@@ -30,7 +30,10 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'delete': {
         const id = args.where.id;
 
-        await deleteEntity(modelName, id, args.dryRun, undefined, undefined, ctx, 'mutation');
+        await deleteEntity(modelName, { id, deleteRootType: modelName, deleteRootId: id }, ctx, {
+          dryRun: args.dryRun,
+          trigger: 'mutation',
+        });
 
         return id;
       }
@@ -173,24 +176,48 @@ type Callbacks = (() => Promise<void>)[];
 export const deleteEntities = async (
   modelName: string,
   where: Record<string, unknown>,
-  deleteRootType: string | undefined,
-  deleteRootId: string | undefined,
+  deleteRoot: {
+    deleteRootType: string;
+    deleteRootId: string;
+  } | null,
   ctx: MutationContext,
 ) => {
   const entities = await ctx.knex(modelName).where(where).select('id');
   for (const entity of entities) {
-    await deleteEntity(modelName, entity.id, false, deleteRootType, deleteRootId, ctx);
+    await deleteEntity(
+      modelName,
+      {
+        id: entity.id,
+        deleteRootType: deleteRoot?.deleteRootType ?? modelName,
+        deleteRootId: deleteRoot?.deleteRootId ?? entity.id,
+      },
+      ctx,
+      {
+        trigger: 'direct-call',
+      },
+    );
   }
 };
 
 export const deleteEntity = async (
   modelName: string,
-  id: string,
-  dryRun: boolean,
-  deleteRootType: string | undefined,
-  deleteRootId: string | undefined = id,
+  {
+    id,
+    deleteRootType,
+    deleteRootId,
+  }: {
+    id: string;
+    deleteRootType: string;
+    deleteRootId: string;
+  },
   ctx: MutationContext,
-  trigger: Trigger = 'direct-call',
+  {
+    dryRun = false,
+    trigger = 'direct-call',
+  }: {
+    dryRun?: boolean;
+    trigger?: Trigger;
+  } = {},
 ) => {
   const model = ctx.models.getModel(modelName, 'entity');
   const rootModel = model.rootModel;
