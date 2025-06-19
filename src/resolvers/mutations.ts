@@ -30,7 +30,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'delete': {
         const id = args.where.id;
 
-        await deleteEntity(modelName, { id, deleteRootType: modelName, deleteRootId: id }, ctx, {
+        await deleteEntity(modelName, id, ctx, {
           dryRun: args.dryRun,
           trigger: 'mutation',
         });
@@ -173,43 +173,18 @@ export const updateEntity = async (
 
 type Callbacks = (() => Promise<void>)[];
 
-export const deleteEntities = async (
-  modelName: string,
-  where: Record<string, unknown>,
-  deleteRoot: {
-    deleteRootType: string;
-    deleteRootId: string;
-  } | null,
-  ctx: MutationContext,
-) => {
+export const deleteEntities = async (modelName: string, where: Record<string, unknown>, ctx: MutationContext) => {
   const entities = await ctx.knex(modelName).where(where).select('id');
   for (const entity of entities) {
-    await deleteEntity(
-      modelName,
-      {
-        id: entity.id,
-        deleteRootType: deleteRoot?.deleteRootType ?? modelName,
-        deleteRootId: deleteRoot?.deleteRootId ?? entity.id,
-      },
-      ctx,
-      {
-        trigger: 'direct-call',
-      },
-    );
+    await deleteEntity(modelName, entity.id, ctx, {
+      trigger: 'direct-call',
+    });
   }
 };
 
 export const deleteEntity = async (
   modelName: string,
-  {
-    id,
-    deleteRootType,
-    deleteRootId,
-  }: {
-    id: string;
-    deleteRootType: string;
-    deleteRootId: string;
-  },
+  id: string,
   ctx: MutationContext,
   {
     dryRun = false,
@@ -221,9 +196,6 @@ export const deleteEntity = async (
 ) => {
   const model = ctx.models.getModel(modelName, 'entity');
   const rootModel = model.rootModel;
-  if (!deleteRootType) {
-    deleteRootType = rootModel.name;
-  }
   const entity = await getEntityToMutate(ctx, rootModel, { id }, 'DELETE');
 
   if (entity.deleted) {
@@ -271,8 +243,8 @@ export const deleteEntity = async (
         deleted: true,
         deletedAt: ctx.now,
         deletedById: ctx.user?.id,
-        deleteRootType,
-        deleteRootId,
+        deleteRootType: model.name,
+        deleteRootId: entity.id,
       };
       if (mutationHook) {
         beforeHooks.push(async () => {
@@ -449,7 +421,7 @@ export const restoreEntity = async (
   const afterHooks: Callbacks = [];
 
   const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
-    if (entity.deleteRootId) {
+    if (entity.deleteRootId || currentEntity.deleteRootId) {
       if (!(currentEntity.deleteRootType === model.name && currentEntity.deleteRootId === entity.id)) {
         return;
       }
@@ -465,22 +437,6 @@ export const restoreEntity = async (
       toRestore[currentModel.name] = new Set();
     }
     toRestore[currentModel.name].add(currentEntity.id as string);
-
-    for (const relation of currentModel.relations) {
-      const parentId = currentEntity[relation.field.foreignKey] as string | undefined;
-      if (!parentId) {
-        continue;
-      }
-      if (toRestore[relation.targetModel.name]?.has(parentId)) {
-        continue;
-      }
-      const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
-      if (parent?.deleted) {
-        throw new ForbiddenError(
-          `Can't restore ${getTechnicalDisplay(currentModel, currentEntity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
-        );
-      }
-    }
 
     const normalizedInput: Entity = {
       deleted: false,
@@ -502,6 +458,22 @@ export const restoreEntity = async (
       });
     }
     mutations.push(async () => {
+      for (const relation of currentModel.relations) {
+        const parentId = currentEntity[relation.field.foreignKey] as string | undefined;
+        if (!parentId) {
+          continue;
+        }
+        if (toRestore[relation.targetModel.name]?.has(parentId)) {
+          continue;
+        }
+        const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
+        if (parent?.deleted) {
+          throw new ForbiddenError(
+            `Can't restore ${getTechnicalDisplay(currentModel, currentEntity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
+          );
+        }
+      }
+
       await doUpdate(currentModel, currentEntity, normalizedInput, ctx);
     });
     if (ctx.mutationHook) {
