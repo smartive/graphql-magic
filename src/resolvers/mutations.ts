@@ -243,7 +243,7 @@ export const deleteEntity = async (
         deleted: true,
         deletedAt: ctx.now,
         deletedById: ctx.user?.id,
-        deleteRootType: model.name,
+        deleteRootType: rootModel.name,
         deleteRootId: entity.id,
       };
       if (mutationHook) {
