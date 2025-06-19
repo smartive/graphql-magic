@@ -23,7 +23,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'update': {
         const id = args.where.id;
 
-        await updateEntity(modelName, id, args.data, ctx);
+        await updateEntity(modelName, id, args.data, ctx, 'mutation');
 
         return await resolve(ctx, id);
       }
