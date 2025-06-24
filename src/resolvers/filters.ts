@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { EntityModel, FullContext } from '..';
+import { EntityModel, FullContext, getPermissionStack } from '..';
 import { ForbiddenError, UserInputError } from '../errors';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode } from './node';
@@ -65,7 +65,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
       where = {};
     }
     if (where.deleted && (!Array.isArray(where.deleted) || where.deleted.some((v) => v))) {
-      if (node.ctx.user?.role !== 'ADMIN') {
+      if (!getPermissionStack(node.ctx, node.model.name, 'DELETE')) {
         throw new ForbiddenError('You cannot access deleted entries.');
       }
     } else {
