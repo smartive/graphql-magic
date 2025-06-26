@@ -469,7 +469,7 @@ export const restoreEntity = async (
         const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
         if (parent?.deleted) {
           throw new ForbiddenError(
-            `Can't restore ${getTechnicalDisplay(currentModel, currentEntity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
+            `Can't restore ${getTechnicalDisplay(model, entity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
           );
         }
       }
@@ -496,10 +496,16 @@ export const restoreEntity = async (
       .filter((reverseRelation) => !reverseRelation.field.inherited)
       .filter(({ targetModel: { deletable } }) => deletable)) {
       const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: true });
-      const deletedDescendants = await query;
+      if (currentEntity.deleteRootId) {
+        query.where({ deleteRootType: currentEntity.deleteRootType, deleteRootId: currentEntity.deleteRootId });
+      } else {
+        // Legacy heuristic
+        query.where({ deletedAt: currentEntity.deletedAt });
+      }
+      const descendantsToRestore = await query;
       applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'RESTORE');
       const restorableDescendants = await query;
-      const notRestorableDescendants = deletedDescendants.filter(
+      const notRestorableDescendants = descendantsToRestore.filter(
         (descendant) => !restorableDescendants.some((d) => d.id === descendant.id),
       );
       if (notRestorableDescendants.length) {
@@ -507,7 +513,7 @@ export const restoreEntity = async (
           `${getTechnicalDisplay(currentModel, currentEntity)} depends on ${descendantModel.labelPlural} which you have no permissions to restore.`,
         );
       }
-      for (const descendant of deletedDescendants) {
+      for (const descendant of descendantsToRestore) {
         await restoreCascade(descendantModel, descendant, 'cascade');
       }
     }

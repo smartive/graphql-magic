@@ -75,7 +75,15 @@ export const applyPermissions = (
       (links) => (query) =>
         query
           .whereNull(`${tableAlias}.id`)
-          .orWhereExists((subQuery) => permissionLinkQuery(ctx, subQuery, links, ctx.knex.raw(`"${tableAlias}".id`))),
+          .orWhereExists((subQuery) =>
+            permissionLinkQuery(
+              ctx,
+              subQuery,
+              links,
+              ctx.knex.raw(`"${tableAlias}".id`),
+              ['READ', 'RESTORE'].includes(action) ? tableAlias : undefined,
+            ),
+          ),
     ),
   );
 
@@ -212,6 +220,7 @@ const permissionLinkQuery = (
   subQuery: Knex.QueryBuilder,
   links: PermissionLink[],
   id: Knex.RawBinding | Knex.ValueDict,
+  tableAliasForDeleteRoot?: string,
 ) => {
   const aliases = new AliasGenerator();
   let alias = aliases.getShort();
@@ -242,7 +251,22 @@ const permissionLinkQuery = (
       subQuery.rightJoin(`${type} as ${subAlias}`, `${alias}.id`, `${subAlias}.${foreignKey || 'id'}`);
     }
 
-    subQuery.where({ [`${subAlias}.deleted`]: false });
+    if (tableAliasForDeleteRoot) {
+      subQuery.where((query) =>
+        query
+          .where({ [`${subAlias}.deleted`]: false })
+          .orWhere((query) =>
+            query
+              .whereNotNull(`${subAlias}.deleteRootType`)
+              .whereNotNull(`${subAlias}.deleteRootId`)
+              .whereRaw(`??."deleteRootType" = ??."deleteRootType"`, [subAlias, tableAliasForDeleteRoot])
+              .whereRaw(`??."deleteRootId" = ??."deleteRootId"`, [subAlias, tableAliasForDeleteRoot]),
+          ),
+      );
+    } else {
+      subQuery.where({ [`${subAlias}.deleted`]: false });
+    }
+
     if (where) {
       applyWhere(model, subQuery, subAlias, where, aliases);
     }
