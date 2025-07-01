@@ -13,10 +13,9 @@ import { AliasGenerator, fetchDisplay, getTechnicalDisplay } from './utils';
 const withTransaction = async <T extends MutationContext>(ctx: T, fn: (ctx: T) => Promise<any>) =>
   await ctx.knex.transaction(async (knex) => fn({ ...ctx, knex }));
 
-export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) => {
-  const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
-
-  return await withTransaction({ ...partialCtx, info, aliases: new AliasGenerator() }, async (ctx) => {
+export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) =>
+  withTransaction({ ...partialCtx, info, aliases: new AliasGenerator() }, async (ctx) => {
+    const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     switch (mutation) {
       case 'create': {
         const id = await createEntity(modelName, args.data, ctx, 'mutation');
@@ -49,7 +48,6 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       }
     }
   });
-};
 
 export const createEntity = async (
   modelName: string,
