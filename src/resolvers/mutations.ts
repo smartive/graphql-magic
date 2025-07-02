@@ -285,11 +285,14 @@ export const deleteEntity = async (
         targetModel: descendantModel,
         field: { name, foreignKey, onDelete },
       } of currentModel.reverseRelations.filter((reverseRelation) => !reverseRelation.field.inherited)) {
-        const query = ctx
-          .knex(descendantModel.name)
-          .where({ [foreignKey]: currentEntity.id, deleted: false })
-          .orderBy('createdAt', 'asc')
-          .orderBy('id', 'asc');
+        const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: false });
+
+        if (descendantModel.creatable) {
+          query.orderBy('createdAt', 'asc');
+        }
+
+        query.orderBy('id', 'asc');
+
         const descendants = await query;
         if (descendants.length) {
           switch (onDelete) {
@@ -501,11 +504,14 @@ export const restoreEntity = async (modelName: string, id: string, ctx: Mutation
       } of currentModel.reverseRelations
         .filter((reverseRelation) => !reverseRelation.field.inherited)
         .filter(({ targetModel: { deletable } }) => deletable)) {
-        const query = ctx
-          .knex(descendantModel.name)
-          .where({ [foreignKey]: currentEntity.id, deleted: true })
-          .orderBy('createdAt', 'asc')
-          .orderBy('id', 'asc');
+        const query = ctx.knex(descendantModel.name).where({ [foreignKey]: currentEntity.id, deleted: true });
+
+        if (descendantModel.creatable) {
+          query.orderBy('createdAt', 'asc');
+        }
+
+        query.orderBy('id', 'asc');
+
         if (currentEntity.deleteRootId) {
           query.where({ deleteRootType: currentEntity.deleteRootType, deleteRootId: currentEntity.deleteRootId });
         } else {
