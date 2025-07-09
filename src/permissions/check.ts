@@ -46,8 +46,6 @@ export const applyPermissions = (
   }
 
   if (permissionStack === false) {
-    console.error(`No applicable permissions exist for ${getRole(ctx)} ${type} ${action}.`);
-
     query.where(false);
 
     return permissionStack;
@@ -106,22 +104,12 @@ export const getEntityToMutate = async (
   let entity = await query.clone();
 
   if (!entity) {
-    console.error(
-      `${model.name} to ${action.toLowerCase()} not found: ${Object.entries(where)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(', ')}`,
-    );
     throw new NotFoundError(`${model.name} to ${action.toLowerCase()} not found`);
   }
 
   applyPermissions(ctx, model.name, model.name, query, action);
   entity = await query;
   if (!entity) {
-    console.error(
-      `Permission error: ${Object.entries(where)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join(', ')}`,
-    );
     throw new PermissionError(getRole(ctx), action, `this ${model.name}`, 'no available permissions applied');
   }
 

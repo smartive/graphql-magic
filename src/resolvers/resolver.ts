@@ -66,7 +66,6 @@ export const resolve = async (ctx: FullContext, id?: string) => {
   }
 
   if (!res[0]) {
-    console.error(`${getTechnicalDisplay(node.rootModel, { id })} not found`, query.toString());
     throw new NotFoundError(`${getTechnicalDisplay(node.rootModel, { id })} not found`);
   }
 
