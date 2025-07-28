@@ -121,6 +121,19 @@ export const getEntityToMutate = async (
   return entity;
 };
 
+export const checkCanRead = async (
+  ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
+  modelName: string,
+  id: string,
+): Promise<void> => {
+  const query = ctx.knex(modelName).where({ id }).first();
+  applyPermissions(ctx, modelName, modelName, query, 'READ');
+  const res = await query;
+  if (!res) {
+    throw new PermissionError(getRole(ctx), 'READ', `this ${modelName}`, 'no applicable permissions');
+  }
+};
+
 /**
  * Check whether given data can be written to db (insert or update)
  */
@@ -129,7 +142,7 @@ export const checkCanWrite = async (
   model: EntityModel,
   data: Record<string, unknown>,
   action: 'CREATE' | 'UPDATE',
-) => {
+): Promise<void> => {
   const permissionStack = getPermissionStack(ctx, model.name, action);
 
   if (permissionStack === true) {
