@@ -165,7 +165,7 @@ export class MigrationGenerator {
               return false;
             }
 
-            return !nonNull && !col.is_nullable;
+            return (!nonNull && !col.is_nullable) || (nonNull && col.is_nullable);
           });
           this.updateFields(model, existingFields, up, down);
         }
