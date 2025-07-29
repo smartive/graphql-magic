@@ -18,6 +18,7 @@ import {
   PrimitiveFieldDefinition,
   RawEnumModelDefinition,
   StringFieldDefinition,
+  UnionModelDefinition,
   UploadFieldDefinition,
 } from '..';
 import {
@@ -60,6 +61,7 @@ export class Models {
   public interfaces: InterfaceModel[];
   public objects: ObjectModel[];
   public entities: EntityModel[];
+  public unions: UnionModel[];
   public definitions: ModelDefinitions;
 
   constructor(definitions: ModelDefinitions) {
@@ -230,6 +232,7 @@ export class Models {
     this.objects = this.models.filter((model): model is ObjectModel => model instanceof ObjectModel);
     this.rawEnums = this.models.filter((model): model is RawEnumModel => model instanceof RawEnumModel);
     this.scalars = this.models.filter((model): model is ScalarModel => model instanceof ScalarModel);
+    this.unions = this.models.filter((model): model is UnionModel => model instanceof UnionModel);
   }
 
   public getModel<K extends keyof ModelKindToClassMapping>(name: string, kind?: K): ModelKindToClassMapping[K] {
@@ -265,6 +268,15 @@ export class ScalarModel extends Model {
   kind: 'scalar';
 }
 
+export class UnionModel extends Model {
+  kind: 'union';
+  types: string[];
+
+  constructor(models: Models, definition: UnionModelDefinition) {
+    super(models, definition);
+    Object.assign(this, omit(definition, 'name', 'plural', 'description'));
+  }
+}
 export class EnumModel extends Model {
   kind: 'enum';
   values: string[];
@@ -505,6 +517,7 @@ const MODEL_KIND_TO_CLASS_MAPPING = {
   object: ObjectModel,
   'raw-enum': RawEnumModel,
   scalar: ScalarModel,
+  union: UnionModel,
 };
 
 type ModelKindToClassMapping = {

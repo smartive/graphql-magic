@@ -22,6 +22,7 @@ import {
   ScalarTypeDefinitionNode,
   StringValueNode,
   TypeNode,
+  UnionTypeDefinitionNode,
 } from 'graphql';
 import { DateTime } from 'luxon';
 import { Directive, Value, Values } from '../values';
@@ -69,6 +70,12 @@ export const input = (nme: string, fields: Field[], dvs?: Directive[]): InputObj
   fields: inputValues(fields),
   kind: Kind.INPUT_OBJECT_TYPE_DEFINITION,
   directives: directives(dvs),
+});
+
+export const union = (nme: string, types: string[]): UnionTypeDefinitionNode => ({
+  name: name(nme),
+  kind: Kind.UNION_TYPE_DEFINITION,
+  types: types.map((t) => namedType(t)),
 });
 
 export const object = (nme: string, fds: Field[], interfaces?: string[], dvs?: Directive[]): ObjectTypeDefinitionNode => ({

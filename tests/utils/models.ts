@@ -159,6 +159,44 @@ const modelDefinitions: ModelDefinitions = [
     name: 'Answer',
     fields: [],
   },
+  {
+    kind: 'union',
+    name: 'Bird',
+    types: ['Duck', 'Eagle'],
+  },
+  {
+    kind: 'object',
+    name: 'Duck',
+    fields: [
+      {
+        name: 'name',
+        type: 'String',
+      },
+    ],
+  },
+  {
+    kind: 'object',
+    name: 'Eagle',
+    fields: [
+      {
+        name: 'name',
+        type: 'String',
+      },
+    ],
+  },
+  {
+    kind: 'object',
+    name: 'Query',
+    fields: [
+      {
+        kind: 'custom',
+        name: 'birds',
+        type: 'Bird',
+        nonNull: true,
+        list: true,
+      },
+    ],
+  },
 ];
 
 export const models = new Models(modelDefinitions);

@@ -124,6 +124,7 @@ export type ModelDefinition = {
   | { kind: 'scalar' }
   | { kind: 'enum'; values: readonly string[]; deleted?: true }
   | { kind: 'raw-enum'; values: readonly string[] }
+  | { kind: 'union'; types: readonly string[] }
   | { kind: 'interface'; fields: EntityFieldDefinition[] }
   | {
       kind: 'input';
@@ -166,5 +167,6 @@ export type InterfaceModelDefinition = Extract<ModelDefinition, { kind: 'interfa
 export type ObjectModelDefinition = Extract<ModelDefinition, { kind: 'object' }>;
 export type InputModelDefinition = Extract<ModelDefinition, { kind: 'input' }>;
 export type EntityModelDefinition = Extract<ModelDefinition, { kind: 'entity' }>;
+export type UnionModelDefinition = Extract<ModelDefinition, { kind: 'union' }>;
 
 export type ModelDefinitions = ModelDefinition[];

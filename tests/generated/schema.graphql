@@ -68,6 +68,8 @@ input AnswerWhereUnique {
   id: ID
 }
 
+union Bird = Duck | Eagle
+
 input CreateAnswer {
   content: String
 }
@@ -86,6 +88,14 @@ input CreateSomeObject {
 }
 
 scalar DateTime
+
+type Duck {
+  name: String
+}
+
+type Eagle {
+  name: String
+}
 
 type Mutation {
   deleteAnotherObject(where: AnotherObjectWhereUnique!, dryRun: Boolean): ID!
@@ -126,6 +136,7 @@ type Query {
   reviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
   questions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
   answers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  birds: [Bird!]!
 }
 
 type Question implements Reaction {

@@ -1,7 +1,7 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import { Models } from '../models/models';
 import { isQueriableField, isRootModel, typeToField } from '../models/utils';
-import { Field, document, enm, iface, input, object, scalar } from './utils';
+import { Field, document, enm, iface, input, object, scalar, union } from './utils';
 
 export const generateDefinitions = ({
   scalars,
@@ -11,6 +11,7 @@ export const generateDefinitions = ({
   interfaces,
   entities,
   objects,
+  unions,
 }: Models): DefinitionNode[] => {
   const definitions = [
     // Predefined types
@@ -20,6 +21,7 @@ export const generateDefinitions = ({
     ...objects.filter(({ name }) => !['Query', 'Mutation'].includes(name)).map((model) => object(model.name, model.fields)),
     ...interfaces.map(({ name, fields }) => iface(name, fields)),
     ...inputs.map((model) => input(model.name, model.fields)),
+    ...unions.map((model) => union(model.name, model.types)),
     ...objects
       .filter((model) =>
         entities.some((m) => m.creatable && m.fields.some((f) => f.creatable && f.kind === 'json' && f.type === model.name)),

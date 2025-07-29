@@ -137,6 +137,8 @@ export type AnswerWhereUnique = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type Bird = Duck | Eagle;
+
 export type CreateAnswer = {
   content?: InputMaybe<Scalars['String']['input']>;
 };
@@ -152,6 +154,16 @@ export type CreateReview = {
 
 export type CreateSomeObject = {
   xyz: Scalars['Int']['input'];
+};
+
+export type Duck = {
+  __typename: 'Duck';
+  name: Maybe<Scalars['String']['output']>;
+};
+
+export type Eagle = {
+  __typename: 'Eagle';
+  name: Maybe<Scalars['String']['output']>;
 };
 
 export type Mutation = {
@@ -285,6 +297,7 @@ export type Query = {
   anotherObjects: Array<AnotherObject>;
   answer: Answer;
   answers: Array<Answer>;
+  birds: Array<Bird>;
   manyObjects: Array<SomeObject>;
   me: Maybe<User>;
   question: Question;
