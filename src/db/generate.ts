@@ -23,8 +23,32 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
 
   writer.write(DATE_CLASS_IMPORT[dateLibrary]).blankLine();
 
+  for (const [key, value] of Object.entries(PRIMITIVE_TYPES)) {
+    writer.write(`export type ${key} = ${value};`).blankLine();
+  }
+
   for (const enm of models.enums) {
     writer.write(`export type ${enm.name} = ${enm.values.map((v) => `'${v}'`).join(' | ')};`).blankLine();
+  }
+  for (const enm of models.rawEnums) {
+    writer.write(`export type ${enm.name} = ${enm.values.map((v) => `'${v}'`).join(' | ')};`).blankLine();
+  }
+
+  for (const model of models.unions) {
+    writer.write(`export type ${model.name} = ${model.types.join(' | ')};`).blankLine();
+  }
+
+  for (const model of models.objects) {
+    writer
+      .write(`export type ${model.name} = `)
+      .inlineBlock(() => {
+        for (const field of model.fields) {
+          writer
+            .write(`'${getColumnName(field)}': ${getFieldType(field, dateLibrary)}${field.nonNull ? '' : ' | null'};`)
+            .newLine();
+        }
+      })
+      .blankLine();
   }
 
   for (const model of models.entities) {
@@ -113,15 +137,14 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
   const kind = field.kind;
   switch (kind) {
     case 'json':
-      // JSON data is stored as string
-      return 'string';
+      return field.type;
     case 'relation':
       // Relations are stored as ids
       return 'string';
     case 'enum':
       return field.type + (field.list ? '[]' : '');
     case 'custom':
-      throw new Error(`Custom fields are not in the db.`);
+      return field.type;
     case 'primitive':
     case undefined:
       if (field.type === 'DateTime') {

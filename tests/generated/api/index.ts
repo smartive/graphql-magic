@@ -140,6 +140,8 @@ export type AnswerWhereUnique = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type Bird = Duck | Eagle;
+
 export type CreateAnswer = {
   content?: InputMaybe<Scalars['String']['input']>;
 };
@@ -155,6 +157,16 @@ export type CreateReview = {
 
 export type CreateSomeObject = {
   xyz: Scalars['Int']['input'];
+};
+
+export type Duck = {
+  __typename?: 'Duck';
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+export type Eagle = {
+  __typename?: 'Eagle';
+  name?: Maybe<Scalars['String']['output']>;
 };
 
 export type Mutation = {
@@ -288,6 +300,7 @@ export type Query = {
   anotherObjects: Array<AnotherObject>;
   answer: Answer;
   answers: Array<Answer>;
+  birds: Array<Bird>;
   manyObjects: Array<SomeObject>;
   me?: Maybe<User>;
   question: Question;
@@ -909,6 +922,10 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
+/** Mapping of union types */
+export type ResolversUnionTypes<RefType extends Record<string, unknown>> = {
+  Bird: ( Duck ) | ( Eagle );
+};
 
 /** Mapping of interface types */
 export type ResolversInterfaceTypes<RefType extends Record<string, unknown>> = {
@@ -925,12 +942,15 @@ export type ResolversTypes = {
   AnswerOrderBy: AnswerOrderBy;
   AnswerWhere: AnswerWhere;
   AnswerWhereUnique: AnswerWhereUnique;
+  Bird: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['Bird']>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   CreateAnswer: CreateAnswer;
   CreateQuestion: CreateQuestion;
   CreateReview: CreateReview;
   CreateSomeObject: CreateSomeObject;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
+  Duck: ResolverTypeWrapper<Duck>;
+  Eagle: ResolverTypeWrapper<Eagle>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
@@ -978,12 +998,15 @@ export type ResolversParentTypes = {
   AnswerOrderBy: AnswerOrderBy;
   AnswerWhere: AnswerWhere;
   AnswerWhereUnique: AnswerWhereUnique;
+  Bird: ResolversUnionTypes<ResolversParentTypes>['Bird'];
   Boolean: Scalars['Boolean']['output'];
   CreateAnswer: CreateAnswer;
   CreateQuestion: CreateQuestion;
   CreateReview: CreateReview;
   CreateSomeObject: CreateSomeObject;
   DateTime: Scalars['DateTime']['output'];
+  Duck: Duck;
+  Eagle: Eagle;
   Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
@@ -1052,9 +1075,23 @@ export type AnswerResolvers<ContextType = any, ParentType extends ResolversParen
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BirdResolvers<ContextType = any, ParentType extends ResolversParentTypes['Bird'] = ResolversParentTypes['Bird']> = {
+  __resolveType: TypeResolveFn<'Duck' | 'Eagle', ParentType, ContextType>;
+};
+
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
+
+export type DuckResolvers<ContextType = any, ParentType extends ResolversParentTypes['Duck'] = ResolversParentTypes['Duck']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type EagleResolvers<ContextType = any, ParentType extends ResolversParentTypes['Eagle'] = ResolversParentTypes['Eagle']> = {
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   createAnswer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<MutationCreateAnswerArgs, 'data'>>;
@@ -1081,6 +1118,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   anotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<QueryAnotherObjectsArgs>>;
   answer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<QueryAnswerArgs, 'where'>>;
   answers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<QueryAnswersArgs>>;
+  birds?: Resolver<Array<ResolversTypes['Bird']>, ParentType, ContextType>;
   manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<QueryManyObjectsArgs>>;
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   question?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<QueryQuestionArgs, 'where'>>;
@@ -1210,7 +1248,10 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
 export type Resolvers<ContextType = any> = {
   AnotherObject?: AnotherObjectResolvers<ContextType>;
   Answer?: AnswerResolvers<ContextType>;
+  Bird?: BirdResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  Duck?: DuckResolvers<ContextType>;
+  Eagle?: EagleResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Question?: QuestionResolvers<ContextType>;
