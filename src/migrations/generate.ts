@@ -677,7 +677,7 @@ export class MigrationGenerator {
         col();
         break;
       case 'json':
-        this.writer.writeLine(`table.json('${typeToField(name)}');`);
+        col(`table.json('${typeToField(name)}')`);
         break;
       case 'custom':
         throw new Error(`Can't create a column for ${name} because it's a custom field`);
