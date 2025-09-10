@@ -7,7 +7,7 @@ import { Maybe, VariableValues } from './utils';
 
 export type Where = Record<string, Value>;
 
-export type OrderBy = Record<string, 'ASC' | 'DESC'>;
+export type OrderBy = { [key: string]: 'ASC' | 'DESC' | OrderBy };
 
 export type Args = {
   where?: Where | null;

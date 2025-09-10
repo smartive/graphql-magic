@@ -251,11 +251,11 @@ const applyOrderBy = (node: FilterNode, orderBy: OrderBy | OrderBy[], query: Kne
         tableAlias,
       };
       addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
-      applyOrderBy(subNode, value as unknown as OrderBy, query, joins);
+      applyOrderBy(subNode, value as OrderBy, query, joins);
       continue;
     }
 
     // Simple field
-    void query.orderBy(getColumn(node, key), value);
+    void query.orderBy(getColumn(node, key), value as 'ASC' | 'DESC');
   }
 };
