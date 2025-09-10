@@ -187,7 +187,7 @@ export class MigrationGenerator {
                       writer
                         .write(`await knex.batchInsert('${model.name}Revision', data.map((row) => (`)
                         .inlineBlock(() => {
-                          writer.writeLine(`id: uuid(),`);
+                          writer.writeLine(`id: randomUUID(),`);
                           writer.writeLine(`${typeToField(model.name)}Id: row.id,`);
                           this.nowUsed = true;
                           writer.writeLine(`createdAt: row.updatedAt || row.createdAt || now,`);
