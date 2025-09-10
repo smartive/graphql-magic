@@ -74,7 +74,6 @@ export const createEntity = async (
     sanitize(ctx, model, normalizedInput);
 
     await checkCanWrite(ctx, model, normalizedInput, 'CREATE');
-    await ctx.handleUploads?.(normalizedInput);
 
     await ctx.mutationHook?.({
       model,
@@ -153,7 +152,6 @@ export const updateEntity = async (
 
     if (Object.keys(normalizedInput).length > 0) {
       await checkCanWrite(ctx, model, normalizedInput, 'UPDATE');
-      await ctx.handleUploads?.(normalizedInput);
 
       await ctx.mutationHook?.({
         model,

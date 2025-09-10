@@ -12,7 +12,7 @@ export const SPECIAL_FILTERS: Record<string, string> = {
   LTE: '?? <= ?',
 };
 
-export type WhereNode = {
+export type FilterNode = {
   ctx: FullContext;
 
   rootTableAlias: string;
@@ -41,7 +41,7 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   }
 
   if (orderBy) {
-    applyOrderBy(node, orderBy, query);
+    applyOrderBy(node, orderBy, query, joins);
   }
 
   if (node.model.parent) {
@@ -59,7 +59,7 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   }
 };
 
-const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
+const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
   if (node.model.deletable) {
     if (!where) {
       where = {};
@@ -122,7 +122,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
         const targetModel = reverseRelation.targetModel;
         const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.tableAlias}__WS_${key}`;
 
-        const subWhereNode: WhereNode = {
+        const subWhereNode: FilterNode = {
           ctx: node.ctx,
           rootTableAlias,
           model: targetModel,
@@ -171,7 +171,7 @@ const applyWhere = (node: WhereNode, where: Where | undefined, ops: QueryBuilder
       const targetModel = relation.targetModel;
       const rootTableAlias = `${node.model.name}__W__${key}`;
       const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.model.name}__WS__${key}`;
-      const subNode: WhereNode = {
+      const subNode: FilterNode = {
         ctx: node.ctx,
         rootTableAlias,
         model: targetModel,
@@ -228,14 +228,32 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
       ),
   );
 
-const applyOrderBy = (node: FieldResolverNode, orderBy: OrderBy, query: Knex.QueryBuilder) => {
-  for (const vals of orderBy) {
+const applyOrderBy = (node: FilterNode, orderBy: OrderBy | OrderBy[], query: Knex.QueryBuilder, joins: Joins) => {
+  for (const vals of Array.isArray(orderBy) ? orderBy : [orderBy]) {
     const keys = Object.keys(vals);
     if (keys.length !== 1) {
       throw new UserInputError(`You need to specify exactly 1 value to order by for each orderBy entry.`);
     }
     const key = keys[0];
     const value = vals[key];
+
+    const field = node.model.getField(key);
+    if (field.kind === 'relation') {
+      const relation = node.model.getRelation(field.name);
+
+      const targetModel = relation.targetModel;
+      const rootTableAlias = `${node.model.name}__O__${key}`;
+      const tableAlias = targetModel === targetModel.rootModel ? rootTableAlias : `${node.model.name}__OS__${key}`;
+      const subNode: FilterNode = {
+        ctx: node.ctx,
+        rootTableAlias,
+        model: targetModel,
+        tableAlias,
+      };
+      addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
+      applyOrderBy(subNode, value as unknown as OrderBy, query, joins);
+      continue;
+    }
 
     // Simple field
     void query.orderBy(getColumn(node, key), value);

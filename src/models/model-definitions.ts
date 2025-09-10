@@ -151,7 +151,7 @@ export type ModelDefinition = {
             deletedAt?: Partial<DateTimeFieldDefinition>;
           };
       displayField?: string;
-      defaultOrderBy?: OrderBy;
+      defaultOrderBy?: OrderBy[];
       fields: EntityFieldDefinition[];
 
       // temporary fields for the generation of migrations

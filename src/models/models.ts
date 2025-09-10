@@ -345,7 +345,7 @@ export class EntityModel extends Model {
         deletedAt?: Partial<DateTimeFieldDefinition>;
       };
   displayField?: string;
-  defaultOrderBy?: OrderBy;
+  defaultOrderBy?: OrderBy[];
   fields: EntityField[];
 
   // temporary fields for the generation of migrations

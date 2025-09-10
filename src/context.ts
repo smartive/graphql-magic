@@ -2,7 +2,7 @@ import { DocumentNode, GraphQLResolveInfo } from 'graphql';
 import { IncomingMessage } from 'http';
 import { Knex } from 'knex';
 import { Models } from './models/models';
-import { Entity, MutationHook } from './models/mutation-hook';
+import { MutationHook } from './models/mutation-hook';
 import { Permissions } from './permissions/generate';
 import { AliasGenerator } from './resolvers/utils';
 import { AnyDateType } from './utils';
@@ -22,7 +22,6 @@ export type Context<DateType extends AnyDateType = AnyDateType> = {
   models: Models;
   permissions: Permissions;
   mutationHook?: MutationHook<DateType>;
-  handleUploads?: (data: Entity) => Promise<void>;
 };
 
 export type FullContext = Context & {

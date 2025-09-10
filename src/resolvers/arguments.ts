@@ -7,7 +7,7 @@ import { Maybe, VariableValues } from './utils';
 
 export type Where = Record<string, Value>;
 
-export type OrderBy = Record<string, 'ASC' | 'DESC'>[];
+export type OrderBy = Record<string, 'ASC' | 'DESC'>;
 
 export type Args = {
   where?: Where | null;
@@ -22,7 +22,7 @@ export type ListArgs = {
 export type NormalizedArguments = {
   limit?: number;
   offset?: number;
-  orderBy?: OrderBy;
+  orderBy?: OrderBy[];
   where?: Where;
   search?: string;
   mine?: boolean;
