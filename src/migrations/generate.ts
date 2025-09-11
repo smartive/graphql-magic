@@ -288,7 +288,7 @@ export class MigrationGenerator {
 
     writer.writeLine(`import { Knex } from 'knex';`);
     if (this.uuidUsed) {
-      writer.writeLine(`import { v4 as uuid } from 'uuid';`);
+      writer.writeLine(`import { randomUUID } from 'crypto';`);
     }
     if (this.nowUsed) {
       writer.writeLine(`import { date } from '../src/utils/dates';`);
