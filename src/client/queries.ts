@@ -1,4 +1,4 @@
-import { ManyToManyRelation, ReverseRelation } from '..';
+import { ManyToManyRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
 import {
   and,
@@ -157,34 +157,6 @@ export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'de
 export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
-
-export const getEntityListQuery = (
-  model: EntityModel,
-  role: string,
-  relations?: string[],
-  fragment = '',
-  reverseRelation?: ReverseRelation,
-) => `query ${model.plural}List(
-  ${reverseRelation ? '$id: ID!,' : ''}
-  $limit: Int!,
-  $where: ${model.name}Where!,
-  ${model.fields.some(({ searchable }) => searchable) ? '$search: String,' : ''}
-) {
-  ${reverseRelation ? `root: ${typeToField(reverseRelation.sourceModel.name)}(where: { id: $id }) {` : ''}
-    data: ${reverseRelation ? reverseRelation.name : model.pluralField}(limit: $limit, where: $where, ${
-      model.fields.some(({ searchable }) => searchable) ? ', search: $search' : ''
-    }) {
-      ${displayField(model)}
-      ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-      ${fragment}
-      ${queryRelations(
-        model.models,
-        model.relations.filter((relation) => !relations || relations.includes(relation.name)),
-      )}
-      ${fragment}
-    }
-  ${reverseRelation ? '}' : ''}
-}`;
 
 export const getEntityQuery = (model: EntityModel, role: string, relations?: string[], fragment = '') => `query Get${
   model.name

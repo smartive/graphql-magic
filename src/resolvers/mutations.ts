@@ -1,5 +1,5 @@
+import { randomUUID } from 'crypto';
 import { GraphQLResolveInfo } from 'graphql';
-import { v4 as uuid } from 'uuid';
 import { Context } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
@@ -59,7 +59,7 @@ export const createEntity = async (
     const model = ctx.models.getModel(modelName, 'entity');
     const normalizedInput = { ...input };
     if (!normalizedInput.id) {
-      normalizedInput.id = uuid();
+      normalizedInput.id = randomUUID();
     }
     const id = normalizedInput.id as string;
     if (!normalizedInput.createdAt) {
@@ -74,7 +74,6 @@ export const createEntity = async (
     sanitize(ctx, model, normalizedInput);
 
     await checkCanWrite(ctx, model, normalizedInput, 'CREATE');
-    await ctx.handleUploads?.(normalizedInput);
 
     await ctx.mutationHook?.({
       model,
@@ -153,7 +152,6 @@ export const updateEntity = async (
 
     if (Object.keys(normalizedInput).length > 0) {
       await checkCanWrite(ctx, model, normalizedInput, 'UPDATE');
-      await ctx.handleUploads?.(normalizedInput);
 
       await ctx.mutationHook?.({
         model,
@@ -544,7 +542,7 @@ export const restoreEntity = async (modelName: string, id: string, ctx: Mutation
 
 export const createRevision = async (model: EntityModel, data: Entity, ctx: MutationContext) => {
   if (model.updatable) {
-    const revisionId = uuid();
+    const revisionId = randomUUID();
     const rootRevisionData: Entity = {
       id: revisionId,
       [`${typeToField(model.parent || model.name)}Id`]: data.id,

@@ -73,15 +73,7 @@ Fields generally have the following options:
 
 ### `kind`
 
-Fields can have various kinds, which affect other available options. Available kinds:
-
-- `undefined` or `'primitive'`
-- `'enum'`
-- `'custom'`
-- `'json'`
-- `'relation'`
-
-For more details, see section on [kinds](#kinds) below.
+Fields can have various kinds, which affect other available options. For more details, see section on [kinds](#kinds) above.
 
 ### `type`
 

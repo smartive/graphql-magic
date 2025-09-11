@@ -120,7 +120,9 @@ export const generateDefinitions = ({
           ? [
               input(
                 `${model.name}OrderBy`,
-                model.fields.filter(({ orderable }) => orderable).map(({ name }) => ({ name, type: 'Order' })),
+                model.fields
+                  .filter(({ orderable }) => orderable)
+                  .map(({ kind, name, type }) => ({ name, type: kind === 'relation' ? `${type}OrderBy` : 'Order' })),
               ),
             ]
           : []),

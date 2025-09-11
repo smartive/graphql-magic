@@ -9,7 +9,7 @@ export type Trigger = 'mutation' | 'direct-call' | 'cascade' | 'set-null';
 
 export type MutationContext<DateType extends AnyDateType = AnyDateType> = Pick<
   Context<DateType>,
-  'knex' | 'now' | 'user' | 'timeZone' | 'mutationHook' | 'handleUploads' | 'models' | 'permissions'
+  'knex' | 'now' | 'user' | 'timeZone' | 'mutationHook' | 'models' | 'permissions'
 >;
 
 export type MutationHook<DateType extends AnyDateType = AnyDateType> = (args: {
