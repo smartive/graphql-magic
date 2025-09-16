@@ -114,6 +114,10 @@ const applySubQueries = async (
   entries: Entry[],
   parentVerifiedPermissionStacks: VerifiedPermissionStacks,
 ): Promise<void> => {
+  if (node.isAggregate) {
+    return;
+  }
+
   if (!entries.length) {
     return;
   }

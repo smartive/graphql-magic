@@ -24,10 +24,6 @@ Start the required dependencies such as a Postgres database:
 npm run deps
 ```
 
-```
-npm bootstrap
-```
-
 Bootstrap the application by generating all the models, migrations and graphql schema:
 
 ```

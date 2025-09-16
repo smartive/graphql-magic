@@ -19,6 +19,11 @@ export const getResolvers = (models: Models) => {
         .map((model) => ({
           [model.pluralField]: queryResolver,
         })),
+      ...models.entities
+        .filter(({ aggregatable }) => aggregatable)
+        .map((model) => ({
+          [`${model.pluralField}_AGGREGATE`]: queryResolver,
+        })),
     ]),
   };
   const mutations = [

@@ -7,6 +7,7 @@ import { isRelation } from '.';
 import {
   CustomFieldDefinition,
   EnumFieldDefinition,
+  Field,
   FloatFieldDefinition,
   IDFieldDefinition,
   InputModelDefinition,
@@ -334,7 +335,7 @@ export class EntityModel extends Model {
   parent?: string;
   interfaces?: string[];
   queriable?: boolean;
-  listQueriable?: boolean;
+  listQueriable?: boolean | { args?: readonly Field[] };
   creatable?: boolean | { createdBy?: Partial<RelationFieldDefinition>; createdAt?: Partial<DateTimeFieldDefinition> };
   updatable?: boolean | { updatedBy?: Partial<RelationFieldDefinition>; updatedAt?: Partial<DateTimeFieldDefinition> };
   deletable?:
@@ -344,6 +345,7 @@ export class EntityModel extends Model {
         deletedBy?: Partial<RelationFieldDefinition>;
         deletedAt?: Partial<DateTimeFieldDefinition>;
       };
+  aggregatable?: boolean;
   displayField?: string;
   defaultOrderBy?: OrderBy[];
   fields: EntityField[];

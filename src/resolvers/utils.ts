@@ -82,9 +82,11 @@ export function hydrate<T extends Entry>(
         const part = allParts[i];
 
         if (!current[part]) {
-          const idField = [node.ctx.aliases.getShort(allParts.slice(0, i + 1).join('__')), ID_ALIAS].join('__');
-          if (!entry[idField]) {
-            continue outer;
+          if (!node.isAggregate) {
+            const idField = [node.ctx.aliases.getShort(allParts.slice(0, i + 1).join('__')), ID_ALIAS].join('__');
+            if (!entry[idField]) {
+              continue outer;
+            }
           }
           current[part] = {};
         }

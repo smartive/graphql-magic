@@ -140,7 +140,7 @@ export type ModelDefinition = {
       parent?: string;
       interfaces?: readonly string[];
       queriable?: boolean;
-      listQueriable?: boolean;
+      listQueriable?: boolean | { args?: readonly Field[] };
       creatable?: boolean | { createdBy?: Partial<RelationFieldDefinition>; createdAt?: Partial<DateTimeFieldDefinition> };
       updatable?: boolean | { updatedBy?: Partial<RelationFieldDefinition>; updatedAt?: Partial<DateTimeFieldDefinition> };
       deletable?:
@@ -150,6 +150,7 @@ export type ModelDefinition = {
             deletedBy?: Partial<RelationFieldDefinition>;
             deletedAt?: Partial<DateTimeFieldDefinition>;
           };
+      aggregatable?: boolean;
       displayField?: string;
       defaultOrderBy?: OrderBy[];
       fields: EntityFieldDefinition[];

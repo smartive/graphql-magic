@@ -1,4 +1,5 @@
-import { AnyDateType, Context } from '..';
+import { Knex } from 'knex';
+import { AnyDateType, Context, NormalizedArguments } from '..';
 import { EntityModel } from './models';
 
 export type Entity = Record<string, unknown>;
@@ -19,4 +20,11 @@ export type MutationHook<DateType extends AnyDateType = AnyDateType> = (args: {
   when: 'before' | 'after';
   data: { prev: Entity; input: Entity; normalizedInput: Entity; next: Entity };
   ctx: MutationContext<DateType>;
+}) => Promise<void> | void;
+
+export type QueryHook<DateType extends AnyDateType = AnyDateType> = (args: {
+  model: EntityModel;
+  query: Knex.QueryBuilder;
+  args: NormalizedArguments;
+  ctx: Context<DateType>;
 }) => Promise<void> | void;

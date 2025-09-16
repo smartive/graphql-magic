@@ -43,46 +43,6 @@ export const fieldIsSearchable = (model: EntityModel, fieldName: string) => {
   return displayField.searchable;
 };
 
-export const getSelectEntityRelationsQuery = (model: EntityModel, relationNames: string[]) => {
-  const relations = relationNames.map((name) => model.getRelation(name));
-
-  return (
-    !!relations.length &&
-    `query Select${model.name}Relations(${relations
-      .map(
-        (relation) =>
-          `$${relation.name}Where: ${relation.targetModel.name}Where, $${relation.name}Limit: Int${
-            fieldIsSearchable(model, relation.name) ? `, $${relation.name}Search: String` : ''
-          }`,
-      )
-      .join(', ')}) {
-      ${relations
-        .map((relation) => {
-          let filters = '';
-
-          if (relation.targetModel.displayField) {
-            const displayField = relation.targetModel.fieldsByName[relation.targetModel.displayField];
-            if ('orderable' in displayField && displayField.orderable) {
-              filters += `, orderBy: [{ ${relation.targetModel.displayField}: ASC }]`;
-            }
-          }
-
-          if (fieldIsSearchable(model, relation.name)) {
-            filters += `, search: $${relation.name}Search`;
-          }
-
-          return `${relation.name}: ${relation.targetModel.pluralField}(where: $${relation.name}Where, limit: $${
-            relation.name
-          }Limit${filters}) {
-            id
-            display: ${relation.targetModel.displayField || 'id'}
-          }`;
-        })
-        .join(' ')}
-    }`
-  );
-};
-
 export const getManyToManyRelationsQuery = (
   model: Model,
   action: 'create' | 'update',

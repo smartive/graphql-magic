@@ -1,10 +1,42 @@
 import { DateTime } from 'luxon';
 
+export type ID = string;
+
+export type Boolean = boolean;
+
+export type Upload = string;
+
+export type Int = number;
+
+export type Float = number;
+
+export type String = string;
+
 export type SomeEnum = 'A' | 'B' | 'C';
 
 export type Role = 'ADMIN' | 'USER';
 
 export type ReactionType = 'Review' | 'Question' | 'Answer';
+
+export type Order = 'ASC' | 'DESC';
+
+export type Bird = Duck | Eagle;
+
+export type SomeRawObject = {
+  'field': string | null;
+}
+
+export type Duck = {
+  'name': string | null;
+}
+
+export type Eagle = {
+  'name': string | null;
+}
+
+export type Query = {
+  'birds': Bird;
+}
 
 export type User = {
   'id': string;
