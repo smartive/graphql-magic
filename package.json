@@ -66,11 +66,11 @@
   "devDependencies": {
     "@smartive/eslint-config": "6.5.0",
     "@smartive/prettier-config": "3.1.2",
-    "@types/jest": "29.5.14",
+    "@types/jest": "30.0.0",
     "@types/lodash": "4.17.20",
     "@types/luxon": "3.7.1",
     "@types/pg": "8.15.5",
-    "@types/uuid": "10.0.0",
+    "@types/uuid": "11.0.0",
     "create-ts-index": "1.14.0",
     "del-cli": "6.0.0",
     "esbuild": "0.25.9",
