@@ -167,6 +167,10 @@ export const generateDefinitions = ({
             ),
           );
         }
+
+        if (model.aggregatable) {
+          types.push(object(`${model.name}Aggregate`, [{ name: 'COUNT', type: 'Int' }]));
+        }
       }
 
       return types;
@@ -203,6 +207,20 @@ export const generateDefinitions = ({
             ...(model.fields.some(({ orderable }) => orderable)
               ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
               : []),
+            { name: 'limit', type: 'Int' },
+            { name: 'offset', type: 'Int' },
+            ...((model.listQueriable && model.listQueriable !== true && model.listQueriable.args) || []),
+          ],
+        })),
+      ...entities
+        .filter(({ aggregatable }) => aggregatable)
+        .map((model) => ({
+          name: `${model.pluralField}_AGGREGATE`,
+          type: `${model.name}Aggregate`,
+          nonNull: true,
+          args: [
+            { name: 'where', type: `${model.name}Where` },
+            ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             { name: 'limit', type: 'Int' },
             { name: 'offset', type: 'Int' },
           ],

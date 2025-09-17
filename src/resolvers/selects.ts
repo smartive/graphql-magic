@@ -10,10 +10,23 @@ import {
   getJoins,
   getNameOrAlias,
   getSimpleFields,
+  isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
+  if (node.isAggregate) {
+    void query.select(
+      node.selectionSet
+        .filter(isFieldNode)
+        .map((field) =>
+          node.ctx.knex.raw(`COUNT(*) as ??`, [`${node.ctx.aliases.getShort(node.resultAlias)}__${getNameOrAlias(field)}`]),
+        ),
+    );
+
+    return;
+  }
+
   // Simple field selects
   void query.select(
     ...[

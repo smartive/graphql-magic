@@ -21,16 +21,21 @@ export type FilterNode = {
   tableAlias: string;
 };
 
-export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
+export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   const normalizedArguments = normalizeArguments(node);
-  if (!normalizedArguments.orderBy) {
-    if (node.model.defaultOrderBy) {
-      normalizedArguments.orderBy = node.model.defaultOrderBy;
-    } else if (node.model.creatable) {
-      normalizedArguments.orderBy = [{ createdAt: 'DESC' }];
+  // No need for default order by in aggregates
+  if (!node.isAggregate) {
+    if (!normalizedArguments.orderBy) {
+      if (node.model.defaultOrderBy) {
+        normalizedArguments.orderBy = node.model.defaultOrderBy;
+      } else if (node.model.creatable) {
+        normalizedArguments.orderBy = [{ createdAt: 'DESC' }];
+      }
     }
   }
   const { limit, offset, orderBy, where, search } = normalizedArguments;
+
+  await node.ctx.queryHook?.({ model: node.model, query, args: normalizedArguments, ctx: node.ctx });
 
   if (limit) {
     query.limit(limit);

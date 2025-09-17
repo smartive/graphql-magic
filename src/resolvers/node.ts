@@ -38,6 +38,8 @@ export type ResolverNode = {
   typeDefinition: ObjectTypeDefinitionNode;
 
   selectionSet: readonly SelectionNode[];
+
+  isAggregate: boolean;
 };
 
 export type FieldResolverNode = ResolverNode & {
@@ -86,6 +88,7 @@ export const getResolverNode = ({
     baseModel: ctx.models.entities.find((model) => model.name === baseTypeDefinition.name.value),
     typeDefinition: getType(ctx.info.schema, typeName),
     selectionSet: get(node.selectionSet, 'selections'),
+    isAggregate: false,
   };
 };
 
@@ -102,7 +105,9 @@ export const getRootFieldNode = ({
   const fieldDefinition = summonByKey(baseTypeDefinition.fields || [], 'name.value', fieldName);
 
   const typeName = getTypeName(fieldDefinition.type);
-  const model = ctx.models.getModel(typeName, 'entity');
+  const isAggregate = typeName.endsWith('Aggregate');
+  const modelName = typeName.replace('Aggregate', '');
+  const model = ctx.models.getModel(modelName, 'entity');
   const rootModel = model.parent ? ctx.models.getModel(model.parent, 'entity') : model;
 
   return {
@@ -122,6 +127,7 @@ export const getRootFieldNode = ({
     field: node,
     fieldDefinition,
     isList: isListType(fieldDefinition.type),
+    isAggregate,
   };
 };
 
@@ -215,6 +221,7 @@ export const getJoins = (node: ResolverNode, toMany: boolean) => {
       relation,
       foreignKey: relation.field.foreignKey,
       isList: isListType(fieldDefinition.type),
+      isAggregate: false,
     });
   }
 
