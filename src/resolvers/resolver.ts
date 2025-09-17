@@ -81,7 +81,7 @@ const buildQuery = async (
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
 
   const joins: Joins = [];
-  applyFilters(node, query, joins);
+  await applyFilters(node, query, joins);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 

@@ -21,7 +21,7 @@ export type FilterNode = {
   tableAlias: string;
 };
 
-export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
+export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   const normalizedArguments = normalizeArguments(node);
   // No need for default order by in aggregates
   if (!node.isAggregate) {
@@ -35,7 +35,7 @@ export const applyFilters = (node: FieldResolverNode, query: Knex.QueryBuilder, 
   }
   const { limit, offset, orderBy, where, search } = normalizedArguments;
 
-  void node.ctx.queryHook?.({ model: node.model, query, args: normalizedArguments, ctx: node.ctx });
+  await node.ctx.queryHook?.({ model: node.model, query, args: normalizedArguments, ctx: node.ctx });
 
   if (limit) {
     query.limit(limit);
