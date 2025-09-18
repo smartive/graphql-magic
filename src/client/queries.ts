@@ -1,6 +1,6 @@
 import { ManyToManyRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
-import { and, isQueriableBy, isSimpleField, typeToField } from '../models/utils';
+import { typeToField } from '../models/utils';
 
 export type RelationConstraints = Record<string, (source: any) => any>;
 
@@ -55,14 +55,6 @@ export const getManyToManyRelationsQuery = (
 export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
-
-export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}($where: ${
-  model.name
-}Where!, $orderBy: [${model.name}OrderBy!]) {
-  data: ${model.pluralField}(limit: 1, where: $where, orderBy: $orderBy) {
-    ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-  }
-}`;
 
 export const queryRelations = (models: Models, relations: Relation[]) =>
   relations
