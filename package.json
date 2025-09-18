@@ -71,6 +71,7 @@
     "@types/luxon": "3.7.1",
     "@types/pg": "8.15.5",
     "@types/uuid": "10.0.0",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
     "create-ts-index": "1.14.0",
     "del-cli": "6.0.0",
     "esbuild": "0.25.9",
