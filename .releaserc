@@ -10,24 +10,13 @@
     [
       "@semantic-release/commit-analyzer",
       {
-        "preset": "angular",
-        "releaseRules": [
-          {
-            "type": "break",
-            "release": "major"
-          }
-        ]
+        "preset": "conventionalcommits"
       }
     ],
     [
       "@semantic-release/release-notes-generator",
       {
-        "preset": "angular",
-        "parserOpts": {
-          "noteKeywords": [
-            "break:"
-          ]
-        }
+        "preset": "conventionalcommits"
       }
     ],
     "@semantic-release/changelog",
