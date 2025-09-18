@@ -52,37 +52,6 @@ export const getManyToManyRelationsQuery = (
               .join(' ')}
           }`);
 
-export type MutationQuery = {
-  mutated: {
-    id: string;
-  };
-};
-
-export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'delete') =>
-  action === 'create'
-    ? `
-        mutation Create${model.name} ($data: Create${model.name}!) {
-          mutated: create${model.name}(data: $data) {
-            id
-          }
-        }
-        `
-    : action === 'update'
-      ? `
-        mutation Update${model.name} ($id: ID!, $data: Update${model.name}!) {
-          mutated: update${model.name}(where: { id: $id } data: $data) {
-            id
-          }
-        }
-        `
-      : `
-        mutation Delete${model.name} ($id: ID!) {
-          mutated: delete${model.name}(where: { id: $id }) {
-            id
-          }
-        }
-        `;
-
 export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
