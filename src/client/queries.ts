@@ -6,7 +6,6 @@ import {
   isQueriableBy,
   isRelation,
   isSimpleField,
-  isToOneRelation,
   isUpdatableBy,
   not,
   typeToField,
@@ -117,27 +116,6 @@ export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'de
 export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
-
-export const getEntityQuery = (model: EntityModel, role: string, relations?: string[], fragment = '') => `query Get${
-  model.name
-}Entity ($id: ID!) {
-  data: ${typeToField(model.name)}(where: { id: $id }) {
-    ${displayField(model)}
-    ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-    ${queryRelations(
-      model.models,
-      model.relations.filter((relation) => !relations || relations.includes(relation.name)),
-    )}
-    ${queryRelations(
-      model.models,
-      model.reverseRelations.filter(
-        (reverseRelation) =>
-          isToOneRelation(reverseRelation.field) && (!relations || relations.includes(reverseRelation.name)),
-      ),
-    )}
-    ${fragment}
-  }
-}`;
 
 export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}($where: ${
   model.name
