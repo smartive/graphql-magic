@@ -1,37 +1,6 @@
 import { ManyToManyRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
-import {
-  and,
-  getActionableRelations,
-  isQueriableBy,
-  isRelation,
-  isSimpleField,
-  isToOneRelation,
-  isUpdatableBy,
-  not,
-  typeToField,
-} from '../models/utils';
-
-export const getUpdateEntityQuery = (
-  model: EntityModel,
-  role: string,
-  fields?: string[],
-  additionalFields = '',
-) => `query Update${model.name}Fields ($id: ID!) {
-  data: ${typeToField(model.name)}(where: { id: $id }) {
-    id
-    ${model.fields
-      .filter(({ name }) => !fields || fields.includes(name))
-      .filter(not(isRelation))
-      .filter(isUpdatableBy(role))
-      .map(({ name }) => name)
-      .join(' ')}
-    ${getActionableRelations(model, 'update')
-      .filter((name) => !fields || fields.includes(name))
-      .map((name) => `${name} { id, display: ${model.getRelation(name).targetModel.displayField || 'id'} }`)}
-    ${additionalFields}
-  }
-}`;
+import { typeToField } from '../models/utils';
 
 export type RelationConstraints = Record<string, (source: any) => any>;
 
@@ -83,69 +52,9 @@ export const getManyToManyRelationsQuery = (
               .join(' ')}
           }`);
 
-export type MutationQuery = {
-  mutated: {
-    id: string;
-  };
-};
-
-export const getMutationQuery = (model: Model, action: 'create' | 'update' | 'delete') =>
-  action === 'create'
-    ? `
-        mutation Create${model.name} ($data: Create${model.name}!) {
-          mutated: create${model.name}(data: $data) {
-            id
-          }
-        }
-        `
-    : action === 'update'
-      ? `
-        mutation Update${model.name} ($id: ID!, $data: Update${model.name}!) {
-          mutated: update${model.name}(where: { id: $id } data: $data) {
-            id
-          }
-        }
-        `
-      : `
-        mutation Delete${model.name} ($id: ID!) {
-          mutated: delete${model.name}(where: { id: $id }) {
-            id
-          }
-        }
-        `;
-
 export const displayField = (model: EntityModel) => `
 ${model.displayField ? `display: ${model.displayField}` : ''}
 `;
-
-export const getEntityQuery = (model: EntityModel, role: string, relations?: string[], fragment = '') => `query Get${
-  model.name
-}Entity ($id: ID!) {
-  data: ${typeToField(model.name)}(where: { id: $id }) {
-    ${displayField(model)}
-    ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-    ${queryRelations(
-      model.models,
-      model.relations.filter((relation) => !relations || relations.includes(relation.name)),
-    )}
-    ${queryRelations(
-      model.models,
-      model.reverseRelations.filter(
-        (reverseRelation) =>
-          isToOneRelation(reverseRelation.field) && (!relations || relations.includes(reverseRelation.name)),
-      ),
-    )}
-    ${fragment}
-  }
-}`;
-
-export const getFindEntityQuery = (model: EntityModel, role: string) => `query Find${model.name}($where: ${
-  model.name
-}Where!, $orderBy: [${model.name}OrderBy!]) {
-  data: ${model.pluralField}(limit: 1, where: $where, orderBy: $orderBy) {
-    ${model.fields.filter(and(isSimpleField, isQueriableBy(role))).map(({ name }) => name)}
-  }
-}`;
 
 export const queryRelations = (models: Models, relations: Relation[]) =>
   relations

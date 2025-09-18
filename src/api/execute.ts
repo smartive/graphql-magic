@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { IResolvers } from '@graphql-tools/utils';
-import { GraphQLResolveInfo, Source, execute as graphqlExecute, parse, validate } from 'graphql';
+import { GraphQLResolveInfo, Source, execute as graphqlExecute, parse, specifiedRules, validate } from 'graphql';
 import merge from 'lodash/merge';
 import { Context, generate, get, getResolvers } from '..';
 import { noIntrospection } from '../utils/rules';
@@ -29,8 +29,7 @@ export const execute = async ({
   const validationErrors = validate(
     schema,
     parsedDocument,
-    // TODO: reintroduce. introspection ? specifiedRules : [...specifiedRules, noIntrospection],
-    introspection ? [] : [noIntrospection],
+    introspection ? specifiedRules : [...specifiedRules, noIntrospection],
   );
 
   if (validationErrors.length > 0) {
