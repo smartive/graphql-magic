@@ -1,36 +1,6 @@
 import { ManyToManyRelation } from '..';
 import { EntityModel, Model, Models, Relation } from '../models/models';
-import {
-  and,
-  getActionableRelations,
-  isQueriableBy,
-  isRelation,
-  isSimpleField,
-  isUpdatableBy,
-  not,
-  typeToField,
-} from '../models/utils';
-
-export const getUpdateEntityQuery = (
-  model: EntityModel,
-  role: string,
-  fields?: string[],
-  additionalFields = '',
-) => `query Update${model.name}Fields ($id: ID!) {
-  data: ${typeToField(model.name)}(where: { id: $id }) {
-    id
-    ${model.fields
-      .filter(({ name }) => !fields || fields.includes(name))
-      .filter(not(isRelation))
-      .filter(isUpdatableBy(role))
-      .map(({ name }) => name)
-      .join(' ')}
-    ${getActionableRelations(model, 'update')
-      .filter((name) => !fields || fields.includes(name))
-      .map((name) => `${name} { id, display: ${model.getRelation(name).targetModel.displayField || 'id'} }`)}
-    ${additionalFields}
-  }
-}`;
+import { and, isQueriableBy, isSimpleField, typeToField } from '../models/utils';
 
 export type RelationConstraints = Record<string, (source: any) => any>;
 
