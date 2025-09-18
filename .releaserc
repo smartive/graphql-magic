@@ -25,15 +25,7 @@
         "preset": "angular",
         "parserOpts": {
           "noteKeywords": [
-            "BREAKING CHANGE",
-            "BREAKING CHANGES",
-            "BREAKING"
-          ],
-          "headerPattern": "^(\\w*)(?:\\((.*)\\))?!?: (.*)$",
-          "headerCorrespondence": [
-            "type",
-            "scope",
-            "subject"
+            "break:"
           ]
         }
       }
