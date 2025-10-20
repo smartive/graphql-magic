@@ -25,7 +25,9 @@ export const execute = async ({
   let resolvers = merge(getResolvers(ctx.models), additionalResolvers);
   if (resolverWrapper) {
     resolvers = mapValues(resolvers, (type) =>
-      mapValues(type, (value) => (isFunction(value) ? resolverWrapper(value) : value)),
+      Object.getPrototypeOf(type) === Object.prototype
+        ? mapValues(type, (resolver) => (isFunction(resolver) ? resolverWrapper(resolver) : resolver))
+        : type,
     );
   }
 
