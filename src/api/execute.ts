@@ -1,6 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { IResolvers } from '@graphql-tools/utils';
+import { IFieldResolver, IResolvers } from '@graphql-tools/utils';
 import { GraphQLResolveInfo, Source, execute as graphqlExecute, parse, specifiedRules, validate } from 'graphql';
+import isFunction from 'lodash/isFunction';
+import mapValues from 'lodash/mapValues';
 import merge from 'lodash/merge';
 import { Context, generate, get, getResolvers } from '..';
 import { noIntrospection } from '../utils/rules';
@@ -9,19 +11,29 @@ export const execute = async ({
   additionalResolvers,
   body,
   introspection = false,
+  resolverWrapper,
   ...ctx
 }: {
   additionalResolvers?: IResolvers<any, any>;
   introspection?: boolean;
   body: any;
+  resolverWrapper?: (
+    resolver: IFieldResolver<unknown, unknown, unknown, unknown>,
+  ) => IFieldResolver<unknown, unknown, unknown, unknown>;
 } & Omit<Context, 'document'>) => {
   const document = generate(ctx.models);
-
-  const generatedResolvers = getResolvers(ctx.models);
+  let resolvers = merge(getResolvers(ctx.models), additionalResolvers);
+  if (resolverWrapper) {
+    resolvers = mapValues(resolvers, (type) =>
+      Object.getPrototypeOf(type) === Object.prototype
+        ? mapValues(type, (resolver) => (isFunction(resolver) ? resolverWrapper(resolver) : resolver))
+        : type,
+    );
+  }
 
   const schema = makeExecutableSchema({
     typeDefs: document,
-    resolvers: merge(generatedResolvers, additionalResolvers),
+    resolvers,
   });
 
   const parsedDocument = parse(new Source(body.query, 'GraphQL request'));
