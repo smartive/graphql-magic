@@ -137,7 +137,7 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
   const kind = field.kind;
   switch (kind) {
     case 'json':
-      return field.type;
+      return field.type + (field.list ? '[]' : '');
     case 'relation':
       // Relations are stored as ids
       return 'string';
