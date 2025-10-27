@@ -88,10 +88,13 @@ export function hydrate<T extends Entry>(
               continue outer;
             }
           }
-          current[part] = {};
+          current[part] = {
+            __PARENT: current,
+          };
         }
         current = current[part];
       }
+
       current[it(fieldName)] = value;
     }
 
