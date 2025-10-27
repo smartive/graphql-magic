@@ -155,7 +155,7 @@ const applySubQueries = async (
     for (const child of children) {
       const childClone = cloneDeep(child);
       for (const entry of entriesById[child[foreignKey] as string]) {
-        childClone.__PARENT = entry;
+        childClone.PARENT = entry;
         if (isList) {
           (entry[fieldName] as Entry[]).push(childClone);
         } else {

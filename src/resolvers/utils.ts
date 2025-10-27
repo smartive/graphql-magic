@@ -89,7 +89,7 @@ export function hydrate<T extends Entry>(
             }
           }
           current[part] = {
-            __PARENT: current,
+            PARENT: current,
           };
         }
         current = current[part];
