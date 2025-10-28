@@ -36,8 +36,7 @@ export const generateGraphqlClientTypes = async () => {
     config: {
       preResolveTypes: true, // Simplifies the generated types
       namingConvention: 'keep', // Keeps naming as-is
-      nonOptionalTypename: true, // Forces `__typename` on all selection sets
-      skipTypeNameForRoot: true, // Don't generate __typename for root types
+      skipTypename: true, // Don't generate __typename
       avoidOptionals: {
         // Avoids optionals on the level of the field
         field: true,
