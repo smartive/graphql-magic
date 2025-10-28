@@ -153,8 +153,8 @@ const applySubQueries = async (
     const children = hydrate(subNode, rawChildren);
 
     for (const child of children) {
-      const childClone = cloneDeep(child);
       for (const entry of entriesById[child[foreignKey] as string]) {
+        const childClone = cloneDeep(child);
         childClone.PARENT = entry;
         if (isList) {
           (entry[fieldName] as Entry[]).push(childClone);
