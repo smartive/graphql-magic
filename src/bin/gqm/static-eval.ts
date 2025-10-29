@@ -208,6 +208,7 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       [SyntaxKind.AmpersandAmpersandToken]: (left: unknown, right: () => unknown) => left && right(),
       [SyntaxKind.EqualsEqualsToken]: (left: unknown, right: () => unknown) => left == right(),
       [SyntaxKind.ExclamationEqualsToken]: (left: unknown, right: () => unknown) => left != right(),
+      [SyntaxKind.QuestionQuestionToken]: (left: unknown, right: () => unknown) => left ?? right(),
     };
     if (node.getOperatorToken().getKind() in mapping) {
       return mapping[node.getOperatorToken().getKind()](staticEval(node.getLeft(), context), () =>
