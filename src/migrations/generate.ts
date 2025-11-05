@@ -159,13 +159,34 @@ export class MigrationGenerator {
           );
 
           // Update fields
-          const existingFields = model.fields.filter(({ name, kind, nonNull }) => {
-            const col = this.getColumn(model.name, kind === 'relation' ? `${name}Id` : name);
+          const existingFields = model.fields.filter((field) => {
+            const col = this.getColumn(model.name, field.kind === 'relation' ? `${field.name}Id` : field.name);
             if (!col) {
               return false;
             }
 
-            return (!nonNull && !col.is_nullable) || (nonNull && col.is_nullable);
+            if ((!field.nonNull && !col.is_nullable) || (field.nonNull && col.is_nullable)) {
+              return true;
+            }
+
+            if (!field.kind || field.kind === 'primitive') {
+              if (field.type === 'Int') {
+                if (col.data_type !== 'integer') {
+                  return true;
+                }
+              }
+              if (field.type === 'Float') {
+                if (field.double) {
+                  if (col.data_type !== 'double precision') {
+                    return true;
+                  }
+                } else if (col.data_type !== 'numeric') {
+                  return true;
+                }
+              }
+            }
+
+            return false;
           });
           this.updateFields(model, existingFields, up, down);
         }
