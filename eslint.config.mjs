@@ -21,7 +21,7 @@ export default [
             "no-constant-binary-expression": "error",
 
             "no-console": ["error", {
-                allow: ["info", "warn", "error", "trace", "time", "timeEnd"],
+                allow: ["info", "warn", "error", "trace", "time", "timeEnd", "debug"],
             }],
 
             'no-restricted-imports': [
