@@ -31,6 +31,7 @@ export class MigrationGenerator {
   private columns: Record<string, Column[]> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
+  public needsMigration = false;
 
   constructor(
     knex: Knex,
@@ -159,35 +160,27 @@ export class MigrationGenerator {
           );
 
           // Update fields
-          const existingFields = model.fields.filter((field) => {
+          const rawExistingFields = model.fields.filter((field) => {
+            if (!field.generateAs) {
+              return false;
+            }
+
             const col = this.getColumn(model.name, field.kind === 'relation' ? `${field.name}Id` : field.name);
             if (!col) {
               return false;
             }
 
-            if ((!field.nonNull && !col.is_nullable) || (field.nonNull && col.is_nullable)) {
+            if (col.generation_expression !== field.generateAs) {
               return true;
             }
 
-            if (!field.kind || field.kind === 'primitive') {
-              if (field.type === 'Int') {
-                if (col.data_type !== 'integer') {
-                  return true;
-                }
-              }
-              if (field.type === 'Float') {
-                if (field.double) {
-                  if (col.data_type !== 'double precision') {
-                    return true;
-                  }
-                } else if (col.data_type !== 'numeric') {
-                  return true;
-                }
-              }
-            }
-
-            return false;
+            return this.hasChanged(model, field);
           });
+          if (rawExistingFields.length) {
+            this.updateFieldsRaw(model, rawExistingFields, up, down);
+          }
+
+          const existingFields = model.fields.filter((field) => !field.generateAs && this.hasChanged(model, field));
           this.updateFields(model, existingFields, up, down);
         }
 
@@ -320,6 +313,9 @@ export class MigrationGenerator {
       writer.writeLine(`const now = date();`).blankLine();
     }
 
+    if (up.length || down.length) {
+      this.needsMigration = true;
+    }
     this.migration('up', up);
     this.migration('down', down.reverse());
 
@@ -371,6 +367,10 @@ export class MigrationGenerator {
       for (const field of fields) {
         alter.push(() => this.column(field, { setNonNull: field.defaultValue !== undefined }));
 
+        if (field.generateAs) {
+          continue;
+        }
+
         // If the field is not nullable but has no default, write placeholder code
         if (field.nonNull && field.defaultValue === undefined) {
           updates.push(() => this.writer.write(`${field.name}: 'TODO',`).newLine());
@@ -401,11 +401,61 @@ export class MigrationGenerator {
 
     down.push(() => {
       this.alterTable(model.name, () => {
-        for (const { kind, name } of fields) {
+        for (const { kind, name } of fields.toReversed()) {
           this.dropColumn(kind === 'relation' ? `${name}Id` : name);
         }
       });
     });
+  }
+
+  private updateFieldsRaw(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
+    if (!fields.length) {
+      return;
+    }
+
+    up.push(() => {
+      this.alterTableRaw(model.name, () => {
+        for (const [index, field] of fields.entries()) {
+          this.columnRaw(field, { alter: true }, index);
+        }
+      });
+    });
+
+    down.push(() => {
+      this.alterTableRaw(model.name, () => {
+        for (const [index, field] of fields.entries()) {
+          this.columnRaw(field, { alter: true }, index);
+        }
+      });
+    });
+
+    if (isUpdatableModel(model)) {
+      const updatableFields = fields.filter(isUpdatableField);
+      if (!updatableFields.length) {
+        return;
+      }
+
+      up.push(() => {
+        this.alterTable(`${model.name}Revision`, () => {
+          for (const [index, field] of updatableFields.entries()) {
+            this.columnRaw(field, { alter: true }, index);
+          }
+        });
+      });
+
+      down.push(() => {
+        this.alterTable(`${model.name}Revision`, () => {
+          for (const [index, field] of updatableFields.entries()) {
+            this.columnRaw(
+              field,
+              { alter: true },
+              index,
+              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
+            );
+          }
+        });
+      });
+    }
   }
 
   private updateFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
@@ -568,6 +618,12 @@ export class MigrationGenerator {
       .blankLine();
   }
 
+  private alterTableRaw(table: string, block: () => void) {
+    this.writer.write(`await knex.raw('ALTER TABLE "${table}"`);
+    block();
+    this.writer.write(`');`).newLine().blankLine();
+  }
+
   private alterTable(table: string, block: () => void) {
     return this.writer
       .write(`await knex.schema.alterTable('${table}', (table) => `)
@@ -601,29 +657,125 @@ export class MigrationGenerator {
     return value;
   }
 
+  private columnRaw(
+    { name, ...field }: EntityField,
+    { setNonNull = true, alter = false } = {},
+    index: number,
+    toColumn?: Column,
+  ) {
+    const nonNull = () => {
+      if (setNonNull) {
+        if (toColumn) {
+          if (toColumn.is_nullable) {
+            return false;
+          }
+
+          return true;
+        }
+        if (field.nonNull) {
+          return true;
+        }
+
+        return false;
+      }
+    };
+    const kind = field.kind;
+    if (field.generateAs) {
+      let type = '';
+      switch (kind) {
+        case undefined:
+        case 'primitive':
+          switch (field.type) {
+            case 'Float':
+              type = `decimal(${field.precision ?? 'undefined'}, ${field.scale ?? 'undefined'})`;
+              break;
+            default:
+              throw new Error(`Generated columns of kind ${kind} and type ${field.type} are not supported yet.`);
+          }
+          break;
+        default:
+          throw new Error(`Generated columns of kind ${kind} are not supported yet.`);
+      }
+      if (index) {
+        this.writer.write(`,`);
+      }
+      if (alter) {
+        this.writer.write(` ALTER COLUMN "${name}" TYPE ${type}`);
+        if (setNonNull) {
+          if (nonNull()) {
+            this.writer.write(`, ALTER COLUMN "${name}" SET NOT NULL`);
+          } else {
+            this.writer.write(`, ALTER COLUMN "${name}" DROP NOT NULL`);
+          }
+        }
+        this.writer.write(`, ALTER COLUMN "${name}" SET EXPRESSION AS (${field.generateAs})`);
+      } else {
+        this.writer.write(
+          `${alter ? 'ALTER' : 'ADD'} COLUMN "${name}" ${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs}) STORED`,
+        );
+      }
+
+      return;
+    }
+
+    throw new Error(`Only generated columns can be created with columnRaw`);
+  }
+
   private column(
     { name, primary, list, ...field }: EntityField,
     { setUnique = true, setNonNull = true, alter = false, foreign = true, setDefault = true } = {},
     toColumn?: Column,
   ) {
+    const nonNull = () => {
+      if (setNonNull) {
+        if (toColumn) {
+          if (toColumn.is_nullable) {
+            return false;
+          }
+
+          return true;
+        }
+        if (field.nonNull) {
+          return true;
+        }
+
+        return false;
+      }
+    };
+    const kind = field.kind;
+    if (field.generateAs) {
+      let type = '';
+      switch (kind) {
+        case undefined:
+        case 'primitive':
+          switch (field.type) {
+            case 'Float':
+              type = `decimal(${field.precision ?? 'undefined'}, ${field.scale ?? 'undefined'})`;
+              break;
+            default:
+              throw new Error(`Generated columns of kind ${kind} and type ${field.type} are not supported yet.`);
+          }
+          break;
+        default:
+          throw new Error(`Generated columns of kind ${kind} are not supported yet.`);
+      }
+      this.writer.write(
+        `table.specificType('${name}', '${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs}) STORED')`,
+      );
+      if (alter) {
+        this.writer.write('.alter()');
+      }
+      this.writer.write(';').newLine();
+
+      return;
+    }
+
     const col = (what?: string) => {
       if (what) {
         this.writer.write(what);
       }
       if (setNonNull) {
-        if (toColumn) {
-          if (toColumn.is_nullable) {
-            this.writer.write(`.nullable()`);
-          } else {
-            this.writer.write('.notNullable()');
-          }
-        } else {
-          if (field.nonNull) {
-            this.writer.write(`.notNullable()`);
-          } else {
-            this.writer.write('.nullable()');
-          }
-        }
+        this.writer.write(nonNull() ? '.notNullable()' : '.nullable()');
       }
       if (setDefault && field.defaultValue !== undefined) {
         this.writer.write(`.defaultTo(${this.value(field.defaultValue)})`);
@@ -638,7 +790,6 @@ export class MigrationGenerator {
       }
       this.writer.write(';').newLine();
     };
-    const kind = field.kind;
     switch (kind) {
       case undefined:
       case 'primitive':
@@ -711,6 +862,44 @@ export class MigrationGenerator {
 
   private getColumn(tableName: string, columnName: string) {
     return this.columns[tableName].find((col) => col.name === columnName);
+  }
+
+  private hasChanged(model: EntityModel, field: EntityField) {
+    const col = this.getColumn(model.name, field.kind === 'relation' ? `${field.name}Id` : field.name);
+    if (!col) {
+      return false;
+    }
+
+    if (field.generateAs) {
+      if (col.generation_expression !== field.generateAs) {
+        throw new Error(
+          `Column ${col.name} has specific type ${col.generation_expression} but expected ${field.generateAs}`,
+        );
+      }
+    }
+
+    if ((!field.nonNull && !col.is_nullable) || (field.nonNull && col.is_nullable)) {
+      return true;
+    }
+
+    if (!field.kind || field.kind === 'primitive') {
+      if (field.type === 'Int') {
+        if (col.data_type !== 'integer') {
+          return true;
+        }
+      }
+      if (field.type === 'Float') {
+        if (field.double) {
+          if (col.data_type !== 'double precision') {
+            return true;
+          }
+        } else if (col.data_type !== 'numeric') {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }
 
