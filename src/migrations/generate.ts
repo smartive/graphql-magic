@@ -31,6 +31,7 @@ export class MigrationGenerator {
   private columns: Record<string, Column[]> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
+  public needsMigration = false;
 
   constructor(
     knex: Knex,
@@ -320,6 +321,9 @@ export class MigrationGenerator {
       writer.writeLine(`const now = date();`).blankLine();
     }
 
+    if (up.length || down.length) {
+      this.needsMigration = true;
+    }
     this.migration('up', up);
     this.migration('down', down.reverse());
 

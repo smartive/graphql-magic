@@ -83,6 +83,27 @@ program
   });
 
 program
+  .command('check-needs-migration')
+  .description('Check if a migration is needed')
+  .action(async () => {
+    const knexfile = await parseKnexfile();
+    const db = knex(knexfile);
+
+    try {
+      const models = await parseModels();
+      const mg = new MigrationGenerator(db, models);
+      await mg.generate();
+
+      if (mg.needsMigration) {
+        console.error('Migration is needed.');
+        process.exit(1);
+      }
+    } finally {
+      await db.destroy();
+    }
+  });
+
+program
   .command('*', { noHelp: true })
   .description('Invalid command')
   .action(() => {
