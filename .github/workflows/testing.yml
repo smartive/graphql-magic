@@ -16,8 +16,11 @@ jobs:
         node:
           - version: 22
         postgres:
-          - version: 13
           - version: 14
+          - version: 15
+          - version: 16
+          - version: 17
+          - version: 18
     name: test and build package (node ${{ matrix.node.version }}, postgres ${{ matrix.postgres.version }})
     runs-on: ubuntu-latest
     container: node:${{ matrix.node.version }}-alpine
