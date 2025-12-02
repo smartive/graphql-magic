@@ -1,7 +1,6 @@
-version: '3.4'
 services:
   postgres:
-    image: postgres:13-alpine
+    image: postgres:18-alpine
     shm_size: 1gb
     environment:
       POSTGRES_DB: postgres
