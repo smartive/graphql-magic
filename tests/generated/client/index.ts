@@ -17,7 +17,6 @@ export type Scalars = {
 };
 
 export type AnotherObject = {
-  __typename: 'AnotherObject';
   deleteRootId: Maybe<Scalars['ID']['output']>;
   deleteRootType: Maybe<Scalars['String']['output']>;
   deleted: Scalars['Boolean']['output'];
@@ -67,7 +66,6 @@ export type AnotherObjectWhereUnique = {
 };
 
 export type Answer = Reaction & {
-  __typename: 'Answer';
   childAnswers: Array<Answer>;
   childQuestions: Array<Question>;
   childReactions: Array<Reaction>;
@@ -157,17 +155,14 @@ export type CreateSomeObject = {
 };
 
 export type Duck = {
-  __typename: 'Duck';
   name: Maybe<Scalars['String']['output']>;
 };
 
 export type Eagle = {
-  __typename: 'Eagle';
   name: Maybe<Scalars['String']['output']>;
 };
 
 export type Mutation = {
-  __typename: 'Mutation';
   createAnswer: Answer;
   createQuestion: Question;
   createReview: Review;
@@ -293,7 +288,6 @@ export enum Order {
 }
 
 export type Query = {
-  __typename: 'Query';
   anotherObjects: Array<AnotherObject>;
   answer: Answer;
   answers: Array<Answer>;
@@ -384,7 +378,6 @@ export type QuerysomeObjectArgs = {
 };
 
 export type Question = Reaction & {
-  __typename: 'Question';
   childAnswers: Array<Answer>;
   childQuestions: Array<Question>;
   childReactions: Array<Reaction>;
@@ -531,7 +524,6 @@ export type ReactionWhereUnique = {
 };
 
 export type Review = Reaction & {
-  __typename: 'Review';
   childAnswers: Array<Answer>;
   childQuestions: Array<Question>;
   childReactions: Array<Reaction>;
@@ -618,7 +610,6 @@ export enum SomeEnum {
 }
 
 export type SomeObject = {
-  __typename: 'SomeObject';
   another: Maybe<AnotherObject>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: User;
@@ -665,7 +656,6 @@ export type SomeObjectWhereUnique = {
 };
 
 export type SomeRawObject = {
-  __typename: 'SomeRawObject';
   field: Maybe<Scalars['String']['output']>;
 };
 
@@ -688,7 +678,6 @@ export type UpdateSomeObject = {
 };
 
 export type User = {
-  __typename: 'User';
   createdAnswers: Array<Answer>;
   createdManyObjects: Array<SomeObject>;
   createdQuestions: Array<Question>;
@@ -860,34 +849,34 @@ export type DeleteAnotherObjectMutation = { deleteAnotherObject: string };
 export type GetAnotherObjectQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAnotherObjectQuery = { anotherObjects: Array<{ __typename: 'AnotherObject', id: string, deleted: boolean }> };
+export type GetAnotherObjectQuery = { anotherObjects: Array<{ id: string, deleted: boolean }> };
 
 export type GetReactionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReactionsQuery = { reactions: Array<{ __typename: 'Answer', type: ReactionType, content: string | null } | { __typename: 'Question', type: ReactionType, content: string | null } | { __typename: 'Review', rating: number | null, type: ReactionType, content: string | null }> };
+export type GetReactionsQuery = { reactions: Array<{ type: ReactionType, content: string | null } | { type: ReactionType, content: string | null } | { rating: number | null, type: ReactionType, content: string | null }> };
 
 export type GetReactionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReactionQuery = { reaction: { __typename: 'Answer', type: ReactionType, content: string | null } | { __typename: 'Question', type: ReactionType, content: string | null } | { __typename: 'Review', rating: number | null, type: ReactionType, content: string | null } };
+export type GetReactionQuery = { reaction: { type: ReactionType, content: string | null } | { type: ReactionType, content: string | null } | { rating: number | null, type: ReactionType, content: string | null } };
 
 export type GetReviewsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReviewsQuery = { reviews: Array<{ __typename: 'Review', type: ReactionType, content: string | null, rating: number | null }> };
+export type GetReviewsQuery = { reviews: Array<{ type: ReactionType, content: string | null, rating: number | null }> };
 
 export type GetReviewQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReviewQuery = { review: { __typename: 'Review', type: ReactionType, content: string | null, rating: number | null } };
+export type GetReviewQuery = { review: { type: ReactionType, content: string | null, rating: number | null } };
 
 export type CreateReviewMutationVariables = Exact<{
   data: CreateReview;
 }>;
 
 
-export type CreateReviewMutation = { createReview: { __typename: 'Review', content: string | null, rating: number | null } };
+export type CreateReviewMutation = { createReview: { content: string | null, rating: number | null } };
 
 export type UpdateReviewMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -895,42 +884,42 @@ export type UpdateReviewMutationVariables = Exact<{
 }>;
 
 
-export type UpdateReviewMutation = { updateReview: { __typename: 'Review', content: string | null, rating: number | null } };
+export type UpdateReviewMutation = { updateReview: { content: string | null, rating: number | null } };
 
 export type SomeQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SomeQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null, xyz: number, another: { __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } | null }> };
+export type SomeQueryQuery = { manyObjects: Array<{ id: string, field: string | null, xyz: number, another: { id: string, manyObjects: Array<{ id: string, field: string | null }> } | null }> };
 
 export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ReverseFiltersQueryQuery = { all: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, withFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat0_5: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }>, noneFloat2: Array<{ __typename: 'AnotherObject', id: string, manyObjects: Array<{ __typename: 'SomeObject', float: number }> }> };
+export type ReverseFiltersQueryQuery = { all: Array<{ id: string, manyObjects: Array<{ float: number }> }>, withFloat0: Array<{ id: string, manyObjects: Array<{ float: number }> }>, withFloat0_5: Array<{ id: string, manyObjects: Array<{ float: number }> }>, noneFloat0: Array<{ id: string, manyObjects: Array<{ float: number }> }>, noneFloat0_5: Array<{ id: string, manyObjects: Array<{ float: number }> }>, noneFloat2: Array<{ id: string, manyObjects: Array<{ float: number }> }> };
 
 export type NotQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NotQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+export type NotQueryQuery = { manyObjects: Array<{ id: string }> };
 
 export type AndQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AndQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+export type AndQueryQuery = { manyObjects: Array<{ id: string }> };
 
 export type OrQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OrQueryQuery = { manyObjects: Array<{ __typename: 'SomeObject', id: string }> };
+export type OrQueryQuery = { manyObjects: Array<{ id: string }> };
 
 export type NullFilterQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NullFilterQueryQuery = { all: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNullField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNotNullField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withSpecificField: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withComplexFilter: Array<{ __typename: 'SomeObject', id: string, field: string | null }>, withNestedFilter: Array<{ __typename: 'SomeObject', id: string, field: string | null, another: { __typename: 'AnotherObject', manyObjects: Array<{ __typename: 'SomeObject', id: string, field: string | null }> } | null }> };
+export type NullFilterQueryQuery = { all: Array<{ id: string, field: string | null }>, withNullField: Array<{ id: string, field: string | null }>, withNotNullField: Array<{ id: string, field: string | null }>, withSpecificField: Array<{ id: string, field: string | null }>, withComplexFilter: Array<{ id: string, field: string | null }>, withNestedFilter: Array<{ id: string, field: string | null, another: { manyObjects: Array<{ id: string, field: string | null }> } | null }> };
 
 export type NullRelationFilterQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NullRelationFilterQueryQuery = { all: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }>, withNullAnother: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }>, withNotNullAnother: Array<{ __typename: 'SomeObject', id: string, another: { __typename: 'AnotherObject', id: string } | null }> };
+export type NullRelationFilterQueryQuery = { all: Array<{ id: string, another: { id: string } | null }>, withNullAnother: Array<{ id: string, another: { id: string } | null }>, withNotNullAnother: Array<{ id: string, another: { id: string } | null }> };
 
 export type DeleteAnotherObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -951,7 +940,7 @@ export type CreateSomeObjectMutationMutationVariables = Exact<{
 }>;
 
 
-export type CreateSomeObjectMutationMutation = { createSomeObject: { __typename: 'SomeObject', id: string } };
+export type CreateSomeObjectMutationMutation = { createSomeObject: { id: string } };
 
 export type UpdateSomeObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -959,7 +948,7 @@ export type UpdateSomeObjectMutationMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSomeObjectMutationMutation = { updateSomeObject: { __typename: 'SomeObject', id: string } };
+export type UpdateSomeObjectMutationMutation = { updateSomeObject: { id: string } };
 
 export type DeleteSomeObjectMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -980,7 +969,7 @@ export type CreateReviewMutationMutationVariables = Exact<{
 }>;
 
 
-export type CreateReviewMutationMutation = { createReview: { __typename: 'Review', id: string } };
+export type CreateReviewMutationMutation = { createReview: { id: string } };
 
 export type UpdateReviewMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -988,7 +977,7 @@ export type UpdateReviewMutationMutationVariables = Exact<{
 }>;
 
 
-export type UpdateReviewMutationMutation = { updateReview: { __typename: 'Review', id: string } };
+export type UpdateReviewMutationMutation = { updateReview: { id: string } };
 
 export type DeleteReviewMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1009,7 +998,7 @@ export type CreateQuestionMutationMutationVariables = Exact<{
 }>;
 
 
-export type CreateQuestionMutationMutation = { createQuestion: { __typename: 'Question', id: string } };
+export type CreateQuestionMutationMutation = { createQuestion: { id: string } };
 
 export type UpdateQuestionMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1017,7 +1006,7 @@ export type UpdateQuestionMutationMutationVariables = Exact<{
 }>;
 
 
-export type UpdateQuestionMutationMutation = { updateQuestion: { __typename: 'Question', id: string } };
+export type UpdateQuestionMutationMutation = { updateQuestion: { id: string } };
 
 export type DeleteQuestionMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1038,7 +1027,7 @@ export type CreateAnswerMutationMutationVariables = Exact<{
 }>;
 
 
-export type CreateAnswerMutationMutation = { createAnswer: { __typename: 'Answer', id: string } };
+export type CreateAnswerMutationMutation = { createAnswer: { id: string } };
 
 export type UpdateAnswerMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1046,7 +1035,7 @@ export type UpdateAnswerMutationMutationVariables = Exact<{
 }>;
 
 
-export type UpdateAnswerMutationMutation = { updateAnswer: { __typename: 'Answer', id: string } };
+export type UpdateAnswerMutationMutation = { updateAnswer: { id: string } };
 
 export type DeleteAnswerMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
