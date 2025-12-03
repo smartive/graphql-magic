@@ -23,7 +23,7 @@ export default [
       'no-console': [
         'error',
         {
-          allow: ['info', 'warn', 'error', 'trace', 'time', 'timeEnd'],
+          allow: ['info', 'warn', 'error', 'trace', 'time', 'timeEnd', 'debug'],
         },
       ],
 

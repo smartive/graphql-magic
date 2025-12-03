@@ -207,6 +207,9 @@ export const checkCanWrite = async (
 
   const role = getRole(ctx);
   if (linked) {
+    if (process.env.DEBUG_GRAPHQL_MAGIC === 'true') {
+      console.debug('QUERY', query.toString());
+    }
     const canMutate = await query;
     if (!canMutate) {
       throw new PermissionError(role, action, `this ${model.name}`, 'no linkable entities');
