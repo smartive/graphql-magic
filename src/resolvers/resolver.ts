@@ -55,6 +55,9 @@ export const resolve = async (ctx: FullContext, id?: string) => {
     void query.limit(1);
   }
 
+  if (process.env.DEBUG_GRAPHQL_MAGIC === 'true') {
+    console.debug('QUERY', query.toString());
+  }
   const raw = await query;
 
   const res = hydrate(node, raw);
