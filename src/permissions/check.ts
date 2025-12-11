@@ -152,7 +152,7 @@ export const checkCanWrite = async (
     throw new PermissionError(getRole(ctx), action, model.plural, 'no applicable permissions');
   }
 
-  const query = ctx.knex.select(1 as any).first();
+  const query = ctx.knex.first();
   let linked = false;
 
   for (const field of model.fields.filter(
@@ -183,7 +183,9 @@ export const checkCanWrite = async (
       if (fieldPermissionStack === true) {
         // User can link any entity from this type, just check whether it exists
 
-        query.whereExists((subQuery) => subQuery.from(`${field.type} as a`).whereRaw(`a.id = ?`, foreignId));
+        query.select(
+          ctx.knex.raw(`EXISTS(SELECT 1 FROM ?? as a WHERE a.id = ?) as ??`, [field.type, foreignId, foreignKey]),
+        );
         continue;
       }
 
@@ -196,10 +198,16 @@ export const checkCanWrite = async (
         );
       }
 
-      ors(
-        query,
-        fieldPermissionStack.map(
-          (links) => (query) => query.whereExists((subQuery) => permissionLinkQuery(ctx, subQuery, links, foreignId)),
+      query.select(
+        ctx.knex.raw(
+          `${fieldPermissionStack
+            .map((links) => {
+              const subQuery = ctx.knex.queryBuilder();
+              permissionLinkQuery(ctx, subQuery, links, foreignId);
+
+              return `EXISTS(${subQuery.toString()})`;
+            })
+            .join(' OR ')} as "${foreignKey}"`,
         ),
       );
     }
@@ -211,8 +219,14 @@ export const checkCanWrite = async (
       console.debug('QUERY', query.toString());
     }
     const canMutate = await query;
-    if (!canMutate) {
-      throw new PermissionError(role, action, `this ${model.name}`, 'no linkable entities');
+    const cannotLink = Object.entries(canMutate).filter(([, value]) => !value);
+    if (cannotLink.length) {
+      throw new PermissionError(
+        role,
+        action,
+        `this ${model.name}`,
+        `cannot link to ${cannotLink.map(([key]) => `${key}: ${data[key]}`).join(', ')}`,
+      );
     }
   } else if (action === 'CREATE') {
     throw new PermissionError(role, action, `this ${model.name}`, 'no linkable entities');
