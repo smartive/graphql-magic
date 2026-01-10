@@ -67,7 +67,7 @@
     "@smartive/eslint-config": "7.0.0",
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "30.0.0",
-    "@types/lodash": "4.17.21",
+    "@types/lodash": "4.17.23",
     "@types/luxon": "3.7.1",
     "@types/pg": "8.16.0",
     "conventional-changelog-conventionalcommits": "9.1.0",
