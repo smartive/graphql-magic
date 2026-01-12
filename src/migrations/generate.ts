@@ -896,6 +896,23 @@ export class MigrationGenerator {
         } else if (col.data_type !== 'numeric') {
           return true;
         }
+        if (field.precision && col.numeric_precision && field.precision !== col.numeric_precision) {
+          return true;
+        }
+        if (field.scale && col.numeric_scale && field.scale !== col.numeric_scale) {
+          return true;
+        }
+      }
+      if (field.type === 'String') {
+        if (field.large && col.data_type !== 'text') {
+          return true;
+        }
+        if (field.stringType === 'richText' && col.data_type !== 'text') {
+          return true;
+        }
+        if (!field.large && field.maxLength && col.max_length && field.maxLength !== col.max_length) {
+          return true;
+        }
       }
     }
 
