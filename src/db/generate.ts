@@ -144,7 +144,7 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
     case 'enum':
       return field.type + (field.list ? '[]' : '');
     case 'custom':
-      return field.type;
+      return field.type + (field.list ? '[]' : '');
     case 'primitive':
     case undefined:
       if (field.type === 'DateTime') {
