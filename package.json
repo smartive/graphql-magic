@@ -58,7 +58,7 @@
     "luxon": "^3.4.4",
     "pg": "^8.11.3",
     "simple-git": "^3.21.0",
-    "ts-morph": "^25.0.0"
+    "ts-morph": "^27.0.0"
   },
   "peerDependencies": {
     "knex": "^3.0.1"
