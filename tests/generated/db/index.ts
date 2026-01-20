@@ -35,7 +35,7 @@ export type Eagle = {
 }
 
 export type Query = {
-  'birds': Bird;
+  'birds': Bird[];
 }
 
 export type User = {
