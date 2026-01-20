@@ -854,12 +854,20 @@ export type GetAnotherObjectQuery = { anotherObjects: Array<{ id: string, delete
 export type GetReactionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReactionsQuery = { reactions: Array<{ type: ReactionType, content: string | null } | { type: ReactionType, content: string | null } | { rating: number | null, type: ReactionType, content: string | null }> };
+export type GetReactionsQuery = { reactions: Array<
+    | { type: ReactionType, content: string | null }
+    | { type: ReactionType, content: string | null }
+    | { rating: number | null, type: ReactionType, content: string | null }
+  > };
 
 export type GetReactionQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetReactionQuery = { reaction: { type: ReactionType, content: string | null } | { type: ReactionType, content: string | null } | { rating: number | null, type: ReactionType, content: string | null } };
+export type GetReactionQuery = { reaction:
+    | { type: ReactionType, content: string | null }
+    | { type: ReactionType, content: string | null }
+    | { rating: number | null, type: ReactionType, content: string | null }
+   };
 
 export type GetReviewsQueryVariables = Exact<{ [key: string]: never; }>;
 

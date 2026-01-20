@@ -22,9 +22,11 @@ import { getSetting, writeToFile } from './settings';
 
 config({
   path: '.env',
+  quiet: true,
 });
 config({
   path: '.env.local',
+  quiet: true,
 });
 
 const gqlTagTemplate = `// This tag does nothing (just generates a string) - it is here for the tooling (syntax highlighting, formatting and type generation)
