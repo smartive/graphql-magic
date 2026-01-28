@@ -33,7 +33,7 @@ import {
   ObjectFieldDefinition,
   RelationFieldDefinition,
 } from './model-definitions';
-import { get, getLabel, summonByName, typeToField } from './utils';
+import { get, getLabel, isManyToManyRelationEntityModel, summonByName, typeToField } from './utils';
 
 // These might one day become classes
 
@@ -438,9 +438,7 @@ export class EntityModel extends Model {
   }
 
   public get isManyToManyRelation() {
-    const nonGeneratedFields = this.fields.filter((field) => !field.generated);
-
-    return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
+    return isManyToManyRelationEntityModel(this);
   }
 
   public get asManyToManyRelation() {

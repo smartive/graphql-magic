@@ -1,6 +1,7 @@
 import camelCase from 'lodash/camelCase';
 import lodashGet from 'lodash/get';
 import startCase from 'lodash/startCase';
+import { EntityModelDefinition } from '..';
 import {
   CustomField,
   EntityField,
@@ -196,4 +197,10 @@ export const as = <T extends keyof Typeof>(value: unknown, type: T): Typeof[T] =
   }
 
   return value as Typeof[T];
+};
+
+export const isManyToManyRelationEntityModel = ({ fields }: Pick<EntityModelDefinition, 'fields'>) => {
+  const nonGeneratedFields = fields.filter((field) => !field.generated);
+
+  return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
 };
