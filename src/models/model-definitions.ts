@@ -156,6 +156,12 @@ export type ModelDefinition = {
       defaultOrderBy?: OrderBy[];
       fields: EntityFieldDefinition[];
 
+      /**
+       * Use this field to explicitly mark/unmark an entity model as a many-to-many relation entity.
+       * If not set, graphql-magic will try to infer it based on its fields.
+       */
+      manyToManyRelation?: boolean;
+
       // temporary fields for the generation of migrations
       deleted?: true;
       oldName?: string;

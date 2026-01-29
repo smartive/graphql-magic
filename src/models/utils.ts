@@ -199,8 +199,21 @@ export const as = <T extends keyof Typeof>(value: unknown, type: T): Typeof[T] =
   return value as Typeof[T];
 };
 
-export const isManyToManyRelationEntityModel = ({ fields }: Pick<EntityModelDefinition, 'fields'>) => {
+export const isManyToManyRelationEntityModel = ({
+  fields,
+  manyToManyRelation,
+}: Pick<EntityModelDefinition, 'fields' | 'manyToManyRelation'>) => {
   const nonGeneratedFields = fields.filter((field) => !field.generated);
+  const relationFields = nonGeneratedFields.filter((field) => field.kind === 'relation');
 
-  return nonGeneratedFields.length === 2 && nonGeneratedFields.every((field) => field.kind === 'relation');
+  if (manyToManyRelation === undefined) {
+    return nonGeneratedFields.length === 2 && nonGeneratedFields.length === relationFields.length;
+  }
+
+  if (manyToManyRelation === true && relationFields.length !== 2) {
+    console.trace();
+    throw new Error('Entity is marked as many-to-many relation but does not have exactly 2 relation fields.');
+  }
+
+  return manyToManyRelation;
 };
