@@ -1,5 +1,6 @@
 import { camelCase, Dictionary, kebabCase, lowerFirst, snakeCase, startCase, upperFirst } from 'lodash';
 import {
+  BindingElement,
   CaseClause,
   ElementAccessExpression,
   Identifier,
@@ -47,6 +48,7 @@ export const staticEval = (node: Node | undefined, context: Dictionary<unknown>)
 
 const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   undefined: () => undefined,
+  [SyntaxKind.BindingElement]: (node: BindingElement, context) => context[node.getName()],
   [SyntaxKind.VariableDeclaration]: (node, context) => staticEval(node.getInitializer(), context),
   [SyntaxKind.ArrayLiteralExpression]: (node, context) => {
     const values: unknown[] = [];
@@ -146,7 +148,52 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       const parameters: Dictionary<unknown> = {};
       let i = 0;
       for (const parameter of node.getParameters()) {
-        parameters[parameter.getName()] = args[i];
+        const argument = args[i];
+
+        if (parameter.isRestParameter()) {
+          parameters[parameter.getName()] = args.slice(i);
+        } else {
+          const nameNode = parameter.getNameNode();
+          if (Node.isObjectBindingPattern(nameNode)) {
+            const value = (argument ?? {}) as Dictionary<unknown>;
+            const usedKeys = new Set<string>();
+
+            for (const element of nameNode.getElements()) {
+              if (element.getDotDotDotToken()) {
+                // Handle rest element (...args)
+                const restName = element.getName();
+                const restValue: Dictionary<unknown> = {};
+                for (const key in value) {
+                  if (!usedKeys.has(key)) {
+                    restValue[key] = value[key];
+                  }
+                }
+                parameters[restName] = restValue;
+              } else {
+                // Handle property destructuring (prop: alias = defaultValue)
+                const propertyNameNode = element.getPropertyNameNode();
+                const elementDetails = element.getNameNode();
+
+                // If "prop: alias", key is "prop". If just "alias", key is "alias".
+                const key = propertyNameNode ? propertyNameNode.getText() : elementDetails.getText();
+                const variableName = elementDetails.getText();
+
+                usedKeys.add(key);
+
+                let propertyValue = value[key];
+
+                // Handle default values (= defaultValue)
+                if (propertyValue === undefined && element.hasInitializer()) {
+                  propertyValue = staticEval(element.getInitializer(), { ...context, ...parameters });
+                }
+
+                parameters[variableName] = propertyValue;
+              }
+            }
+          } else {
+            parameters[parameter.getName()] = argument;
+          }
+        }
         i++;
       }
       return staticEval(node.getBody(), { ...context, ...parameters });
