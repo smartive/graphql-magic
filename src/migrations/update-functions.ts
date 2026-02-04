@@ -128,11 +128,13 @@ const compareFunctions = (defined: ParsedFunction, db: DatabaseFunction): { chan
   if (definedBody !== dbBody) {
     const definedPreview = definedBody.length > 200 ? `${definedBody.substring(0, 200)}...` : definedBody;
     const dbPreview = dbBody.length > 200 ? `${dbBody.substring(0, 200)}...` : dbBody;
+
     return {
       changed: true,
       diff: `Definition changed:\n  File: ${definedPreview}\n  DB:   ${dbPreview}`,
     };
   }
+
   return { changed: false };
 };
 
@@ -140,7 +142,6 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
   const definedFunctions = parseFunctionsFile(functionsFilePath);
 
   if (definedFunctions.length === 0) {
-    console.log('No functions found in functions.sql file.');
     return;
   }
 
@@ -150,7 +151,7 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
     dbFunctionsBySignature.set(func.signature, func);
   }
 
-  console.log(`Found ${definedFunctions.length} function(s) in file, ${dbFunctions.length} function(s) in database.`);
+  console.info(`Found ${definedFunctions.length} function(s) in file, ${dbFunctions.length} function(s) in database.`);
 
   let updatedCount = 0;
   let skippedCount = 0;
@@ -161,7 +162,7 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
     if (!dbFunc) {
       try {
         await knex.raw(definedFunc.fullDefinition);
-        console.log(`✓ Created ${definedFunc.isAggregate ? 'aggregate' : 'function'}: ${definedFunc.signature}`);
+        console.info(`✓ Created ${definedFunc.isAggregate ? 'aggregate' : 'function'}: ${definedFunc.signature}`);
         updatedCount++;
       } catch (error: any) {
         console.error(
@@ -173,9 +174,9 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
     } else {
       const comparison = compareFunctions(definedFunc, dbFunc);
       if (comparison.changed) {
-        console.log(`\n⚠ ${definedFunc.isAggregate ? 'Aggregate' : 'Function'} ${definedFunc.signature} has changes:`);
+        console.info(`\n⚠ ${definedFunc.isAggregate ? 'Aggregate' : 'Function'} ${definedFunc.signature} has changes:`);
         if (comparison.diff) {
-          console.log(comparison.diff);
+          console.info(comparison.diff);
         }
         try {
           if (definedFunc.isAggregate) {
@@ -188,7 +189,7 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
             }
           }
           await knex.raw(definedFunc.fullDefinition);
-          console.log(`✓ Updated ${definedFunc.isAggregate ? 'aggregate' : 'function'}: ${definedFunc.signature}\n`);
+          console.info(`✓ Updated ${definedFunc.isAggregate ? 'aggregate' : 'function'}: ${definedFunc.signature}\n`);
           updatedCount++;
         } catch (error: any) {
           console.error(
@@ -198,16 +199,18 @@ export const updateFunctions = async (knex: Knex, functionsFilePath: string): Pr
           throw error;
         }
       } else {
-        console.log(`○ Skipped ${definedFunc.isAggregate ? 'aggregate' : 'function'} (unchanged): ${definedFunc.signature}`);
+        console.info(
+          `○ Skipped ${definedFunc.isAggregate ? 'aggregate' : 'function'} (unchanged): ${definedFunc.signature}`,
+        );
         skippedCount++;
       }
     }
   }
 
-  console.log(`\nSummary: ${updatedCount} updated, ${skippedCount} skipped`);
+  console.info(`\nSummary: ${updatedCount} updated, ${skippedCount} skipped`);
   if (updatedCount > 0) {
-    console.log('Functions updated successfully.');
+    console.info('Functions updated successfully.');
   } else {
-    console.log('All functions are up to date.');
+    console.info('All functions are up to date.');
   }
 };

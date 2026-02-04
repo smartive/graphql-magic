@@ -82,7 +82,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
           };
         }),
     ].map(({ tableAlias, resultAlias, field, fieldAlias, generateAs }) => {
-      if (generateAs && generateAs.type === 'expression') {
+      if (generateAs?.type === 'expression') {
         const tableShortAlias = node.ctx.aliases.getShort(tableAlias);
         const resultShortAlias = node.ctx.aliases.getShort(resultAlias);
         const expression = generateAs.expression.replace(/\b(\w+)\b/g, (match, columnName) => {

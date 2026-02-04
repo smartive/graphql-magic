@@ -144,7 +144,7 @@ export class MigrationGenerator {
               }
               for (const field of model.fields
                 .filter(not(isInherited))
-                .filter((f) => !(f.generateAs && f.generateAs.type === 'expression'))) {
+                .filter((f) => !(f.generateAs?.type === 'expression'))) {
                 this.column(field);
               }
             });
@@ -166,7 +166,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !(field.generateAs && field.generateAs.type === 'expression') &&
+                  !(field.generateAs?.type === 'expression') &&
                   !this.getColumn(model.name, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               ),
             up,
@@ -230,7 +230,7 @@ export class MigrationGenerator {
 
                           for (const { name, kind } of model.fields
                             .filter(isUpdatableField)
-                            .filter((f) => !(f.generateAs && f.generateAs.type === 'expression'))) {
+                            .filter((f) => !(f.generateAs?.type === 'expression'))) {
                             const col = kind === 'relation' ? `${name}Id` : name;
 
                             writer.writeLine(`${col}: row.${col},`);
@@ -265,7 +265,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !(field.generateAs && field.generateAs.type === 'expression') &&
+                  !(field.generateAs?.type === 'expression') &&
                   !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               );
 
@@ -395,7 +395,7 @@ export class MigrationGenerator {
       const updates: Callbacks = [];
       const postAlter: Callbacks = [];
       for (const field of fields) {
-        if (field.generateAs && field.generateAs.type === 'expression') {
+        if (field.generateAs?.type === 'expression') {
           continue;
         }
 
@@ -464,9 +464,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields
-        .filter(isUpdatableField)
-        .filter((f) => !(f.generateAs && f.generateAs.type === 'expression'));
+      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
       if (!updatableFields.length) {
         return;
       }
@@ -520,9 +518,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields
-        .filter(isUpdatableField)
-        .filter((f) => !(f.generateAs && f.generateAs.type === 'expression'));
+      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
       if (!updatableFields.length) {
         return;
       }
@@ -568,7 +564,7 @@ export class MigrationGenerator {
 
       for (const field of model.fields
         .filter(and(isUpdatableField, not(isInherited)))
-        .filter((f) => !(f.generateAs && f.generateAs.type === 'expression'))) {
+        .filter((f) => !(f.generateAs?.type === 'expression'))) {
         this.column(field, { setUnique: false, setDefault: false });
       }
     });
@@ -927,7 +923,7 @@ export class MigrationGenerator {
   }
 
   private hasChanged(model: EntityModel, field: EntityField) {
-    if (field.generateAs && field.generateAs.type === 'expression') {
+    if (field.generateAs?.type === 'expression') {
       return false;
     }
 
@@ -1145,7 +1141,7 @@ export class MigrationGenerator {
       definedFunctionsBySignature.set(func.signature, func);
     }
 
-    const functionsToRestore: Array<{ func: DatabaseFunction; definition: string }> = [];
+    const functionsToRestore: { func: DatabaseFunction; definition: string }[] = [];
 
     for (const definedFunc of definedFunctions) {
       const dbFunc = dbFunctionsBySignature.get(definedFunc.signature);
