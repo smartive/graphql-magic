@@ -74,6 +74,7 @@ const extractFunctionSignature = (definition: string, isAggregate: boolean): str
       if (typeMatch) {
         return `${typeMatch[1]} ${typeMatch[2]}`;
       }
+
       return trimmed;
     })
     .join(', ');

@@ -224,23 +224,26 @@ export const getColumnExpression = (
 ) => {
   const field = node.model.fields.find((field) => field.name === fieldName)!;
 
-  if (field.generateAs && field.generateAs.type === 'expression') {
-    const tableAlias = field.inherited ? node.rootTableAlias : node.tableAlias;
+  if (field.generateAs?.type === 'expression') {
     const expression = field.generateAs.expression.replace(/\b(\w+)\b/g, (match, columnName) => {
       const referencedField = node.model.fields.find((f) => {
         if (f.name === columnName) {
           return true;
         }
         const actualColumnName = getColumnName(f);
+
         return actualColumnName === columnName;
       });
       if (referencedField) {
         const actualColumnName = getColumnName(referencedField);
         const referencedTableAlias = referencedField.inherited ? node.rootTableAlias : node.tableAlias;
+
         return `${node.ctx.aliases.getShort(referencedTableAlias)}.${actualColumnName}`;
       }
+
       return match;
     });
+
     return `(${expression})`;
   }
 

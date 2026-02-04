@@ -158,7 +158,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         throw new Error(`Invalid filter ${key}.`);
       }
       const actualField = node.model.getField(actualKey);
-      const isExpressionField = actualField.generateAs && actualField.generateAs.type === 'expression';
+      const isExpressionField = actualField.generateAs?.type === 'expression';
       const actualColumn = isExpressionField ? getColumnExpression(node, actualKey) : getColumn(node, actualKey);
       if (isExpressionField) {
         const operator = filter === 'GT' ? '>' : filter === 'GTE' ? '>=' : filter === 'LT' ? '<' : '<=';
@@ -171,7 +171,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
 
     const field = node.model.getField(key);
 
-    const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+    const isExpressionField = field.generateAs?.type === 'expression';
     const column = isExpressionField ? getColumnExpression(node, key) : getColumn(node, key);
 
     if (field.kind === 'relation') {
@@ -270,12 +270,14 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
     node.model.fields
       .filter(({ searchable }) => searchable)
       .map((field) => {
-        const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+        const isExpressionField = field.generateAs?.type === 'expression';
         const column = isExpressionField ? getColumnExpression(node, field.name) : getColumn(node, field.name);
+
         return (query: Knex.QueryBuilder) => {
           if (isExpressionField) {
             return query.whereRaw(`${column}::text ILIKE ?`, [`%${search}%`]);
           }
+
           return query.whereRaw('??::text ILIKE ?', [column, `%${search}%`]);
         };
       }),
@@ -309,7 +311,7 @@ const applyOrderBy = (node: FilterNode, orderBy: OrderBy | OrderBy[], query: Kne
     }
 
     // Simple field
-    const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+    const isExpressionField = field.generateAs?.type === 'expression';
     const column = isExpressionField ? getColumnExpression(node, key) : getColumn(node, key);
     if (isExpressionField) {
       void query.orderByRaw(`${column} ${value}`);
