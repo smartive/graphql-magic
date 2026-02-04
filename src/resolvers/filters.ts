@@ -3,7 +3,7 @@ import { EntityModel, FullContext, getPermissionStack } from '..';
 import { ForbiddenError, UserInputError } from '../errors';
 import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode } from './node';
-import { Joins, QueryBuilderOps, addJoin, apply, applyJoins, getColumn, ors } from './utils';
+import { Joins, QueryBuilderOps, addJoin, apply, applyJoins, getColumn, getColumnExpression, ors } from './utils';
 
 export const SPECIAL_FILTERS: Record<string, string> = {
   GT: '?? > ?',
@@ -157,19 +157,32 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         // Should not happen
         throw new Error(`Invalid filter ${key}.`);
       }
-      ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [getColumn(node, actualKey), value as string]));
+      const actualField = node.model.getField(actualKey);
+      const isExpressionField = actualField.generateAs && actualField.generateAs.type === 'expression';
+      const actualColumn = isExpressionField ? getColumnExpression(node, actualKey) : getColumn(node, actualKey);
+      if (isExpressionField) {
+        const operator = filter === 'GT' ? '>' : filter === 'GTE' ? '>=' : filter === 'LT' ? '<' : '<=';
+        ops.push((query) => query.whereRaw(`${actualColumn} ${operator} ?`, [value as string]));
+      } else {
+        ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [actualColumn, value as string]));
+      }
       continue;
     }
 
     const field = node.model.getField(key);
 
-    const column = getColumn(node, key);
+    const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+    const column = isExpressionField ? getColumnExpression(node, key) : getColumn(node, key);
 
     if (field.kind === 'relation') {
       const relation = node.model.getRelation(field.name);
 
       if (value === null) {
-        ops.push((query) => query.whereNull(column));
+        if (isExpressionField) {
+          ops.push((query) => query.whereRaw(`${column} IS NULL`));
+        } else {
+          ops.push((query) => query.whereNull(column));
+        }
         continue;
       }
 
@@ -189,35 +202,65 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
 
     if (Array.isArray(value)) {
       if (field && field.list) {
-        ops.push((query) =>
-          ors(
-            query,
-            value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, column] as string[])),
-          ),
-        );
+        if (isExpressionField) {
+          ops.push((query) =>
+            ors(
+              query,
+              value.map((v) => (subQuery) => subQuery.whereRaw(`? = ANY(${column})`, [v])),
+            ),
+          );
+        } else {
+          ops.push((query) =>
+            ors(
+              query,
+              value.map((v) => (subQuery) => subQuery.whereRaw('? = ANY(??)', [v, column] as string[])),
+            ),
+          );
+        }
         continue;
       }
 
       if (value.some((v) => v === null)) {
         if (value.some((v) => v !== null)) {
-          ops.push((query) =>
-            ors(query, [
-              (subQuery) => subQuery.whereIn(column, value.filter((v) => v !== null) as string[]),
-              (subQuery) => subQuery.whereNull(column),
-            ]),
-          );
+          if (isExpressionField) {
+            ops.push((query) =>
+              ors(query, [
+                (subQuery) => subQuery.whereRaw(`${column} IN (?)`, [value.filter((v) => v !== null) as string[]]),
+                (subQuery) => subQuery.whereRaw(`${column} IS NULL`),
+              ]),
+            );
+          } else {
+            ops.push((query) =>
+              ors(query, [
+                (subQuery) => subQuery.whereIn(column, value.filter((v) => v !== null) as string[]),
+                (subQuery) => subQuery.whereNull(column),
+              ]),
+            );
+          }
           continue;
         }
 
-        ops.push((query) => query.whereNull(column));
+        if (isExpressionField) {
+          ops.push((query) => query.whereRaw(`${column} IS NULL`));
+        } else {
+          ops.push((query) => query.whereNull(column));
+        }
         continue;
       }
 
-      ops.push((query) => query.whereIn(column, value as string[]));
+      if (isExpressionField) {
+        ops.push((query) => query.whereRaw(`${column} IN (?)`, [value as string[]]));
+      } else {
+        ops.push((query) => query.whereIn(column, value as string[]));
+      }
       continue;
     }
 
-    ops.push((query) => query.where({ [column]: value }));
+    if (isExpressionField) {
+      ops.push((query) => query.whereRaw(`${column} = ?`, [value]));
+    } else {
+      ops.push((query) => query.where({ [column]: value }));
+    }
   }
 };
 
@@ -226,11 +269,16 @@ const applySearch = (node: FieldResolverNode, search: string, query: Knex.QueryB
     query,
     node.model.fields
       .filter(({ searchable }) => searchable)
-      .map(
-        ({ name }) =>
-          (query) =>
-            query.whereRaw('??::text ILIKE ?', [getColumn(node, name), `%${search}%`]),
-      ),
+      .map((field) => {
+        const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+        const column = isExpressionField ? getColumnExpression(node, field.name) : getColumn(node, field.name);
+        return (query: Knex.QueryBuilder) => {
+          if (isExpressionField) {
+            return query.whereRaw(`${column}::text ILIKE ?`, [`%${search}%`]);
+          }
+          return query.whereRaw('??::text ILIKE ?', [column, `%${search}%`]);
+        };
+      }),
   );
 
 const applyOrderBy = (node: FilterNode, orderBy: OrderBy | OrderBy[], query: Knex.QueryBuilder, joins: Joins) => {
@@ -261,6 +309,12 @@ const applyOrderBy = (node: FilterNode, orderBy: OrderBy | OrderBy[], query: Kne
     }
 
     // Simple field
-    void query.orderBy(getColumn(node, key), value as 'ASC' | 'DESC');
+    const isExpressionField = field.generateAs && field.generateAs.type === 'expression';
+    const column = isExpressionField ? getColumnExpression(node, key) : getColumn(node, key);
+    if (isExpressionField) {
+      void query.orderByRaw(`${column} ${value}`);
+    } else {
+      void query.orderBy(column, value as 'ASC' | 'DESC');
+    }
   }
 };
