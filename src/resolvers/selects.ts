@@ -13,6 +13,7 @@ import {
   isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
+import { getColumnName } from './utils';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   if (node.isAggregate) {
@@ -32,7 +33,15 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
     ...[
       { tableAlias: node.rootTableAlias, resultAlias: node.resultAlias, field: 'id', fieldAlias: ID_ALIAS },
       ...(node.model.root
-        ? [{ tableAlias: node.rootTableAlias, resultAlias: node.resultAlias, field: 'type', fieldAlias: TYPE_ALIAS }]
+        ? [
+            {
+              tableAlias: node.rootTableAlias,
+              resultAlias: node.resultAlias,
+              field: 'type',
+              fieldAlias: TYPE_ALIAS,
+              generateAs: undefined,
+            },
+          ]
         : []),
       ...getSimpleFields(node)
         .filter((fieldNode) => {
@@ -69,12 +78,36 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
             tableAlias: field.inherited ? node.rootTableAlias : node.tableAlias,
             resultAlias: node.resultAlias,
             fieldAlias,
+            generateAs: field.generateAs,
           };
         }),
-    ].map(
-      ({ tableAlias, resultAlias, field, fieldAlias }) =>
-        `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`,
-    ),
+    ].map(({ tableAlias, resultAlias, field, fieldAlias, generateAs }) => {
+      if (generateAs && generateAs.type === 'expression') {
+        const tableShortAlias = node.ctx.aliases.getShort(tableAlias);
+        const resultShortAlias = node.ctx.aliases.getShort(resultAlias);
+        const expression = generateAs.expression.replace(/\b(\w+)\b/g, (match, columnName) => {
+          const field = node.model.fields.find((f) => {
+            if (f.name === columnName) {
+              return true;
+            }
+            const actualColumnName = getColumnName(f);
+
+            return actualColumnName === columnName;
+          });
+          if (field) {
+            const actualColumnName = getColumnName(field);
+
+            return `${tableShortAlias}.${actualColumnName}`;
+          }
+
+          return match;
+        });
+
+        return node.ctx.knex.raw(`(${expression}) as ??`, [`${resultShortAlias}__${fieldAlias}`]);
+      }
+
+      return `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`;
+    }),
   );
 
   for (const subNode of getInlineFragments(node)) {

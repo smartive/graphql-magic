@@ -39,6 +39,13 @@ const DEFAULTS = {
       ensureFileExists(path, EMPTY_MODELS);
     },
   },
+  functionsPath: {
+    question: 'What is the PostgreSQL functions file path?',
+    defaultValue: 'src/config/functions.sql',
+    init: (path: string) => {
+      ensureFileExists(path, '-- PostgreSQL functions\n-- Add your CREATE FUNCTION statements here\n');
+    },
+  },
   generatedFolderPath: {
     question: 'What is the path for generated stuff?',
     defaultValue: 'src/generated',
