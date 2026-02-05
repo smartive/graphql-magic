@@ -9,13 +9,18 @@ type DatabaseFunction = {
   definition?: string;
 };
 
-const normalizeFunctionBody = (body: string): string => {
-  return body
+const normalizeWhitespace = (str: string): string => {
+  return str
     .replace(/\s+/g, ' ')
     .replace(/\s*\(\s*/g, '(')
     .replace(/\s*\)\s*/g, ')')
     .replace(/\s*,\s*/g, ',')
+    .replace(/\s*;\s*/g, ';')
     .trim();
+};
+
+const normalizeFunctionBody = (body: string): string => {
+  return normalizeWhitespace(body);
 };
 
 const extractFunctionBody = (definition: string): string => {
