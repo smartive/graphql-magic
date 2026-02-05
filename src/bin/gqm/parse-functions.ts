@@ -1,15 +1,8 @@
 import { existsSync } from 'fs';
 import { IndentationText, Project } from 'ts-morph';
-import { staticEval } from '../bin/gqm/static-eval';
-import { findDeclarationInFile } from '../bin/gqm/utils';
-
-export type ParsedFunction = {
-  name: string;
-  signature: string;
-  body: string;
-  fullDefinition: string;
-  isAggregate: boolean;
-};
+import { ParsedFunction } from '../../migrations/types';
+import { staticEval } from './static-eval';
+import { findDeclarationInFile } from './utils';
 
 const normalizeWhitespace = (str: string): string => {
   return str

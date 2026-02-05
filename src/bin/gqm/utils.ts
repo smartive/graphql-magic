@@ -9,6 +9,7 @@ export const findDeclarationInFile = (sourceFile: SourceFile, name: string) => {
   if (!declaration) {
     throw new Error(`No ${name} declaration`);
   }
+
   return declaration;
 };
 

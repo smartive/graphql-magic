@@ -19,7 +19,7 @@ import {
 } from '../models/utils';
 import { getColumnName } from '../resolvers';
 import { Value } from '../values';
-import { ParsedFunction, parseFunctionsFile } from './parse-functions';
+import { ParsedFunction } from './types';
 
 type Callbacks = (() => void)[];
 
@@ -47,7 +47,7 @@ export class MigrationGenerator {
   constructor(
     knex: Knex,
     private models: Models,
-    private functionsFilePath?: string,
+    private parsedFunctions?: ParsedFunction[],
   ) {
     this.knex = knex;
     this.schema = SchemaInspector(knex);
@@ -1120,15 +1120,11 @@ export class MigrationGenerator {
   }
 
   private async handleFunctions(up: Callbacks, down: Callbacks) {
-    if (!this.functionsFilePath) {
+    if (!this.parsedFunctions || this.parsedFunctions.length === 0) {
       return;
     }
 
-    const definedFunctions = parseFunctionsFile(this.functionsFilePath);
-
-    if (definedFunctions.length === 0) {
-      return;
-    }
+    const definedFunctions = this.parsedFunctions;
 
     const dbFunctions = await this.getDatabaseFunctions();
     const dbFunctionsBySignature = new Map<string, DatabaseFunction>();

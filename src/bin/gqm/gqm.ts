@@ -16,6 +16,7 @@ import { generateFunctionsFromDatabase } from '../../migrations/generate-functio
 import { updateFunctions } from '../../migrations/update-functions';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
+import { parseFunctionsFile } from './parse-functions';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
 import { generatePermissionTypes } from './permissions';
@@ -79,7 +80,8 @@ program
     try {
       const models = await parseModels();
       const functionsPath = await getSetting('functionsPath');
-      const migrations = await new MigrationGenerator(db, models, functionsPath).generate();
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      const migrations = await new MigrationGenerator(db, models, parsedFunctions).generate();
 
       writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
     } finally {
@@ -97,7 +99,8 @@ program
     try {
       const models = await parseModels();
       const functionsPath = await getSetting('functionsPath');
-      const mg = new MigrationGenerator(db, models, functionsPath);
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      const mg = new MigrationGenerator(db, models, parsedFunctions);
       await mg.generate();
 
       if (mg.needsMigration) {
