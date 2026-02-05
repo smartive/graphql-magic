@@ -13,7 +13,7 @@ import {
   isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
-import { getColumnName } from './utils';
+import { getColumnExpression } from './utils';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   if (node.isAggregate) {
@@ -83,25 +83,9 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
         }),
     ].map(({ tableAlias, resultAlias, field, fieldAlias, generateAs }) => {
       if (generateAs?.type === 'expression') {
-        const tableShortAlias = node.ctx.aliases.getShort(tableAlias);
         const resultShortAlias = node.ctx.aliases.getShort(resultAlias);
-        const expression = generateAs.expression.replace(/\b(\w+)\b/g, (match, columnName) => {
-          const field = node.model.fields.find((f) => {
-            if (f.name === columnName) {
-              return true;
-            }
-            const actualColumnName = getColumnName(f);
-
-            return actualColumnName === columnName;
-          });
-          if (field) {
-            const actualColumnName = getColumnName(field);
-
-            return `${tableShortAlias}.${actualColumnName}`;
-          }
-
-          return match;
-        });
+        const columnExpression = getColumnExpression(node, field);
+        const expression = columnExpression.slice(1, -1);
 
         return node.ctx.knex.raw(`(${expression}) as ??`, [`${resultShortAlias}__${fieldAlias}`]);
       }

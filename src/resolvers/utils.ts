@@ -218,6 +218,35 @@ export const getColumn = (
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${getColumnName(field)}`;
 };
 
+const replaceColumnReferences = (
+  expression: string,
+  node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>,
+) => {
+  const replaceField = (columnName: string) => {
+    const referencedField = node.model.fields.find((f) => getColumnName(f) === columnName);
+    if (referencedField) {
+      const actualColumnName = getColumnName(referencedField);
+      const referencedTableAlias = referencedField.inherited ? node.rootTableAlias : node.tableAlias;
+
+      return {
+        tableAlias: node.ctx.aliases.getShort(referencedTableAlias),
+        columnName: actualColumnName,
+      };
+    }
+
+    return null;
+  };
+
+  return expression.replace(/"(\w+)"/g, (match, columnName) => {
+    const replacement = replaceField(columnName);
+    if (replacement) {
+      return `"${replacement.tableAlias}"."${replacement.columnName}"`;
+    }
+
+    return match;
+  });
+};
+
 export const getColumnExpression = (
   node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>,
   fieldName: string,
@@ -225,24 +254,7 @@ export const getColumnExpression = (
   const field = node.model.fields.find((field) => field.name === fieldName)!;
 
   if (field.generateAs?.type === 'expression') {
-    const expression = field.generateAs.expression.replace(/\b(\w+)\b/g, (match, columnName) => {
-      const referencedField = node.model.fields.find((f) => {
-        if (f.name === columnName) {
-          return true;
-        }
-        const actualColumnName = getColumnName(f);
-
-        return actualColumnName === columnName;
-      });
-      if (referencedField) {
-        const actualColumnName = getColumnName(referencedField);
-        const referencedTableAlias = referencedField.inherited ? node.rootTableAlias : node.tableAlias;
-
-        return `${node.ctx.aliases.getShort(referencedTableAlias)}.${actualColumnName}`;
-      }
-
-      return match;
-    });
+    const expression = replaceColumnReferences(field.generateAs.expression, node);
 
     return `(${expression})`;
   }
