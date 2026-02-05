@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import { parseFunctionsFile } from '../bin/gqm/parse-functions';
 import { ParsedFunction } from './types';
 
 type DatabaseFunction = {
@@ -144,12 +143,12 @@ const compareFunctions = (defined: ParsedFunction, db: DatabaseFunction): { chan
   return { changed: false };
 };
 
-export const updateFunctions = async (knex: Knex, functionsFilePath: string): Promise<void> => {
-  const definedFunctions = parseFunctionsFile(functionsFilePath);
-
-  if (definedFunctions.length === 0) {
+export const updateFunctions = async (knex: Knex, parsedFunctions: ParsedFunction[]): Promise<void> => {
+  if (parsedFunctions.length === 0) {
     return;
   }
+
+  const definedFunctions = parsedFunctions;
 
   const dbFunctions = await getDatabaseFunctions(knex);
   const dbFunctionsBySignature = new Map<string, DatabaseFunction>();
