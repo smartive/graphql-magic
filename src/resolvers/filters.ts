@@ -225,7 +225,14 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
           if (isExpressionField) {
             ops.push((query) =>
               ors(query, [
-                (subQuery) => subQuery.whereRaw(`${column} IN (?)`, [value.filter((v) => v !== null) as string[]]),
+                (subQuery) =>
+                  subQuery.whereRaw(
+                    `${column} IN (${value
+                      .filter((v) => v !== null)
+                      .map(() => `?`)
+                      .join(',')})`,
+                    value.filter((v) => v !== null) as string[],
+                  ),
                 (subQuery) => subQuery.whereRaw(`${column} IS NULL`),
               ]),
             );
@@ -249,7 +256,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
       }
 
       if (isExpressionField) {
-        ops.push((query) => query.whereRaw(`${column} IN (?)`, [value as string[]]));
+        ops.push((query) => query.whereRaw(`${column} IN (${value.map(() => `?`).join(',')})`, value as string[]));
       } else {
         ops.push((query) => query.whereIn(column, value as string[]));
       }
