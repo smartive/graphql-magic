@@ -65,8 +65,10 @@ export const generateFunctionsFromDatabase = async (knex: Knex): Promise<string>
   }
 
   if (functions.length === 0) {
-    return '-- PostgreSQL functions\n-- No functions found in database\n';
+    return `export const functions: string[] = [];\n`;
   }
 
-  return functions.join('\n\n') + '\n';
+  const functionsArrayString = functions.map((func) => `  ${JSON.stringify(func)}`).join(',\n');
+
+  return `export const functions: string[] = [\n${functionsArrayString},\n];\n`;
 };

@@ -41,9 +41,9 @@ const DEFAULTS = {
   },
   functionsPath: {
     question: 'What is the PostgreSQL functions file path?',
-    defaultValue: 'src/config/functions.sql',
+    defaultValue: 'src/config/functions.ts',
     init: (path: string) => {
-      ensureFileExists(path, '-- PostgreSQL functions\n-- Add your CREATE FUNCTION statements here\n');
+      ensureFileExists(path, `export const functions: string[] = [];\n`);
     },
   },
   generatedFolderPath: {

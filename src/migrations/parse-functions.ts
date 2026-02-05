@@ -1,4 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
+import { IndentationText, Project } from 'ts-morph';
+import { staticEval } from '../bin/gqm/static-eval';
+import { findDeclarationInFile } from '../bin/gqm/utils';
 
 export type ParsedFunction = {
   name: string;
@@ -8,22 +11,22 @@ export type ParsedFunction = {
   isAggregate: boolean;
 };
 
-const normalizeFunctionBody = (body: string): string => {
-  return body
+const normalizeWhitespace = (str: string): string => {
+  return str
     .replace(/\s+/g, ' ')
     .replace(/\s*\(\s*/g, '(')
     .replace(/\s*\)\s*/g, ')')
     .replace(/\s*,\s*/g, ',')
+    .replace(/\s*;\s*/g, ';')
     .trim();
 };
 
+const normalizeFunctionBody = (body: string): string => {
+  return normalizeWhitespace(body);
+};
+
 const normalizeAggregateDefinition = (definition: string): string => {
-  let normalized = definition
-    .replace(/\s+/g, ' ')
-    .replace(/\s*\(\s*/g, '(')
-    .replace(/\s*\)\s*/g, ')')
-    .replace(/\s*,\s*/g, ',')
-    .trim();
+  let normalized = normalizeWhitespace(definition);
 
   const initCondMatch = normalized.match(/INITCOND\s*=\s*([^,)]+)/i);
   if (initCondMatch) {
@@ -67,15 +70,9 @@ const extractFunctionSignature = (definition: string, isAggregate: boolean): str
 
   const argsSection = fullArgsMatch[2].trim();
   const args = argsSection
-    .split(',')
+    .split(/\s*,\s*/)
     .map((arg) => {
-      const trimmed = arg.trim();
-      const typeMatch = trimmed.match(/(\w+)\s+(\w+(?:\s*\[\])?)/);
-      if (typeMatch) {
-        return `${typeMatch[1]} ${typeMatch[2]}`;
-      }
-
-      return trimmed;
+      return arg.trim().replace(/\s+/g, ' ');
     })
     .join(', ');
 
@@ -101,40 +98,51 @@ export const parseFunctionsFile = (filePath: string): ParsedFunction[] => {
     return [];
   }
 
-  const content = readFileSync(filePath, 'utf-8');
-  const functions: ParsedFunction[] = [];
+  const project = new Project({
+    manipulationSettings: {
+      indentationText: IndentationText.TwoSpaces,
+    },
+  });
+  const sourceFile = project.addSourceFileAtPath(filePath);
 
-  const functionRegex =
-    /CREATE\s+(OR\s+REPLACE\s+)?(FUNCTION|AGGREGATE)\s+[\s\S]*?(?=CREATE\s+(OR\s+REPLACE\s+)?(FUNCTION|AGGREGATE)|$)/gi;
-  let match;
-  let lastIndex = 0;
+  try {
+    const functionsDeclaration = findDeclarationInFile(sourceFile, 'functions');
+    const functionsArray = staticEval(functionsDeclaration, {}) as string[];
 
-  while ((match = functionRegex.exec(content)) !== null) {
-    if (match.index < lastIndex) {
-      continue;
-    }
-    lastIndex = match.index + match[0].length;
-
-    const definition = match[0].trim();
-    const isAggregate = /CREATE\s+(OR\s+REPLACE\s+)?AGGREGATE/i.test(definition);
-    const signature = extractFunctionSignature(definition, isAggregate);
-
-    if (!signature) {
-      continue;
+    if (!Array.isArray(functionsArray)) {
+      return [];
     }
 
-    const nameMatch = signature.match(/^([^(]+)\(/);
-    const name = nameMatch ? nameMatch[1].trim().split('.').pop() || '' : '';
-    const body = isAggregate ? definition : extractFunctionBody(definition);
+    const parsedFunctions: ParsedFunction[] = [];
 
-    functions.push({
-      name,
-      signature,
-      body: isAggregate ? normalizeAggregateDefinition(body) : normalizeFunctionBody(body),
-      fullDefinition: definition,
-      isAggregate,
-    });
+    for (const definition of functionsArray) {
+      if (!definition || typeof definition !== 'string') {
+        continue;
+      }
+
+      const trimmedDefinition = definition.trim();
+      const isAggregate = /CREATE\s+(OR\s+REPLACE\s+)?AGGREGATE/i.test(trimmedDefinition);
+      const signature = extractFunctionSignature(trimmedDefinition, isAggregate);
+
+      if (!signature) {
+        continue;
+      }
+
+      const nameMatch = signature.match(/^([^(]+)\(/);
+      const name = nameMatch ? nameMatch[1].trim().split('.').pop() || '' : '';
+      const body = isAggregate ? trimmedDefinition : extractFunctionBody(trimmedDefinition);
+
+      parsedFunctions.push({
+        name,
+        signature,
+        body: isAggregate ? normalizeAggregateDefinition(body) : normalizeFunctionBody(body),
+        fullDefinition: trimmedDefinition,
+        isAggregate,
+      });
+    }
+
+    return parsedFunctions;
+  } catch (error) {
+    return [];
   }
-
-  return functions;
 };

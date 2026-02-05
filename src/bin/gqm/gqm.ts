@@ -111,7 +111,7 @@ program
 
 program
   .command('generate-functions')
-  .description('Generate functions.sql file from database')
+  .description('Generate functions.ts file from database')
   .action(async () => {
     const knexfile = await parseKnexfile();
     const db = knex(knexfile);
@@ -127,7 +127,7 @@ program
 
 program
   .command('update-functions')
-  .description('Update database functions from functions.sql file')
+  .description('Update database functions from functions.ts file')
   .action(async () => {
     const knexfile = await parseKnexfile();
     const db = knex(knexfile);
