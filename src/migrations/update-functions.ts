@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
-import { ParsedFunction, parseFunctionsFile } from './parse-functions';
+import { parseFunctionsFile } from '../bin/gqm/parse-functions';
+import { ParsedFunction } from './types';
 
 type DatabaseFunction = {
   name: string;
