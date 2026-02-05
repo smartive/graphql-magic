@@ -137,7 +137,8 @@ program
 
     try {
       const functionsPath = await getSetting('functionsPath');
-      await updateFunctions(db, functionsPath);
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      await updateFunctions(db, parsedFunctions);
     } finally {
       await db.destroy();
     }
