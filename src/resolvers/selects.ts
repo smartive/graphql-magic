@@ -13,6 +13,7 @@ import {
   isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
+import { getColumnExpression } from './utils';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   if (node.isAggregate) {
@@ -32,7 +33,15 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
     ...[
       { tableAlias: node.rootTableAlias, resultAlias: node.resultAlias, field: 'id', fieldAlias: ID_ALIAS },
       ...(node.model.root
-        ? [{ tableAlias: node.rootTableAlias, resultAlias: node.resultAlias, field: 'type', fieldAlias: TYPE_ALIAS }]
+        ? [
+            {
+              tableAlias: node.rootTableAlias,
+              resultAlias: node.resultAlias,
+              field: 'type',
+              fieldAlias: TYPE_ALIAS,
+              generateAs: undefined,
+            },
+          ]
         : []),
       ...getSimpleFields(node)
         .filter((fieldNode) => {
@@ -69,12 +78,20 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
             tableAlias: field.inherited ? node.rootTableAlias : node.tableAlias,
             resultAlias: node.resultAlias,
             fieldAlias,
+            generateAs: field.generateAs,
           };
         }),
-    ].map(
-      ({ tableAlias, resultAlias, field, fieldAlias }) =>
-        `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`,
-    ),
+    ].map(({ tableAlias, resultAlias, field, fieldAlias, generateAs }) => {
+      if (generateAs?.type === 'expression') {
+        const resultShortAlias = node.ctx.aliases.getShort(resultAlias);
+        const columnExpression = getColumnExpression(node, field);
+        const expression = columnExpression.slice(1, -1);
+
+        return node.ctx.knex.raw(`(${expression}) as ??`, [`${resultShortAlias}__${fieldAlias}`]);
+      }
+
+      return `${node.ctx.aliases.getShort(tableAlias)}.${field} as ${node.ctx.aliases.getShort(resultAlias)}__${fieldAlias}`;
+    }),
   );
 
   for (const subNode of getInlineFragments(node)) {

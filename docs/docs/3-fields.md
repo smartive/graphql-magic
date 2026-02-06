@@ -341,3 +341,152 @@ the reverse relation will automatically be `Post.comments`. With `reverse` this 
 ### `onDelete`
 
 Only available on relation fields. Can be `"cascade"` (default), `"restrict"` or `"set-null"`.
+
+### `generateAs`
+
+Only available on entity fields. Allows you to define fields that are computed from SQL expressions rather than stored directly. This option accepts an object with:
+
+- `expression`: A SQL expression string that defines how the field is computed
+- `type`: One of `'virtual'`, `'stored'`, or `'expression'`
+
+#### `type: 'virtual'` and `type: 'stored'`
+
+These types create SQL generated columns in the database. The difference is:
+
+- **`'virtual'`**: The value is computed on-the-fly when queried (not stored in the database)
+- **`'stored'`**: The value is computed and stored in the database (takes up space but faster queries)
+
+Both types affect the SQL schema and create actual database columns.
+
+Example:
+
+```ts
+{
+    name: 'Product',
+    fields: [
+        {
+            name: 'price',
+            type: 'Float',
+        },
+        {
+            name: 'quantity',
+            type: 'Int',
+        },
+        {
+            name: 'totalPrice',
+            type: 'Float',
+            generateAs: {
+                expression: 'price * quantity',
+                type: 'stored'
+            }
+        }
+    ]
+}
+```
+
+This creates a `totalPrice` column in the database that is automatically computed as `price * quantity`. The expression can reference other columns in the same table.
+
+#### `type: 'expression'`
+
+This type creates a field that is **not** stored in the database schema. Instead, the expression is evaluated at query time during SELECT operations. This is useful for:
+
+- Computed fields that don't need to be stored
+- Fields that reference columns but shouldn't create database columns
+- Dynamic calculations that should always use the latest data
+
+Example:
+
+```ts
+{
+    name: 'Product',
+    fields: [
+        {
+            name: 'price',
+            type: 'Float',
+        },
+        {
+            name: 'quantity',
+            type: 'Int',
+        },
+        {
+            name: 'totalPrice',
+            type: 'Float',
+            generateAs: {
+                expression: 'price * quantity',
+                type: 'expression'
+            },
+            filterable: true,
+            comparable: true,
+            orderable: true
+        }
+    ]
+}
+```
+
+This creates a `totalPrice` field that is computed at query time. The expression can reference other columns in the table, and column names in the expression are automatically resolved with proper table aliases.
+
+**Important notes for `type: 'expression'`:**
+
+- The field does **not** create a database column
+- The expression is evaluated during SELECT queries
+- Column references in the expression are automatically prefixed with the table alias
+- Can be combined with `filterable`, `comparable`, `orderable`, and `searchable` options
+- Works with all filter types (equality, arrays, null checks, comparisons)
+
+**Expression examples:**
+
+```ts
+// Simple calculation
+{
+    name: 'totalPrice',
+    type: 'Float',
+    generateAs: {
+        expression: 'price * quantity',
+        type: 'expression'
+    }
+}
+
+// Using SQL functions
+{
+    name: 'fullName',
+    type: 'String',
+    generateAs: {
+        expression: "COALESCE(firstName || ' ' || lastName, 'Unknown')",
+        type: 'expression'
+    }
+}
+
+// Conditional logic
+{
+    name: 'discountedPrice',
+    type: 'Float',
+    generateAs: {
+        expression: 'CASE WHEN discount > 0 THEN price * (1 - discount) ELSE price END',
+        type: 'expression'
+    }
+}
+```
+
+**Filtering expression fields:**
+
+When `filterable: true` is set on an expression field, you can filter by it:
+
+```graphql
+query {
+  products(where: { totalPrice_GT: 100 }) {
+    totalPrice
+  }
+}
+```
+
+**Ordering expression fields:**
+
+When `orderable: true` is set on an expression field, you can order by it:
+
+```graphql
+query {
+  products(orderBy: [{ totalPrice: DESC }]) {
+    totalPrice
+  }
+}
+```

@@ -218,6 +218,50 @@ export const getColumn = (
   return `${node.ctx.aliases.getShort(field.inherited ? node.rootTableAlias : node.tableAlias)}.${getColumnName(field)}`;
 };
 
+const replaceColumnReferences = (
+  expression: string,
+  node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>,
+) => {
+  const replaceField = (columnName: string) => {
+    const referencedField = node.model.fields.find((f) => getColumnName(f) === columnName);
+    if (referencedField) {
+      const actualColumnName = getColumnName(referencedField);
+      const referencedTableAlias = referencedField.inherited ? node.rootTableAlias : node.tableAlias;
+
+      return {
+        tableAlias: node.ctx.aliases.getShort(referencedTableAlias),
+        columnName: actualColumnName,
+      };
+    }
+
+    return null;
+  };
+
+  return expression.replace(/"(\w+)"/g, (match, columnName) => {
+    const replacement = replaceField(columnName);
+    if (replacement) {
+      return `"${replacement.tableAlias}"."${replacement.columnName}"`;
+    }
+
+    return match;
+  });
+};
+
+export const getColumnExpression = (
+  node: Pick<ResolverNode, 'model' | 'ctx' | 'rootTableAlias' | 'tableAlias'>,
+  fieldName: string,
+) => {
+  const field = node.model.fields.find((field) => field.name === fieldName)!;
+
+  if (field.generateAs?.type === 'expression') {
+    const expression = replaceColumnReferences(field.generateAs.expression, node);
+
+    return `(${expression})`;
+  }
+
+  return getColumn(node, fieldName);
+};
+
 export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
   model.displayField && entity[model.displayField]
     ? `${model.name} "${entity[model.displayField]}" (${entity.id})`

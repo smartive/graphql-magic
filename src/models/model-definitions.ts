@@ -90,7 +90,10 @@ export type EntityFieldDefinition = FieldDefinitionBase &
     indent?: boolean;
     // If true the field is hidden in the admin interface
     hidden?: boolean;
-    generateAs?: string;
+    generateAs?: {
+      expression: string;
+      type: 'virtual' | 'stored' | 'expression';
+    };
 
     // Temporary fields for the generation of migrations
     deleted?: true;
