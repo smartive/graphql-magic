@@ -4,10 +4,12 @@ import {
   CaseClause,
   ElementAccessExpression,
   Identifier,
+  ImportSpecifier,
   Node,
   ObjectLiteralExpression,
   PrefixUnaryExpression,
   ShorthandPropertyAssignment,
+  StringLiteral,
   SyntaxKind,
   TemplateExpression,
   TemplateTail,
@@ -77,6 +79,106 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   }),
   [SyntaxKind.SpreadElement]: (node, context) => staticEval(node.getExpression(), context),
   [SyntaxKind.SpreadAssignment]: (node, context) => staticEval(node.getExpression(), context),
+  [SyntaxKind.ImportSpecifier]: (node: ImportSpecifier, context) => {
+    const nameNode = node.getNameNode();
+    const name = nameNode.getText();
+
+    if (name in KNOWN_IDENTIFIERS) {
+      return KNOWN_IDENTIFIERS[name];
+    }
+
+    if (nameNode instanceof StringLiteral) {
+      throw new Error(`Cannot handle computed import specifier: ${name}. Only static imports are supported.`);
+    }
+
+    const definitions = nameNode.getDefinitionNodes();
+    // Filter out the node itself to prevent infinite recursion
+    // We compare compilerNode references to handle distinct ts-morph wrapper instances
+    let externalDefinition = definitions.find((d) => d.compilerNode !== node.compilerNode);
+
+    // Fallback: If definition navigation fails (e.g. path aliases), try resolving module manually
+    if (!externalDefinition) {
+      const importDeclaration = node.getImportDeclaration();
+      let sourceFile = importDeclaration.getModuleSpecifierSourceFile();
+
+      // If ts-morph failed to find the file (common with aliases without project config), try manual lookup
+      if (!sourceFile) {
+        const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+        const project = node.getProject();
+
+        if (moduleSpecifier.startsWith('@/')) {
+          const suffix = moduleSpecifier.substring(2);
+
+          // 1. Check if the file is already loaded in the project
+          sourceFile = project.getSourceFiles().find((sf) => {
+            const filePath = sf.getFilePath();
+            // Check for direct match or index file
+            return (
+              filePath.endsWith(`/${suffix}.ts`) ||
+              filePath.endsWith(`/${suffix}.tsx`) ||
+              filePath.endsWith(`/${suffix}/index.ts`) ||
+              filePath.endsWith(`/${suffix}/index.tsx`)
+            );
+          });
+
+          // 2. If not loaded, try to find and add it from disk (heuristic: @/ -> src/)
+          if (!sourceFile) {
+            const candidates = [
+              `src/${suffix}.ts`,
+              `src/${suffix}.tsx`,
+              `src/${suffix}/index.ts`,
+              `src/${suffix}/index.tsx`,
+            ];
+
+            for (const candidate of candidates) {
+              try {
+                // addSourceFileAtPathIfExists resolves relative to CWD
+                const added = project.addSourceFileAtPathIfExists(candidate);
+                if (added) {
+                  sourceFile = added;
+                  break;
+                }
+              } catch {
+                // Ignore load errors
+              }
+            }
+          }
+        }
+      }
+
+      if (sourceFile) {
+        // Use property path if aliased (import { RealName as Alias }), otherwise name
+        // The import specifier is { propertyName as name }
+        // If propertyName is undefined, then propertyName is name
+        // We want the original propertyName to look up exports
+        const localName = node.getName();
+        const propertyName = node.compilerNode.propertyName?.getText();
+        const exportedName = propertyName ?? localName;
+
+        const exportedDeclarations = sourceFile.getExportedDeclarations();
+        const declarations = exportedDeclarations.get(exportedName);
+        const declaration = declarations?.[0];
+
+        if (declaration) {
+          externalDefinition = declaration;
+        }
+      }
+    }
+
+    // Handle re-exports: if the definition is another ImportSpecifier (in a different file), recurse
+    if (externalDefinition && externalDefinition.getKind() === SyntaxKind.ImportSpecifier) {
+      return staticEval(externalDefinition, context);
+    }
+
+    if (!externalDefinition) {
+      const importDeclaration = node.getImportDeclaration();
+      throw new Error(
+        `No definition node found for import specifier '${name}' imported from '${importDeclaration.getModuleSpecifierValue()}'.`,
+      );
+    }
+
+    return staticEval(externalDefinition, context);
+  },
   [SyntaxKind.Identifier]: (node: Identifier, context) => {
     const identifierName = node.getText();
     if (identifierName in KNOWN_IDENTIFIERS) {
