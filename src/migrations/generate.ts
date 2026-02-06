@@ -17,6 +17,7 @@ import {
   summonByName,
   typeToField,
 } from '../models/utils';
+import { getColumnName } from '../resolvers';
 import { Value } from '../values';
 
 type Callbacks = (() => void)[];
@@ -546,23 +547,31 @@ export class MigrationGenerator {
         });
 
         // Insert data for missing revisions columns
-        this.writer
-          .write(`await knex('${model.name}Revision').update(`)
-          .inlineBlock(() => {
-            for (const { name, kind: type } of missingRevisionFields) {
-              const col = type === 'relation' ? `${name}Id` : name;
-              this.writer
-                .write(
-                  `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
-                    model.name
-                  }Revision"."${typeToField(model.name)}Id")'),`,
-                )
-                .newLine();
-            }
-          })
-          .write(');')
-          .newLine()
-          .blankLine();
+        const revisionFieldsWithDataToCopy = missingRevisionFields.filter(
+          (field) =>
+            this.columns[model.name].find((col) => col.name === getColumnName(field)) ||
+            field.defaultValue !== undefined ||
+            field.nonNull,
+        );
+        if (revisionFieldsWithDataToCopy.length) {
+          this.writer
+            .write(`await knex('${model.name}Revision').update(`)
+            .inlineBlock(() => {
+              for (const { name, kind: type } of revisionFieldsWithDataToCopy) {
+                const col = type === 'relation' ? `${name}Id` : name;
+                this.writer
+                  .write(
+                    `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
+                      model.name
+                    }Revision"."${typeToField(model.name)}Id")'),`,
+                  )
+                  .newLine();
+              }
+            })
+            .write(');')
+            .newLine()
+            .blankLine();
+        }
 
         const nonNullableMissingRevisionFields = missingRevisionFields.filter(({ nonNull }) => nonNull);
         if (nonNullableMissingRevisionFields.length) {
