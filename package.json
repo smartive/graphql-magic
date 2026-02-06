@@ -2,6 +2,10 @@
   "name": "@smartive/graphql-magic",
   "version": "0.0.0-development",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smartive/graphql-magic"
+  },
   "source": "src/index.ts",
   "type": "module",
   "module": "dist/esm/index.js",
