@@ -20,16 +20,14 @@ import {
 import { getColumnName } from '../resolvers';
 import { Value } from '../values';
 import { ParsedFunction } from './types';
+import {
+  DatabaseFunction,
+  getDatabaseFunctions,
+  normalizeAggregateDefinition,
+  normalizeFunctionBody,
+} from './update-functions';
 
 type Callbacks = (() => void)[];
-
-type DatabaseFunction = {
-  name: string;
-  signature: string;
-  body: string;
-  isAggregate: boolean;
-  definition?: string;
-};
 
 export class MigrationGenerator {
   // eslint-disable-next-line @typescript-eslint/dot-notation
@@ -762,7 +760,7 @@ export class MigrationGenerator {
         this.writer.write(`, ALTER COLUMN "${name}" SET EXPRESSION AS (${field.generateAs.expression})`);
       } else {
         this.writer.write(
-          `${alter ? 'ALTER' : 'ADD'} COLUMN "${name}" ${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs.expression}) STORED`,
+          `ADD COLUMN "${name}" ${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs.expression}) STORED`,
         );
       }
 
@@ -981,144 +979,6 @@ export class MigrationGenerator {
     return false;
   }
 
-  private normalizeFunctionBody(body: string): string {
-    return body
-      .replace(/\s+/g, ' ')
-      .replace(/\s*\(\s*/g, '(')
-      .replace(/\s*\)\s*/g, ')')
-      .replace(/\s*,\s*/g, ',')
-      .trim();
-  }
-
-  private normalizeAggregateDefinition(definition: string): string {
-    let normalized = definition
-      .replace(/\s+/g, ' ')
-      .replace(/\s*\(\s*/g, '(')
-      .replace(/\s*\)\s*/g, ')')
-      .replace(/\s*,\s*/g, ',')
-      .trim();
-
-    const initCondMatch = normalized.match(/INITCOND\s*=\s*([^,)]+)/i);
-    if (initCondMatch) {
-      const initCondValue = initCondMatch[1].trim();
-      const unquoted = initCondValue.replace(/^['"]|['"]$/g, '');
-      if (/^\d+$/.test(unquoted)) {
-        normalized = normalized.replace(/INITCOND\s*=\s*[^,)]+/i, `INITCOND = '${unquoted}'`);
-      }
-    }
-
-    return normalized;
-  }
-
-  private extractFunctionBody(definition: string): string {
-    const dollarQuoteMatch = definition.match(/AS\s+\$([^$]*)\$([\s\S]*?)\$\1\$/i);
-    if (dollarQuoteMatch) {
-      return dollarQuoteMatch[2].trim();
-    }
-
-    const bodyMatch = definition.match(/AS\s+\$\$([\s\S]*?)\$\$/i) || definition.match(/AS\s+['"]([\s\S]*?)['"]/i);
-    if (bodyMatch) {
-      return bodyMatch[1].trim();
-    }
-
-    return definition;
-  }
-
-  private async getDatabaseFunctions(): Promise<DatabaseFunction[]> {
-    const regularFunctions = await this.knex.raw(`
-      SELECT 
-        p.proname as name,
-        pg_get_function_identity_arguments(p.oid) as arguments,
-        pg_get_functiondef(p.oid) as definition,
-        false as is_aggregate
-      FROM pg_proc p
-      JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE n.nspname = 'public'
-      AND NOT EXISTS (SELECT 1 FROM pg_aggregate a WHERE a.aggfnoid = p.oid)
-      ORDER BY p.proname, pg_get_function_identity_arguments(p.oid)
-    `);
-
-    const aggregateFunctions = await this.knex.raw(`
-      SELECT 
-        p.proname as name,
-        pg_get_function_identity_arguments(p.oid) as arguments,
-        a.aggtransfn::regproc::text as trans_func,
-        a.aggfinalfn::regproc::text as final_func,
-        a.agginitval as init_val,
-        pg_catalog.format_type(a.aggtranstype, NULL) as state_type,
-        true as is_aggregate
-      FROM pg_proc p
-      JOIN pg_aggregate a ON p.oid = a.aggfnoid
-      JOIN pg_namespace n ON p.pronamespace = n.oid
-      WHERE n.nspname = 'public'
-      ORDER BY p.proname, pg_get_function_identity_arguments(p.oid)
-    `);
-
-    const result: DatabaseFunction[] = [];
-
-    for (const row of regularFunctions.rows || []) {
-      const definition = row.definition || '';
-      const name = row.name || '';
-      const argumentsStr = row.arguments || '';
-
-      if (!definition) {
-        continue;
-      }
-
-      const signature = `${name}(${argumentsStr})`;
-      const body = this.normalizeFunctionBody(this.extractFunctionBody(definition));
-
-      result.push({
-        name,
-        signature,
-        body,
-        isAggregate: false,
-        definition,
-      });
-    }
-
-    for (const row of aggregateFunctions.rows || []) {
-      const name = row.name || '';
-      const argumentsStr = row.arguments || '';
-      const transFunc = row.trans_func || '';
-      const finalFunc = row.final_func || '';
-      const initVal = row.init_val;
-      const stateType = row.state_type || '';
-
-      const signature = `${name}(${argumentsStr})`;
-
-      let aggregateDef = `CREATE AGGREGATE ${name}(${argumentsStr}) (`;
-      aggregateDef += `SFUNC = ${transFunc}, STYPE = ${stateType}`;
-
-      if (finalFunc) {
-        aggregateDef += `, FINALFUNC = ${finalFunc}`;
-      }
-
-      if (initVal !== null && initVal !== undefined) {
-        let initValStr: string;
-        if (typeof initVal === 'string') {
-          initValStr = `'${initVal}'`;
-        } else {
-          const numStr = String(initVal);
-          initValStr = /^\d+$/.test(numStr) ? `'${numStr}'` : numStr;
-        }
-        aggregateDef += `, INITCOND = ${initValStr}`;
-      }
-
-      aggregateDef += ');';
-
-      result.push({
-        name,
-        signature,
-        body: this.normalizeAggregateDefinition(aggregateDef),
-        isAggregate: true,
-        definition: aggregateDef,
-      });
-    }
-
-    return result;
-  }
-
   private async handleFunctions(up: Callbacks, down: Callbacks) {
     if (!this.parsedFunctions || this.parsedFunctions.length === 0) {
       return;
@@ -1126,7 +986,7 @@ export class MigrationGenerator {
 
     const definedFunctions = this.parsedFunctions;
 
-    const dbFunctions = await this.getDatabaseFunctions();
+    const dbFunctions = await getDatabaseFunctions(this.knex);
     const dbFunctionsBySignature = new Map<string, DatabaseFunction>();
     for (const func of dbFunctions) {
       dbFunctionsBySignature.set(func.signature, func);
@@ -1163,12 +1023,10 @@ export class MigrationGenerator {
           }
         });
       } else {
-        const dbBody = dbFunc.isAggregate
-          ? this.normalizeAggregateDefinition(dbFunc.body)
-          : this.normalizeFunctionBody(dbFunc.body);
+        const dbBody = dbFunc.isAggregate ? normalizeAggregateDefinition(dbFunc.body) : normalizeFunctionBody(dbFunc.body);
         const definedBody = definedFunc.isAggregate
-          ? this.normalizeAggregateDefinition(definedFunc.body)
-          : this.normalizeFunctionBody(definedFunc.body);
+          ? normalizeAggregateDefinition(definedFunc.body)
+          : normalizeFunctionBody(definedFunc.body);
 
         if (dbBody !== definedBody) {
           const oldDefinition = dbFunc.definition || dbFunc.body;

@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { ParsedFunction } from './types';
 
-type DatabaseFunction = {
+export type DatabaseFunction = {
   name: string;
   signature: string;
   body: string;
@@ -19,11 +19,31 @@ const normalizeWhitespace = (str: string): string => {
     .trim();
 };
 
-const normalizeFunctionBody = (body: string): string => {
+export const normalizeFunctionBody = (body: string): string => {
   return normalizeWhitespace(body);
 };
 
-const extractFunctionBody = (definition: string): string => {
+export const normalizeAggregateDefinition = (definition: string): string => {
+  let normalized = definition
+    .replace(/\s+/g, ' ')
+    .replace(/\s*\(\s*/g, '(')
+    .replace(/\s*\)\s*/g, ')')
+    .replace(/\s*,\s*/g, ',')
+    .trim();
+
+  const initCondMatch = normalized.match(/INITCOND\s*=\s*([^,)]+)/i);
+  if (initCondMatch) {
+    const initCondValue = initCondMatch[1].trim();
+    const unquoted = initCondValue.replace(/^['"]|['"]$/g, '');
+    if (/^\d+$/.test(unquoted)) {
+      normalized = normalized.replace(/INITCOND\s*=\s*[^,)]+/i, `INITCOND = '${unquoted}'`);
+    }
+  }
+
+  return normalized;
+};
+
+export const extractFunctionBody = (definition: string): string => {
   const dollarQuoteMatch = definition.match(/AS\s+\$([^$]*)\$([\s\S]*?)\$\1\$/i);
   if (dollarQuoteMatch) {
     return dollarQuoteMatch[2].trim();
@@ -37,7 +57,7 @@ const extractFunctionBody = (definition: string): string => {
   return definition;
 };
 
-const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction[]> => {
+export const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction[]> => {
   const regularFunctions = await knex.raw(`
     SELECT 
       p.proname as name,
@@ -108,7 +128,13 @@ const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction[]> => 
     }
 
     if (initVal !== null && initVal !== undefined) {
-      const initValStr = typeof initVal === 'string' ? `'${initVal}'` : String(initVal);
+      let initValStr: string;
+      if (typeof initVal === 'string') {
+        initValStr = `'${initVal}'`;
+      } else {
+        const numStr = String(initVal);
+        initValStr = /^\d+$/.test(numStr) ? `'${numStr}'` : numStr;
+      }
       aggregateDef += `, INITCOND = ${initValStr}`;
     }
 
@@ -117,7 +143,7 @@ const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction[]> => 
     result.push({
       name,
       signature,
-      body: normalizeFunctionBody(aggregateDef),
+      body: normalizeAggregateDefinition(aggregateDef),
       isAggregate: true,
       definition: aggregateDef,
     });
