@@ -1,32 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>smartive/renovate-config"],
-  "packageRules": [
-    {
-      "packagePatterns": ["^@types[/]"],
-      "groupName": "TypeScript typings"
-    },
-    {
-      "packagePatterns": ["^eslint*", "prettier"],
-      "groupName": "Linting"
-    },
-    {
-      "updateTypes": ["major"],
-      "automerge": false,
-      "gitLabAutomerge": false,
-      "labels": ["dependencies", "dependencies-major"]
-    },
-    {
-      "packagePatterns": ["*"],
-      "rangeStrategy": "replace"
-    },
-    {
-      "depTypeList": ["devDependencies"],
-      "rangeStrategy": "pin"
-    },
-    {
-      "depTypeList": ["peerDependencies"],
-      "rangeStrategy": "widen"
-    }
+  "extends": [
+    "config:js-lib",
+    "security:minimumReleaseAgeNpm",
+    ":automergeRequireAllStatusChecks",
+    ":automergeDisabled",
+    ":automergeStableNonMajor"
   ]
 }
