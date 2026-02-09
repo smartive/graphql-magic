@@ -12,8 +12,11 @@ import {
   getMigrationDate,
   printSchemaFromModels,
 } from '../..';
+import { generateFunctionsFromDatabase } from '../../migrations/generate-functions';
+import { updateFunctions } from '../../migrations/update-functions';
 import { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
+import { parseFunctionsFile } from './parse-functions';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
 import { generatePermissionTypes } from './permissions';
@@ -76,7 +79,9 @@ program
 
     try {
       const models = await parseModels();
-      const migrations = await new MigrationGenerator(db, models).generate();
+      const functionsPath = await getSetting('functionsPath');
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      const migrations = await new MigrationGenerator(db, models, parsedFunctions).generate();
 
       writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
     } finally {
@@ -93,7 +98,9 @@ program
 
     try {
       const models = await parseModels();
-      const mg = new MigrationGenerator(db, models);
+      const functionsPath = await getSetting('functionsPath');
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      const mg = new MigrationGenerator(db, models, parsedFunctions);
       await mg.generate();
 
       if (mg.needsMigration) {
@@ -106,10 +113,42 @@ program
   });
 
 program
-  .command('*', { noHelp: true })
+  .command('generate-functions')
+  .description('Generate functions.ts file from database')
+  .action(async () => {
+    const knexfile = await parseKnexfile();
+    const db = knex(knexfile);
+
+    try {
+      const functionsPath = await getSetting('functionsPath');
+      const functions = await generateFunctionsFromDatabase(db);
+      writeToFile(functionsPath, functions);
+    } finally {
+      await db.destroy();
+    }
+  });
+
+program
+  .command('update-functions')
+  .description('Update database functions from functions.ts file')
+  .action(async () => {
+    const knexfile = await parseKnexfile();
+    const db = knex(knexfile);
+
+    try {
+      const functionsPath = await getSetting('functionsPath');
+      const parsedFunctions = parseFunctionsFile(functionsPath);
+      await updateFunctions(db, parsedFunctions);
+    } finally {
+      await db.destroy();
+    }
+  });
+
+program
+  .command('*')
   .description('Invalid command')
-  .action(() => {
-    console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
+  .action((command) => {
+    console.error(`Invalid command: ${command}\nSee --help for a list of available commands.`);
     process.exit(1);
   });
 

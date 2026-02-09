@@ -17,7 +17,15 @@ import {
   summonByName,
   typeToField,
 } from '../models/utils';
+import { getColumnName } from '../resolvers';
 import { Value } from '../values';
+import { ParsedFunction } from './types';
+import {
+  DatabaseFunction,
+  getDatabaseFunctions,
+  normalizeAggregateDefinition,
+  normalizeFunctionBody,
+} from './update-functions';
 
 type Callbacks = (() => void)[];
 
@@ -32,11 +40,14 @@ export class MigrationGenerator {
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
+  private knex: Knex;
 
   constructor(
     knex: Knex,
     private models: Models,
+    private parsedFunctions?: ParsedFunction[],
   ) {
+    this.knex = knex;
     this.schema = SchemaInspector(knex);
   }
 
@@ -56,6 +67,8 @@ export class MigrationGenerator {
       up,
       down,
     );
+
+    await this.handleFunctions(up, down);
 
     for (const model of models.entities) {
       if (model.deleted) {
@@ -127,7 +140,9 @@ export class MigrationGenerator {
                   foreignKey: 'id',
                 });
               }
-              for (const field of model.fields.filter(not(isInherited))) {
+              for (const field of model.fields
+                .filter(not(isInherited))
+                .filter((f) => !(f.generateAs?.type === 'expression'))) {
                 this.column(field);
               }
             });
@@ -138,12 +153,8 @@ export class MigrationGenerator {
           });
         } else {
           // Rename fields
-          this.renameFields(
-            model,
-            model.fields.filter(not(isInherited)).filter(({ oldName }) => oldName),
-            up,
-            down,
-          );
+          const fieldsToRename = model.fields.filter(not(isInherited)).filter(({ oldName }) => oldName);
+          this.renameFields(model.name, fieldsToRename, up, down);
 
           // Add missing fields
           this.createFields(
@@ -153,6 +164,7 @@ export class MigrationGenerator {
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
+                  !(field.generateAs?.type === 'expression') &&
                   !this.getColumn(model.name, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               ),
             up,
@@ -161,7 +173,7 @@ export class MigrationGenerator {
 
           // Update fields
           const rawExistingFields = model.fields.filter((field) => {
-            if (!field.generateAs) {
+            if (!field.generateAs || field.generateAs.type === 'expression') {
               return false;
             }
 
@@ -170,7 +182,7 @@ export class MigrationGenerator {
               return false;
             }
 
-            if (col.generation_expression !== field.generateAs) {
+            if (col.generation_expression !== field.generateAs.expression) {
               return true;
             }
 
@@ -180,7 +192,9 @@ export class MigrationGenerator {
             this.updateFieldsRaw(model, rawExistingFields, up, down);
           }
 
-          const existingFields = model.fields.filter((field) => !field.generateAs && this.hasChanged(model, field));
+          const existingFields = model.fields.filter(
+            (field) => (!field.generateAs || field.generateAs.type === 'expression') && this.hasChanged(model, field),
+          );
           this.updateFields(model, existingFields, up, down);
         }
 
@@ -212,7 +226,9 @@ export class MigrationGenerator {
                             writer.writeLine(`deleteRootId: row.deleteRootId,`);
                           }
 
-                          for (const { name, kind } of model.fields.filter(isUpdatableField)) {
+                          for (const { name, kind } of model.fields
+                            .filter(isUpdatableField)
+                            .filter((f) => !(f.generateAs?.type === 'expression'))) {
                             const col = kind === 'relation' ? `${name}Id` : name;
 
                             writer.writeLine(`${col}: row.${col},`);
@@ -231,11 +247,23 @@ export class MigrationGenerator {
             });
           } else {
             const revisionTable = `${model.name}Revision`;
+
+            this.renameFields(
+              revisionTable,
+              model.fields
+                .filter(isUpdatableField)
+                .filter(not(isInherited))
+                .filter(({ oldName }) => oldName),
+              up,
+              down,
+            );
+
             const missingRevisionFields = model.fields
               .filter(isUpdatableField)
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
+                  !(field.generateAs?.type === 'expression') &&
                   !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               );
 
@@ -322,14 +350,14 @@ export class MigrationGenerator {
     return writer.toString();
   }
 
-  private renameFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
+  private renameFields(tableName: string, fields: EntityField[], up: Callbacks, down: Callbacks) {
     if (!fields.length) {
       return;
     }
 
     up.push(() => {
       for (const field of fields) {
-        this.alterTable(model.name, () => {
+        this.alterTable(tableName, () => {
           this.renameColumn(
             field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
             field.kind === 'relation' ? `${field.name}Id` : field.name,
@@ -340,7 +368,7 @@ export class MigrationGenerator {
 
     down.push(() => {
       for (const field of fields) {
-        this.alterTable(model.name, () => {
+        this.alterTable(tableName, () => {
           this.renameColumn(
             field.kind === 'relation' ? `${field.name}Id` : field.name,
             field.kind === 'relation' ? `${field.oldName}Id` : get(field, 'oldName'),
@@ -350,7 +378,7 @@ export class MigrationGenerator {
     });
 
     for (const field of fields) {
-      summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
+      summonByName(this.columns[tableName], field.kind === 'relation' ? `${field.oldName!}Id` : field.oldName!).name =
         field.kind === 'relation' ? `${field.name}Id` : field.name;
     }
   }
@@ -365,6 +393,10 @@ export class MigrationGenerator {
       const updates: Callbacks = [];
       const postAlter: Callbacks = [];
       for (const field of fields) {
+        if (field.generateAs?.type === 'expression') {
+          continue;
+        }
+
         alter.push(() => this.column(field, { setNonNull: field.defaultValue !== undefined }));
 
         if (field.generateAs) {
@@ -430,7 +462,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField);
+      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
       if (!updatableFields.length) {
         return;
       }
@@ -484,7 +516,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField);
+      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
       if (!updatableFields.length) {
         return;
       }
@@ -528,7 +560,9 @@ export class MigrationGenerator {
         }
       }
 
-      for (const field of model.fields.filter(and(isUpdatableField, not(isInherited)))) {
+      for (const field of model.fields
+        .filter(and(isUpdatableField, not(isInherited)))
+        .filter((f) => !(f.generateAs?.type === 'expression'))) {
         this.column(field, { setUnique: false, setDefault: false });
       }
     });
@@ -546,23 +580,31 @@ export class MigrationGenerator {
         });
 
         // Insert data for missing revisions columns
-        this.writer
-          .write(`await knex('${model.name}Revision').update(`)
-          .inlineBlock(() => {
-            for (const { name, kind: type } of missingRevisionFields) {
-              const col = type === 'relation' ? `${name}Id` : name;
-              this.writer
-                .write(
-                  `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
-                    model.name
-                  }Revision"."${typeToField(model.name)}Id")'),`,
-                )
-                .newLine();
-            }
-          })
-          .write(');')
-          .newLine()
-          .blankLine();
+        const revisionFieldsWithDataToCopy = missingRevisionFields.filter(
+          (field) =>
+            this.columns[model.name].find((col) => col.name === getColumnName(field)) ||
+            field.defaultValue !== undefined ||
+            field.nonNull,
+        );
+        if (revisionFieldsWithDataToCopy.length) {
+          this.writer
+            .write(`await knex('${model.name}Revision').update(`)
+            .inlineBlock(() => {
+              for (const { name, kind: type } of revisionFieldsWithDataToCopy) {
+                const col = type === 'relation' ? `${name}Id` : name;
+                this.writer
+                  .write(
+                    `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
+                      model.name
+                    }Revision"."${typeToField(model.name)}Id")'),`,
+                  )
+                  .newLine();
+              }
+            })
+            .write(');')
+            .newLine()
+            .blankLine();
+        }
 
         const nonNullableMissingRevisionFields = missingRevisionFields.filter(({ nonNull }) => nonNull);
         if (nonNullableMissingRevisionFields.length) {
@@ -646,7 +688,7 @@ export class MigrationGenerator {
   }
 
   private renameColumn(from: string, to: string) {
-    this.writer.writeLine(`table.renameColumn('${from}', '${to}')`);
+    this.writer.writeLine(`table.renameColumn('${from}', '${to}');`);
   }
 
   private value(value: Value) {
@@ -681,6 +723,10 @@ export class MigrationGenerator {
     };
     const kind = field.kind;
     if (field.generateAs) {
+      if (field.generateAs.type === 'expression') {
+        throw new Error(`Expression fields cannot be created in SQL schema.`);
+      }
+
       let type = '';
       switch (kind) {
         case undefined:
@@ -688,6 +734,9 @@ export class MigrationGenerator {
           switch (field.type) {
             case 'Float':
               type = `decimal(${field.precision ?? 'undefined'}, ${field.scale ?? 'undefined'})`;
+              break;
+            case 'Boolean':
+              type = 'boolean';
               break;
             default:
               throw new Error(`Generated columns of kind ${kind} and type ${field.type} are not supported yet.`);
@@ -708,10 +757,10 @@ export class MigrationGenerator {
             this.writer.write(`, ALTER COLUMN "${name}" DROP NOT NULL`);
           }
         }
-        this.writer.write(`, ALTER COLUMN "${name}" SET EXPRESSION AS (${field.generateAs})`);
+        this.writer.write(`, ALTER COLUMN "${name}" SET EXPRESSION AS (${field.generateAs.expression})`);
       } else {
         this.writer.write(
-          `${alter ? 'ALTER' : 'ADD'} COLUMN "${name}" ${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs}) STORED`,
+          `ADD COLUMN "${name}" ${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs.expression}) STORED`,
         );
       }
 
@@ -744,6 +793,10 @@ export class MigrationGenerator {
     };
     const kind = field.kind;
     if (field.generateAs) {
+      if (field.generateAs.type === 'expression') {
+        throw new Error(`Expression fields cannot be created in SQL schema.`);
+      }
+
       let type = '';
       switch (kind) {
         case undefined:
@@ -751,6 +804,9 @@ export class MigrationGenerator {
           switch (field.type) {
             case 'Float':
               type = `decimal(${field.precision ?? 'undefined'}, ${field.scale ?? 'undefined'})`;
+              break;
+            case 'Boolean':
+              type = 'boolean';
               break;
             default:
               throw new Error(`Generated columns of kind ${kind} and type ${field.type} are not supported yet.`);
@@ -760,7 +816,7 @@ export class MigrationGenerator {
           throw new Error(`Generated columns of kind ${kind} are not supported yet.`);
       }
       this.writer.write(
-        `table.specificType('${name}', '${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs}) STORED')`,
+        `table.specificType('${name}', '${type}${nonNull() ? ' not null' : ''} GENERATED ALWAYS AS (${field.generateAs.expression}) ${field.generateAs.type === 'virtual' ? 'VIRTUAL' : 'STORED'}')`,
       );
       if (alter) {
         this.writer.write('.alter()');
@@ -865,15 +921,19 @@ export class MigrationGenerator {
   }
 
   private hasChanged(model: EntityModel, field: EntityField) {
+    if (field.generateAs?.type === 'expression') {
+      return false;
+    }
+
     const col = this.getColumn(model.name, field.kind === 'relation' ? `${field.name}Id` : field.name);
     if (!col) {
       return false;
     }
 
     if (field.generateAs) {
-      if (col.generation_expression !== field.generateAs) {
+      if (col.generation_expression !== field.generateAs.expression) {
         throw new Error(
-          `Column ${col.name} has specific type ${col.generation_expression} but expected ${field.generateAs}`,
+          `Column ${col.name} has specific type ${col.generation_expression} but expected ${field.generateAs.expression}`,
         );
       }
     }
@@ -917,6 +977,97 @@ export class MigrationGenerator {
     }
 
     return false;
+  }
+
+  private async handleFunctions(up: Callbacks, down: Callbacks) {
+    if (!this.parsedFunctions || this.parsedFunctions.length === 0) {
+      return;
+    }
+
+    const definedFunctions = this.parsedFunctions;
+
+    const dbFunctions = await getDatabaseFunctions(this.knex);
+    const dbFunctionsBySignature = new Map<string, DatabaseFunction>();
+    for (const func of dbFunctions) {
+      dbFunctionsBySignature.set(func.signature, func);
+    }
+
+    const definedFunctionsBySignature = new Map<string, ParsedFunction>();
+    for (const func of definedFunctions) {
+      definedFunctionsBySignature.set(func.signature, func);
+    }
+
+    const functionsToRestore: { func: DatabaseFunction; definition: string }[] = [];
+
+    for (const definedFunc of definedFunctions) {
+      const dbFunc = dbFunctionsBySignature.get(definedFunc.signature);
+
+      if (!dbFunc) {
+        up.push(() => {
+          this.writer.writeLine(`await knex.raw(\`${definedFunc.fullDefinition.replace(/`/g, '\\`')}\`);`).blankLine();
+        });
+
+        down.push(() => {
+          const isAggregate = definedFunc.isAggregate;
+          const dropMatch = definedFunc.fullDefinition.match(/CREATE\s+(OR\s+REPLACE\s+)?(FUNCTION|AGGREGATE)\s+([^(]+)\(/i);
+          if (dropMatch) {
+            const functionName = dropMatch[3].trim();
+            const argsMatch = definedFunc.fullDefinition.match(
+              /CREATE\s+(OR\s+REPLACE\s+)?(FUNCTION|AGGREGATE)\s+[^(]+\(([^)]*)\)/i,
+            );
+            const args = argsMatch ? argsMatch[3].trim() : '';
+            const dropType = isAggregate ? 'AGGREGATE' : 'FUNCTION';
+            this.writer
+              .writeLine(`await knex.raw(\`DROP ${dropType} IF EXISTS ${functionName}${args ? `(${args})` : ''}\`);`)
+              .blankLine();
+          }
+        });
+      } else {
+        const dbBody = dbFunc.isAggregate ? normalizeAggregateDefinition(dbFunc.body) : normalizeFunctionBody(dbFunc.body);
+        const definedBody = definedFunc.isAggregate
+          ? normalizeAggregateDefinition(definedFunc.body)
+          : normalizeFunctionBody(definedFunc.body);
+
+        if (dbBody !== definedBody) {
+          const oldDefinition = dbFunc.definition || dbFunc.body;
+
+          up.push(() => {
+            this.writer.writeLine(`await knex.raw(\`${definedFunc.fullDefinition.replace(/`/g, '\\`')}\`);`).blankLine();
+          });
+
+          down.push(() => {
+            if (oldDefinition) {
+              this.writer.writeLine(`await knex.raw(\`${oldDefinition.replace(/`/g, '\\`')}\`);`).blankLine();
+            }
+          });
+        }
+      }
+    }
+
+    for (const dbFunc of dbFunctions) {
+      if (!definedFunctionsBySignature.has(dbFunc.signature)) {
+        const definition = dbFunc.definition || dbFunc.body;
+
+        if (definition) {
+          functionsToRestore.push({ func: dbFunc, definition });
+
+          down.push(() => {
+            const argsMatch = dbFunc.signature.match(/\(([^)]*)\)/);
+            const args = argsMatch ? argsMatch[1] : '';
+            const dropType = dbFunc.isAggregate ? 'AGGREGATE' : 'FUNCTION';
+            this.writer
+              .writeLine(`await knex.raw(\`DROP ${dropType} IF EXISTS ${dbFunc.name}${args ? `(${args})` : ''}\`);`)
+              .blankLine();
+          });
+        }
+      }
+    }
+
+    for (const { definition } of functionsToRestore) {
+      up.push(() => {
+        this.writer.writeLine(`await knex.raw(\`${definition.replace(/`/g, '\\`')}\`);`).blankLine();
+      });
+    }
   }
 }
 
