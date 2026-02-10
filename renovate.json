@@ -1,10 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:js-lib",
-    "security:minimumReleaseAgeNpm",
-    ":automergeRequireAllStatusChecks",
-    ":automergeDisabled",
-    ":automergeStableNonMajor"
-  ]
+  "extends": ["github>smartive/renovate-config:best-practices-lib"]
 }
