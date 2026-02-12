@@ -65,6 +65,13 @@ const DEFAULTS = {
       ensureFileExists(`${path}/execute.ts`, EXECUTE);
     },
   },
+  resolversPath: {
+    question: 'Where to generate concrete resolvers?',
+    defaultValue: 'src/generated/resolvers',
+    init: () => {
+      // Do nothing
+    },
+  },
   gqmModule: {
     defaultValue: '@smartive/graphql-magic',
   },

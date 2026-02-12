@@ -1,0 +1,510 @@
+import { Knex } from 'knex';
+import { FullContext, ForbiddenError, UserInputError, getPermissionStack, addJoin, applyJoins, ors, apply, SPECIAL_FILTERS, concreteNormalizeArguments } from '../../../../src';
+import type { Joins, QueryBuilderOps } from '../../../../src';
+import type { ConcreteFieldNode } from '../../../../src';
+import { applyAnotherObjectWhere, applyAnotherObjectOrderBy } from '../another-object/filters';
+import { applyUserWhere, applyUserOrderBy } from '../user/filters';
+
+export const applySomeObjectFilters = async (
+  node: ConcreteFieldNode,
+  query: Knex.QueryBuilder,
+  joins: Joins,
+) => {
+  const normalizedArguments = concreteNormalizeArguments(node.field, node.fieldDefinition, node.ctx.info.schema, node.ctx.info.variableValues);
+
+  if (!node.isAggregate) {
+    if (!normalizedArguments.orderBy) {
+      normalizedArguments.orderBy = [{ createdAt: 'DESC' }];
+    }
+  }
+
+  const { limit, offset, orderBy, where, search } = normalizedArguments;
+
+  await node.ctx.queryHook?.({ model: node.ctx.models.getModel('SomeObject', 'entity'), query, args: normalizedArguments, ctx: node.ctx });
+
+  if (limit) {
+    query.limit(limit);
+  }
+
+  if (offset) {
+    query.offset(offset);
+  }
+
+  if (orderBy) {
+    applySomeObjectOrderBy(node.ctx, node.rootTableAlias, node.tableAlias, orderBy, query, joins);
+  }
+
+  const ops: QueryBuilderOps = [];
+  applySomeObjectWhere(node.ctx, node.rootTableAlias, node.tableAlias, where, ops, joins);
+  apply(query, ops);
+
+  if (search) {
+    applySomeObjectSearch(node.ctx, node.rootTableAlias, node.tableAlias, search, query);
+  }
+}
+
+export const applySomeObjectWhere = (
+  ctx: FullContext,
+  rootTableAlias: string,
+  tableAlias: string,
+  where: Record<string, any> | undefined,
+  ops: QueryBuilderOps,
+  joins: Joins,
+) => {
+  if (where === undefined || where === null) {
+    where = {};
+  }if (where!.deleted && (!Array.isArray(where!.deleted) || where!.deleted.some((v: unknown) => v))) {
+    if (!getPermissionStack(ctx, 'SomeObject', 'DELETE')) {
+      throw new ForbiddenError('You cannot access deleted entries.');
+    }
+  }else {
+    where!.deleted = false;
+  }
+
+  if (!where) {
+    return;
+  }
+
+  const aliases = ctx.aliases;
+
+  for (const key of Object.keys(where)) {
+    const value = where[key];
+
+    if (key === 'NOT') {
+      const subOps: QueryBuilderOps = [];
+      applySomeObjectWhere(ctx, rootTableAlias, tableAlias, value, subOps, joins);
+      ops.push((query) => query.whereNot((subQuery) => apply(subQuery, subOps)));
+      continue;
+    }
+
+    if (key === 'AND') {
+      for (const subWhere of value) {
+        applySomeObjectWhere(ctx, rootTableAlias, tableAlias, subWhere, ops, joins);
+      }
+      continue;
+    }
+
+    if (key === 'OR') {
+      const allSubOps: QueryBuilderOps[] = [];
+      for (const subWhere of value) {
+        const subOps: QueryBuilderOps = [];
+        applySomeObjectWhere(ctx, rootTableAlias, tableAlias, subWhere, subOps, joins);
+        allSubOps.push(subOps);
+      }
+      ops.push((query) => ors(query, allSubOps.map((subOps) => (subQuery: any) => apply(subQuery, subOps))));
+      continue;
+    }
+
+    const specialFilter = key.match(/^(\w+)_(\w+)$/);
+    if (specialFilter) {
+      const [, actualKey, filter] = specialFilter;
+
+      if (SPECIAL_FILTERS[filter]) {
+        switch (actualKey) {
+          case 'id': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.id`, value as string]));
+            break;
+          }
+          case 'field': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.field`, value as string]));
+            break;
+          }
+          case 'float': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.float`, value as string]));
+            break;
+          }
+          case 'list': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.list`, value as string]));
+            break;
+          }
+          case 'xyz': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.xyz`, value as string]));
+            break;
+          }
+          case 'createdAt': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.createdAt`, value as string]));
+            break;
+          }
+          case 'updatedAt': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.updatedAt`, value as string]));
+            break;
+          }
+          case 'deleted': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.deleted`, value as string]));
+            break;
+          }
+          case 'deletedAt': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.deletedAt`, value as string]));
+            break;
+          }
+          case 'deleteRootType': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.deleteRootType`, value as string]));
+            break;
+          }
+          case 'deleteRootId': {
+            ops.push((query) => query.whereRaw(SPECIAL_FILTERS[filter], [`${aliases.getShort(rootTableAlias)}.deleteRootId`, value as string]));
+            break;
+          }
+        }
+        continue;
+      }
+      continue;
+    }
+
+    switch (key) {
+      case 'id': {
+        const col = `${aliases.getShort(rootTableAlias)}.id`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'field': {
+        const col = `${aliases.getShort(rootTableAlias)}.field`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'another': {
+        if (value === null) {
+          ops.push((query) => query.whereNull(`${aliases.getShort(rootTableAlias)}.anotherId`));
+          continue;
+        }
+        const subRootAlias = `SomeObject__W__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'AnotherObject', subAlias, 'anotherId', 'id');
+        applyAnotherObjectWhere(ctx, subRootAlias, subAlias, value, ops, joins);
+        break;
+      }
+      case 'float': {
+        const col = `${aliases.getShort(rootTableAlias)}.float`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'list': {
+        const col = `${aliases.getShort(rootTableAlias)}.list`;
+        if (Array.isArray(value)) {
+          ops.push((query) => ors(query, value.map((v: any) => (subQuery: any) => subQuery.whereRaw('? = ANY(??)', [v, col] as string[]))));
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'xyz': {
+        const col = `${aliases.getShort(rootTableAlias)}.xyz`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'createdAt': {
+        const col = `${aliases.getShort(rootTableAlias)}.createdAt`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'createdBy': {
+        if (value === null) {
+          ops.push((query) => query.whereNull(`${aliases.getShort(rootTableAlias)}.createdById`));
+          continue;
+        }
+        const subRootAlias = `SomeObject__W__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'createdById', 'id');
+        applyUserWhere(ctx, subRootAlias, subAlias, value, ops, joins);
+        break;
+      }
+      case 'updatedAt': {
+        const col = `${aliases.getShort(rootTableAlias)}.updatedAt`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'updatedBy': {
+        if (value === null) {
+          ops.push((query) => query.whereNull(`${aliases.getShort(rootTableAlias)}.updatedById`));
+          continue;
+        }
+        const subRootAlias = `SomeObject__W__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'updatedById', 'id');
+        applyUserWhere(ctx, subRootAlias, subAlias, value, ops, joins);
+        break;
+      }
+      case 'deleted': {
+        const col = `${aliases.getShort(rootTableAlias)}.deleted`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'deletedAt': {
+        const col = `${aliases.getShort(rootTableAlias)}.deletedAt`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'deletedBy': {
+        if (value === null) {
+          ops.push((query) => query.whereNull(`${aliases.getShort(rootTableAlias)}.deletedById`));
+          continue;
+        }
+        const subRootAlias = `SomeObject__W__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'deletedById', 'id');
+        applyUserWhere(ctx, subRootAlias, subAlias, value, ops, joins);
+        break;
+      }
+      case 'deleteRootType': {
+        const col = `${aliases.getShort(rootTableAlias)}.deleteRootType`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+      case 'deleteRootId': {
+        const col = `${aliases.getShort(rootTableAlias)}.deleteRootId`;
+        if (Array.isArray(value)) {
+          if (value.some((v: any) => v === null)) {
+            if (value.some((v: any) => v !== null)) {
+              ops.push((query) => ors(query, [(subQuery: any) => subQuery.whereIn(col, value.filter((v: any) => v !== null)), (subQuery: any) => subQuery.whereNull(col)]));
+            }else {
+              ops.push((query) => query.whereNull(col));
+            }
+          }else {
+            ops.push((query) => query.whereIn(col, value));
+          }
+        }else if (value === null) {
+          ops.push((query) => query.whereNull(col));
+        }else {
+          ops.push((query) => query.where({ [col]: value }));
+        }
+        break;
+      }
+    }
+  }
+}
+
+export const applySomeObjectOrderBy = (
+  ctx: FullContext,
+  rootTableAlias: string,
+  tableAlias: string,
+  orderBy: any | any[],
+  query: Knex.QueryBuilder,
+  joins: Joins,
+) => {
+  const aliases = ctx.aliases;
+  for (const vals of Array.isArray(orderBy) ? orderBy : [orderBy]) {
+    const keys = Object.keys(vals);
+    if (keys.length !== 1) {
+      throw new UserInputError('You need to specify exactly 1 value to order by for each orderBy entry.');
+    }
+    const key = keys[0];
+    const value = vals[key];
+
+    switch (key) {
+      case 'id': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.id`, value);
+        break;
+      }
+      case 'field': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.field`, value);
+        break;
+      }
+      case 'another': {
+        const subRootAlias = `SomeObject__O__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'AnotherObject', subAlias, 'anotherId', 'id');
+        applyAnotherObjectOrderBy(ctx, subRootAlias, subAlias, value, query, joins);
+        break;
+      }
+      case 'float': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.float`, value);
+        break;
+      }
+      case 'list': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.list`, value);
+        break;
+      }
+      case 'xyz': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.xyz`, value);
+        break;
+      }
+      case 'createdAt': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.createdAt`, value);
+        break;
+      }
+      case 'createdBy': {
+        const subRootAlias = `SomeObject__O__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'createdById', 'id');
+        applyUserOrderBy(ctx, subRootAlias, subAlias, value, query, joins);
+        break;
+      }
+      case 'updatedAt': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.updatedAt`, value);
+        break;
+      }
+      case 'updatedBy': {
+        const subRootAlias = `SomeObject__O__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'updatedById', 'id');
+        applyUserOrderBy(ctx, subRootAlias, subAlias, value, query, joins);
+        break;
+      }
+      case 'deleted': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.deleted`, value);
+        break;
+      }
+      case 'deletedAt': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.deletedAt`, value);
+        break;
+      }
+      case 'deletedBy': {
+        const subRootAlias = `SomeObject__O__${key}`;
+        const subAlias = subRootAlias;
+        addJoin(joins, tableAlias, 'User', subAlias, 'deletedById', 'id');
+        applyUserOrderBy(ctx, subRootAlias, subAlias, value, query, joins);
+        break;
+      }
+      case 'deleteRootType': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.deleteRootType`, value);
+        break;
+      }
+      case 'deleteRootId': {
+        void query.orderBy(`${aliases.getShort(rootTableAlias)}.deleteRootId`, value);
+        break;
+      }
+    }
+  }
+}
+
+export const applySomeObjectSearch = (
+  ctx: FullContext,
+  rootTableAlias: string,
+  tableAlias: string,
+  search: string,
+  query: Knex.QueryBuilder,
+) => {
+  const aliases = ctx.aliases;
+  ors(query, [
+    (q: any) => q.whereRaw('??::text ILIKE ?', [`${aliases.getShort(rootTableAlias)}.field`, `%${search}%`]),
+  ]);
+}
+

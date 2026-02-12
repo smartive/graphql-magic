@@ -17,7 +17,8 @@
   "sideEffecs": false,
   "scripts": {
     "bootstrap": "npm ci && npm run generate",
-    "generate": "npm run generate:index-files && npm run build:bin && npm run generate:gqm-stuff && npm run generate:setup-migration",
+    "generate": "npm run generate:index-files && npm run build:bin && npm run generate:gqm-stuff && npm run generate:resolvers && npm run generate:setup-migration",
+    "generate:resolvers": "npx gqm generate-resolvers",
     "generate:index-files": "cti create ./src --excludes bin --withoutbackup",
     "generate:gqm-stuff": "npx gqm generate",
     "generate:setup-migration": "npm run build:bin && npx gqm generate-migration setup 20230912185644",

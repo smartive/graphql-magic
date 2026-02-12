@@ -2,6 +2,7 @@
 
 export * from './api';
 export * from './client';
+export * from './concrete-resolvers';
 export * from './db';
 export * from './migrations';
 export * from './models';

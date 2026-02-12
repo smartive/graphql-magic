@@ -6,6 +6,7 @@ import knex from 'knex';
 import { simpleGit } from 'simple-git';
 import {
   MigrationGenerator,
+  generateConcreteResolvers,
   generateDBModels,
   generateKnexTables,
   generateMutations,
@@ -58,6 +59,19 @@ program
     writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionTypes(models));
     await generateGraphqlApiTypes(dateLibrary);
     await generateGraphqlClientTypes();
+  });
+
+program
+  .command('generate-resolvers')
+  .description('Generate concrete resolvers')
+  .action(async () => {
+    const models = await parseModels();
+    const gqmModule = await getSetting('gqmModule');
+    const resolversPath = await getSetting('resolversPath');
+    const files = generateConcreteResolvers(models, gqmModule);
+    for (const [filePath, content] of Object.entries(files)) {
+      writeToFile(`${resolversPath}/${filePath}`, content);
+    }
   });
 
 program
