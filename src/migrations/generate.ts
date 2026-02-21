@@ -37,6 +37,8 @@ export class MigrationGenerator {
   });
   private schema: SchemaInspectorType;
   private columns: Record<string, Column[]> = {};
+  /** table name -> constraint name -> check clause expression */
+  private existingCheckConstraints: Record<string, Map<string, string>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -57,6 +59,26 @@ export class MigrationGenerator {
     const tables = await schema.tables();
     for (const table of tables) {
       this.columns[table] = await schema.columnInfo(table);
+    }
+
+    const checkResult = await schema.knex.raw(
+      `SELECT tc.table_name, tc.constraint_name, cc.check_clause
+       FROM information_schema.table_constraints tc
+       JOIN information_schema.check_constraints cc
+         ON tc.constraint_schema = cc.constraint_schema AND tc.constraint_name = cc.constraint_name
+       WHERE tc.table_schema = ? AND tc.constraint_type = ?`,
+      ['public', 'CHECK'],
+    );
+    const rows: { table_name: string; constraint_name: string; check_clause: string }[] =
+      'rows' in checkResult && Array.isArray((checkResult as { rows: unknown }).rows)
+        ? (checkResult as { rows: { table_name: string; constraint_name: string; check_clause: string }[] }).rows
+        : [];
+    for (const row of rows) {
+      const tableName = row.table_name;
+      if (!this.existingCheckConstraints[tableName]) {
+        this.existingCheckConstraints[tableName] = new Map();
+      }
+      this.existingCheckConstraints[tableName].set(row.constraint_name, row.check_clause);
     }
 
     const up: Callbacks = [];
@@ -148,6 +170,20 @@ export class MigrationGenerator {
             });
           });
 
+          if (model.constraints?.length) {
+            for (let i = 0; i < model.constraints.length; i++) {
+              const entry = model.constraints[i];
+              if (entry.kind === 'check') {
+                const table = model.name;
+                const constraintName = this.getCheckConstraintName(model, entry, i);
+                const expression = entry.expression;
+                up.push(() => {
+                  this.addCheckConstraint(table, constraintName, expression);
+                });
+              }
+            }
+          }
+
           down.push(() => {
             this.dropTable(model.name);
           });
@@ -196,6 +232,39 @@ export class MigrationGenerator {
             (field) => (!field.generateAs || field.generateAs.type === 'expression') && this.hasChanged(model, field),
           );
           this.updateFields(model, existingFields, up, down);
+
+          if (model.constraints?.length) {
+            const existingMap = this.existingCheckConstraints[model.name];
+            for (let i = 0; i < model.constraints.length; i++) {
+              const entry = model.constraints[i];
+              if (entry.kind !== 'check') {
+                continue;
+              }
+              const table = model.name;
+              const constraintName = this.getCheckConstraintName(model, entry, i);
+              const newExpression = entry.expression;
+              const existingExpression = existingMap?.get(constraintName);
+              if (existingExpression === undefined) {
+                up.push(() => {
+                  this.addCheckConstraint(table, constraintName, newExpression);
+                });
+                down.push(() => {
+                  this.dropCheckConstraint(table, constraintName);
+                });
+              } else if (
+                this.normalizeCheckExpression(existingExpression) !== this.normalizeCheckExpression(newExpression)
+              ) {
+                up.push(() => {
+                  this.dropCheckConstraint(table, constraintName);
+                  this.addCheckConstraint(table, constraintName, newExpression);
+                });
+                down.push(() => {
+                  this.dropCheckConstraint(table, constraintName);
+                  this.addCheckConstraint(table, constraintName, existingExpression);
+                });
+              }
+            }
+          }
         }
 
         if (isUpdatableModel(model)) {
@@ -689,6 +758,32 @@ export class MigrationGenerator {
 
   private renameColumn(from: string, to: string) {
     this.writer.writeLine(`table.renameColumn('${from}', '${to}');`);
+  }
+
+  private getCheckConstraintName(model: EntityModel, entry: { kind: string; name: string }, index: number): string {
+    return `${model.name}_${entry.name}_${entry.kind}_${index}`;
+  }
+
+  private normalizeCheckExpression(expr: string): string {
+    return expr.replace(/\s+/g, ' ').trim();
+  }
+
+  /** Escape expression for embedding inside a template literal in generated code */
+  private escapeExpressionForRaw(expr: string): string {
+    return expr.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+  }
+
+  private addCheckConstraint(table: string, constraintName: string, expression: string) {
+    const escaped = this.escapeExpressionForRaw(expression);
+    this.writer.writeLine(
+      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" CHECK (${escaped})\`);`,
+    );
+    this.writer.blankLine();
+  }
+
+  private dropCheckConstraint(table: string, constraintName: string) {
+    this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
+    this.writer.blankLine();
   }
 
   private value(value: Value) {

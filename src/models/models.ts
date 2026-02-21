@@ -350,6 +350,8 @@ export class EntityModel extends Model {
   defaultOrderBy?: OrderBy[];
   fields: EntityField[];
 
+  constraints?: { kind: 'check'; name: string; expression: string }[];
+
   // temporary fields for the generation of migrations
   deleted?: true;
   oldName?: string;
