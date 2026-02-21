@@ -33,7 +33,7 @@ import {
   ObjectFieldDefinition,
   RelationFieldDefinition,
 } from './model-definitions';
-import { get, getLabel, isManyToManyRelationEntityModel, summonByName, typeToField } from './utils';
+import { get, getLabel, isManyToManyRelationEntityModel, summonByName, typeToField, validateCheckConstraint } from './utils';
 
 // These might one day become classes
 
@@ -380,6 +380,13 @@ export class EntityModel extends Model {
     this.label = getLabel(definition.name);
     for (const field of definition.fields) {
       this.fieldsByName[field.name] = field;
+    }
+    if (this.constraints?.length) {
+      for (const constraint of this.constraints) {
+        if (constraint.kind === 'check') {
+          validateCheckConstraint(this, constraint);
+        }
+      }
     }
   }
 

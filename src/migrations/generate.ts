@@ -16,6 +16,7 @@ import {
   not,
   summonByName,
   typeToField,
+  validateCheckConstraint,
 } from '../models/utils';
 import { getColumnName } from '../resolvers';
 import { Value } from '../values';
@@ -174,6 +175,7 @@ export class MigrationGenerator {
             for (let i = 0; i < model.constraints.length; i++) {
               const entry = model.constraints[i];
               if (entry.kind === 'check') {
+                validateCheckConstraint(model, entry);
                 const table = model.name;
                 const constraintName = this.getCheckConstraintName(model, entry, i);
                 const expression = entry.expression;
@@ -240,6 +242,7 @@ export class MigrationGenerator {
               if (entry.kind !== 'check') {
                 continue;
               }
+              validateCheckConstraint(model, entry);
               const table = model.name;
               const constraintName = this.getCheckConstraintName(model, entry, i);
               const newExpression = entry.expression;
