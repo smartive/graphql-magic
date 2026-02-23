@@ -3,7 +3,6 @@ import cloneDeep from 'lodash/cloneDeep';
 import kebabCase from 'lodash/kebabCase';
 import omit from 'lodash/omit';
 import pick from 'lodash/pick';
-import { isRelation } from '.';
 import {
   CustomFieldDefinition,
   EnumFieldDefinition,
@@ -33,7 +32,15 @@ import {
   ObjectFieldDefinition,
   RelationFieldDefinition,
 } from './model-definitions';
-import { get, getLabel, isManyToManyRelationEntityModel, summonByName, typeToField, validateCheckConstraint } from './utils';
+import {
+  get,
+  getLabel,
+  isManyToManyRelationEntityModel,
+  isRelation,
+  summonByName,
+  typeToField,
+  validateCheckConstraint,
+} from './utils';
 
 // These might one day become classes
 

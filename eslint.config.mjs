@@ -11,7 +11,10 @@ export default [
       sourceType: 'script',
 
       parserOptions: {
-        projectService: { defaultProject: './tsconfig.eslint.json' },
+        projectService: {
+          defaultProject: './tsconfig.eslint.json',
+          allowDefaultProject: ['src/bin/gqm/*.ts'],
+        },
       },
     },
 
