@@ -114,7 +114,7 @@ export function normalizeValue(value: Value, type: TypeNode, schema: GraphQLSche
 }
 
 export const normalizeValueByTypeDefinition = (value: Value, type: Maybe<TypeDefinitionNode>, schema: GraphQLSchema) => {
-  if (!type || type.kind !== Kind.INPUT_OBJECT_TYPE_DEFINITION) {
+  if (type?.kind !== Kind.INPUT_OBJECT_TYPE_DEFINITION) {
     return value;
   }
 
