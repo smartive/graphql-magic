@@ -8,7 +8,7 @@ import { ModelDefinitions, Models } from '../../src/models';
 import type { EntityField } from '../../src/models/models';
 import { generateDefinitions } from '../../src/schema/generate';
 
-jest.mock('ode-block-writer', () => {
+jest.mock('code-block-writer', () => {
   const Writer = class {
     private _out = '';
 
