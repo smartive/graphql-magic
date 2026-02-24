@@ -9,6 +9,7 @@ import {
   and,
   get,
   isCreatableModel,
+  isGenerateAsField,
   isInherited,
   isUpdatableField,
   isUpdatableModel,
@@ -300,7 +301,7 @@ export class MigrationGenerator {
 
                           for (const { name, kind } of model.fields
                             .filter(isUpdatableField)
-                            .filter((f) => !(f.generateAs?.type === 'expression'))) {
+                            .filter(not(isGenerateAsField))) {
                             const col = kind === 'relation' ? `${name}Id` : name;
 
                             writer.writeLine(`${col}: row.${col},`);
@@ -332,10 +333,10 @@ export class MigrationGenerator {
 
             const missingRevisionFields = model.fields
               .filter(isUpdatableField)
+              .filter(not(isGenerateAsField))
               .filter(
                 ({ name, ...field }) =>
                   field.kind !== 'custom' &&
-                  !(field.generateAs?.type === 'expression') &&
                   !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               );
 
@@ -534,7 +535,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
+      const updatableFields = fields.filter(isUpdatableField).filter(not(isGenerateAsField));
       if (!updatableFields.length) {
         return;
       }
@@ -588,7 +589,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField).filter((f) => !(f.generateAs?.type === 'expression'));
+      const updatableFields = fields.filter(isUpdatableField).filter(not(isGenerateAsField));
       if (!updatableFields.length) {
         return;
       }
@@ -632,9 +633,7 @@ export class MigrationGenerator {
         }
       }
 
-      for (const field of model.fields
-        .filter(and(isUpdatableField, not(isInherited)))
-        .filter((f) => !(f.generateAs?.type === 'expression'))) {
+      for (const field of model.fields.filter(and(isUpdatableField, not(isInherited))).filter(not(isGenerateAsField))) {
         this.column(field, { setUnique: false, setDefault: false });
       }
     });

@@ -1,6 +1,6 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import { Models } from '../models/models';
-import { isQueriableField, isRootModel, typeToField } from '../models/utils';
+import { isGenerateAsField, isQueriableField, isRootModel, not, typeToField } from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar, union } from './utils';
 
 export const generateDefinitions = ({
@@ -135,6 +135,7 @@ export const generateDefinitions = ({
               `Create${model.name}`,
               model.fields
                 .filter(({ creatable }) => creatable)
+                .filter(not(isGenerateAsField))
                 .map((field) =>
                   field.kind === 'relation'
                     ? { name: `${field.name}Id`, type: 'ID', nonNull: field.nonNull }
@@ -155,6 +156,7 @@ export const generateDefinitions = ({
               `Update${model.name}`,
               model.fields
                 .filter(({ updatable }) => updatable)
+                .filter(not(isGenerateAsField))
                 .map((field) =>
                   field.kind === 'relation'
                     ? { name: `${field.name}Id`, type: 'ID' }

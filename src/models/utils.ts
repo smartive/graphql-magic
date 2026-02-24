@@ -88,6 +88,12 @@ export const isQueriableField = ({ queriable }: EntityField) => queriable !== fa
 
 export const isCustomField = (field: EntityField): field is CustomField => field.kind === 'custom';
 
+/** True if field is computed (generateAs); not user-settable in insert/update. */
+export const isGenerateAsField = (field: EntityField) => !!field.generateAs;
+
+/** True if field exists as a column in the DB (excludes expression-only fields). */
+export const isStoredInDatabase = (field: EntityField) => field.generateAs?.type !== 'expression';
+
 export const isVisible = ({ hidden }: EntityField) => hidden !== true;
 
 export const isSimpleField = and(not(isRelation), not(isCustomField));

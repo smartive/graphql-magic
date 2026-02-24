@@ -4,7 +4,7 @@ import { Context } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
 import { Entity, MutationContext, Trigger } from '../models/mutation-hook';
-import { get, isPrimitive, it, typeToField } from '../models/utils';
+import { get, isGenerateAsField, isPrimitive, it, not, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
@@ -87,7 +87,7 @@ export const createEntity = async (
     if (model.parent) {
       const rootInput = {};
       const childInput = { id };
-      for (const field of model.fields) {
+      for (const field of model.fields.filter(not(isGenerateAsField))) {
         const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
         if (columnName in normalizedInput) {
           if (field.inherited) {
@@ -100,7 +100,12 @@ export const createEntity = async (
       await ctx.knex(model.parent).insert(rootInput);
       await ctx.knex(model.name).insert(childInput);
     } else {
-      await ctx.knex(model.name).insert(normalizedInput);
+      const insertData = { ...normalizedInput };
+      for (const field of model.fields.filter(isGenerateAsField)) {
+        const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
+        delete insertData[columnName];
+      }
+      await ctx.knex(model.name).insert(insertData);
     }
     await createRevision(model, normalizedInput, ctx);
     await ctx.mutationHook?.({
@@ -555,7 +560,7 @@ export const createRevision = async (model: EntityModel, data: Entity, ctx: Muta
     }
     const childRevisionData = { id: revisionId };
 
-    for (const field of model.fields.filter(({ updatable }) => updatable)) {
+    for (const field of model.fields.filter(({ updatable }) => updatable).filter(not(isGenerateAsField))) {
       const col = field.kind === 'relation' ? `${field.name}Id` : field.name;
       let value;
       if (field.nonNull && (!(col in data) || col === undefined || col === null)) {
@@ -631,7 +636,7 @@ const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entit
   if (model.parent) {
     const rootInput = {};
     const childInput = {};
-    for (const field of model.fields) {
+    for (const field of model.fields.filter(not(isGenerateAsField))) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
       if (columnName in update) {
         if (field.inherited) {
@@ -648,7 +653,12 @@ const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entit
       await ctx.knex(model.name).where({ id: currentEntity.id }).update(childInput);
     }
   } else {
-    await ctx.knex(model.name).where({ id: currentEntity.id }).update(update);
+    const updateData = { ...update };
+    for (const field of model.fields.filter(isGenerateAsField)) {
+      const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
+      delete updateData[columnName];
+    }
+    await ctx.knex(model.name).where({ id: currentEntity.id }).update(updateData);
   }
   await createRevision(model, { ...currentEntity, ...update }, ctx);
 };
