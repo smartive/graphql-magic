@@ -4,5 +4,6 @@
   "graphqlQueriesPath": "tests",
   "gqmModule": "../../../src",
   "knexfilePath": "knexfile.ts",
-  "dateLibrary": "luxon"
+  "dateLibrary": "luxon",
+  "functionsPath": "tests/functions.ts"
 }

@@ -1,7 +1,7 @@
 {
   "include": [
     "./src/**/*.ts",
-    "./src/**/*.tsx",
+    "./src/**/*.tsx", "tests/utils/functions.ts",
   ],
   "exclude": [
     "node_modules",
