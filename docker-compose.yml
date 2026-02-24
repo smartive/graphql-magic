@@ -4,7 +4,6 @@ services:
     shm_size: 1gb
     env_file:
       - .env
-      - .env.local
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:

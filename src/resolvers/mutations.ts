@@ -4,7 +4,7 @@ import { Context } from '../context';
 import { ForbiddenError, GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
 import { Entity, MutationContext, Trigger } from '../models/mutation-hook';
-import { and, get, isPrimitive, isStoredInDatabase, isUpdatableField, it, not, typeToField } from '../models/utils';
+import { and, get, isDynamicField, isPrimitive, isUpdatableField, it, not, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
@@ -87,7 +87,7 @@ export const createEntity = async (
     if (model.parent) {
       const rootInput = {};
       const childInput = { id };
-      for (const field of model.fields.filter(isStoredInDatabase)) {
+      for (const field of model.fields.filter(not(isDynamicField))) {
         const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
         if (columnName in normalizedInput) {
           if (field.inherited) {
@@ -101,7 +101,7 @@ export const createEntity = async (
       await ctx.knex(model.name).insert(childInput);
     } else {
       const insertData = { ...normalizedInput };
-      for (const field of model.fields.filter(not(isStoredInDatabase))) {
+      for (const field of model.fields.filter(isDynamicField)) {
         const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
         delete insertData[columnName];
       }
@@ -560,7 +560,7 @@ export const createRevision = async (model: EntityModel, data: Entity, ctx: Muta
     }
     const childRevisionData = { id: revisionId };
 
-    for (const field of model.fields.filter(and(isUpdatableField, isStoredInDatabase))) {
+    for (const field of model.fields.filter(and(isUpdatableField, not(isDynamicField)))) {
       const col = field.kind === 'relation' ? `${field.name}Id` : field.name;
       let value;
       if (field.nonNull && (!(col in data) || col === undefined || col === null)) {
@@ -636,7 +636,7 @@ const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entit
   if (model.parent) {
     const rootInput = {};
     const childInput = {};
-    for (const field of model.fields.filter(isStoredInDatabase)) {
+    for (const field of model.fields.filter(not(isDynamicField))) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
       if (columnName in update) {
         if (field.inherited) {
@@ -654,7 +654,7 @@ const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entit
     }
   } else {
     const updateData = { ...update };
-    for (const field of model.fields.filter(not(isStoredInDatabase))) {
+    for (const field of model.fields.filter(isDynamicField)) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
       delete updateData[columnName];
     }

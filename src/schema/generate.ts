@@ -2,11 +2,11 @@ import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } fr
 import { Models } from '../models/models';
 import {
   and,
-  isCreatableField,
+  isCreatable,
   isQueriableField,
   isRootModel,
   isStoredInDatabase,
-  isUpdatableField,
+  isUpdatable,
   typeToField,
 } from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar, union } from './utils';
@@ -141,7 +141,7 @@ export const generateDefinitions = ({
           types.push(
             input(
               `Create${model.name}`,
-              model.fields.filter(and(isCreatableField, isStoredInDatabase)).map((field) =>
+              model.fields.filter(and(isCreatable, isStoredInDatabase)).map((field) =>
                 field.kind === 'relation'
                   ? { name: `${field.name}Id`, type: 'ID', nonNull: field.nonNull }
                   : {
@@ -159,7 +159,7 @@ export const generateDefinitions = ({
           types.push(
             input(
               `Update${model.name}`,
-              model.fields.filter(and(isUpdatableField, isStoredInDatabase)).map((field) =>
+              model.fields.filter(and(isUpdatable, isStoredInDatabase)).map((field) =>
                 field.kind === 'relation'
                   ? { name: `${field.name}Id`, type: 'ID' }
                   : {

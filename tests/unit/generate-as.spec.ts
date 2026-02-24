@@ -1,7 +1,7 @@
 import { Kind } from 'graphql';
 import { generateDBModels } from '../../src/db/generate';
 import {
-  isGenerateAsField,
+  isDynamicField,
   isStoredInDatabase,
 } from '../../src/models/utils';
 import { ModelDefinitions, Models } from '../../src/models';
@@ -42,10 +42,10 @@ jest.mock('code-block-writer', () => {
 });
 
 describe('generateAs helpers', () => {
-  describe('isGenerateAsField', () => {
+  describe('isDynamicField', () => {
     it('returns false when field.generateAs is undefined', () => {
       const field: EntityField = { name: 'price', type: 'Float' };
-      expect(isGenerateAsField(field)).toBe(false);
+      expect(isDynamicField(field)).toBe(false);
     });
 
     it('returns true when field has generateAs with type expression', () => {
@@ -54,7 +54,7 @@ describe('generateAs helpers', () => {
         type: 'Float',
         generateAs: { expression: 'price * quantity', type: 'expression' },
       };
-      expect(isGenerateAsField(field)).toBe(true);
+      expect(isDynamicField(field)).toBe(true);
     });
 
     it('returns true when field has generateAs with type stored', () => {
@@ -63,7 +63,7 @@ describe('generateAs helpers', () => {
         type: 'Float',
         generateAs: { expression: 'price * quantity', type: 'stored' },
       };
-      expect(isGenerateAsField(field)).toBe(true);
+      expect(isDynamicField(field)).toBe(true);
     });
 
     it('returns true when field has generateAs with type virtual', () => {
@@ -72,7 +72,7 @@ describe('generateAs helpers', () => {
         type: 'Float',
         generateAs: { expression: 'price * quantity', type: 'virtual' },
       };
-      expect(isGenerateAsField(field)).toBe(true);
+      expect(isDynamicField(field)).toBe(true);
     });
   });
 
