@@ -28,6 +28,15 @@ Fields with `generateAs` are handled specially in migrations:
 
 - **`type: 'expression'`**: These fields do **not** create database columns. They are computed at query time and will not appear in migration files. This means you can add or remove expression fields without needing a migration.
 
+### Check constraints
+
+If an entity defines [constraints](./2-models.md#constraints) with `kind: 'check'`, the migration generator will:
+
+- **New tables**: add each check constraint in the `up` migration.
+- **Existing tables**: add new constraints, and for existing constraints, if the expression changed, drop and re-add the constraint with the new expression.
+
+Constraint names in the database follow the pattern `{table}_{constraintName}_check_{index}`.
+
 ## Running migrations
 
 Migrations themselves are managed with `knex` (see the [knex migration docs](https://knexjs.org/guide/migrations.html)).

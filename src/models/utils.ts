@@ -1,7 +1,7 @@
 import camelCase from 'lodash/camelCase';
 import lodashGet from 'lodash/get';
 import startCase from 'lodash/startCase';
-import { EntityModelDefinition } from '..';
+import { EntityModelDefinition, getColumnName } from '..';
 import {
   CustomField,
   EntityField,
@@ -216,4 +216,41 @@ export const isManyToManyRelationEntityModel = ({
   }
 
   return manyToManyRelation;
+};
+
+/**
+ * Extract column name candidates from a PostgreSQL CHECK constraint expression.
+ * Uses only double-quoted identifiers to avoid false positives (e.g. SQL functions).
+ * Matches the same naming as getColumnName in resolvers/utils (used for DB column names).
+ */
+export const extractColumnReferencesFromCheckExpression = (expression: string): string[] => {
+  const normalized = expression.replace(/\s+/g, ' ').trim();
+  const quotedIdentifiers: string[] = [];
+  const re = /"([^"]+)"/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(normalized)) !== null) {
+    quotedIdentifiers.push(match[1]);
+  }
+
+  return [...new Set(quotedIdentifiers)];
+};
+
+/**
+ * Validate that every column referenced in the check constraint expression exists on the model.
+ * Throws with a clear message if an inferred column is not found.
+ */
+export const validateCheckConstraint = (model: EntityModel, constraint: { name: string; expression: string }): void => {
+  const identifiers = extractColumnReferencesFromCheckExpression(constraint.expression);
+  if (identifiers.length === 0) {
+    return;
+  }
+  const validColumnNames = new Set(model.fields.map((f) => getColumnName(f)));
+  for (const identifier of identifiers) {
+    if (!validColumnNames.has(identifier)) {
+      const validList = [...validColumnNames].sort().join(', ');
+      throw new Error(
+        `Constraint "${constraint.name}" references column "${identifier}" which does not exist on model ${model.name}. Valid columns: ${validList}`,
+      );
+    }
+  }
 };

@@ -129,6 +129,34 @@ An array of orders with the same structure as the `orderBy` parameters in GraphQ
 
 An array of fields. See [fields](./fields)
 
+### `constraints`
+
+Optional array of database check constraints for this entity. Only `check` constraints are supported. Each constraint has:
+
+- **`kind`**: `'check'`
+- **`name`**: A short name for the constraint (used in migration constraint names).
+- **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns; unquoted identifiers are not checked.
+
+Example: ensure a numeric field is non-negative and a status is one of the allowed values:
+
+```ts
+{
+    kind: 'entity',
+    name: 'Product',
+    fields: [
+        { name: 'score', type: 'Int' },
+        { name: 'status', kind: 'enum', type: 'ProductStatus' },
+        // ...
+    ],
+    constraints: [
+        { kind: 'check', name: 'score_non_negative', expression: '"score" >= 0' },
+        { kind: 'check', name: 'status_allowed', expression: '"status" IN (\'DRAFT\', \'PUBLISHED\')' },
+    ],
+}
+```
+
+When you generate a migration, check constraints are created on new tables and added, changed, or left unchanged on existing tables. Changing the expression generates a migration that drops and re-adds the constraint.
+
 ## Scalars
 
 Used for GraphQL scalars, e.g.

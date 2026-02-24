@@ -165,6 +165,8 @@ export type ModelDefinition = {
        */
       manyToManyRelation?: boolean;
 
+      constraints?: { kind: 'check'; name: string; expression: string }[];
+
       // temporary fields for the generation of migrations
       deleted?: true;
       oldName?: string;
