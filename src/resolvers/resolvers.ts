@@ -1,5 +1,5 @@
 import { Models } from '../models/models';
-import { isRootModel, merge, not, typeToField } from '../models/utils';
+import { and, isCreatableModel, isRootModel, isUpdatableModel, merge, not, typeToField } from '../models/utils';
 import { mutationResolver } from './mutations';
 import { queryResolver } from './resolver';
 
@@ -27,18 +27,12 @@ export const getResolvers = (models: Models) => {
     ]),
   };
   const mutations = [
-    ...models.entities
-      .filter(not(isRootModel))
-      .filter(({ creatable }) => creatable)
-      .map((model) => ({
-        [`create${model.name}`]: mutationResolver,
-      })),
-    ...models.entities
-      .filter(not(isRootModel))
-      .filter(({ updatable }) => updatable)
-      .map((model) => ({
-        [`update${model.name}`]: mutationResolver,
-      })),
+    ...models.entities.filter(and(not(isRootModel), isCreatableModel)).map((model) => ({
+      [`create${model.name}`]: mutationResolver,
+    })),
+    ...models.entities.filter(and(not(isRootModel), isUpdatableModel)).map((model) => ({
+      [`update${model.name}`]: mutationResolver,
+    })),
     ...models.entities
       .filter(not(isRootModel))
       .filter(({ deletable }) => deletable)

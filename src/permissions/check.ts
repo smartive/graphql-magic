@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 import { FullContext } from '../context';
 import { NotFoundError, PermissionError } from '../errors';
 import { EntityModel } from '../models/models';
-import { get, isGenerateAsField, isRelation, not } from '../models/utils';
+import { get, isRelation, isStoredInDatabase } from '../models/utils';
 import { AliasGenerator, getColumnName, hash, ors } from '../resolvers/utils';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
 
@@ -156,7 +156,7 @@ export const checkCanWrite = async (
   let linked = false;
 
   for (const field of model.fields
-    .filter(not(isGenerateAsField))
+    .filter(isStoredInDatabase)
     .filter((field) => field.generated || (action === 'CREATE' ? field.creatable : field.updatable))) {
     const fieldPermissions = field[action === 'CREATE' ? 'creatable' : 'updatable'];
     const role = getRole(ctx);

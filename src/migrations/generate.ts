@@ -9,8 +9,8 @@ import {
   and,
   get,
   isCreatableModel,
-  isGenerateAsField,
   isInherited,
+  isStoredInDatabase,
   isUpdatableField,
   isUpdatableModel,
   modelNeedsTable,
@@ -299,9 +299,7 @@ export class MigrationGenerator {
                             writer.writeLine(`deleteRootId: row.deleteRootId,`);
                           }
 
-                          for (const { name, kind } of model.fields
-                            .filter(isUpdatableField)
-                            .filter(not(isGenerateAsField))) {
+                          for (const { name, kind } of model.fields.filter(and(isUpdatableField, isStoredInDatabase))) {
                             const col = kind === 'relation' ? `${name}Id` : name;
 
                             writer.writeLine(`${col}: row.${col},`);
@@ -332,11 +330,9 @@ export class MigrationGenerator {
             );
 
             const missingRevisionFields = model.fields
-              .filter(isUpdatableField)
-              .filter(not(isGenerateAsField))
+              .filter(and(isUpdatableField, isStoredInDatabase))
               .filter(
                 ({ name, ...field }) =>
-                  field.kind !== 'custom' &&
                   !this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
               );
 
@@ -535,7 +531,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField).filter(not(isGenerateAsField));
+      const updatableFields = fields.filter(and(isUpdatableField, isStoredInDatabase));
       if (!updatableFields.length) {
         return;
       }
@@ -589,7 +585,7 @@ export class MigrationGenerator {
     });
 
     if (isUpdatableModel(model)) {
-      const updatableFields = fields.filter(isUpdatableField).filter(not(isGenerateAsField));
+      const updatableFields = fields.filter(and(isUpdatableField, isStoredInDatabase));
       if (!updatableFields.length) {
         return;
       }
@@ -633,7 +629,7 @@ export class MigrationGenerator {
         }
       }
 
-      for (const field of model.fields.filter(and(isUpdatableField, not(isInherited))).filter(not(isGenerateAsField))) {
+      for (const field of model.fields.filter(and(isUpdatableField, not(isInherited), isStoredInDatabase))) {
         this.column(field, { setUnique: false, setDefault: false });
       }
     });

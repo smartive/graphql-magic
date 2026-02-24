@@ -59,9 +59,9 @@ export const isInputModel = (model: Model): model is InputModel => model instanc
 
 export const isInterfaceModel = (model: Model): model is InterfaceModel => model instanceof InterfaceModel;
 
-export const isCreatableModel = (model: EntityModel) => model.creatable && model.fields.some(isCreatableField);
+export const isCreatableModel = (model: EntityModel) => !!model.creatable && model.fields.some(isCreatableField);
 
-export const isUpdatableModel = (model: EntityModel) => model.updatable && model.fields.some(isUpdatableField);
+export const isUpdatableModel = (model: EntityModel) => !!model.updatable && model.fields.some(isUpdatableField);
 
 export const isCreatableField = (field: EntityField) => !field.inherited && !!field.creatable;
 
@@ -88,11 +88,8 @@ export const isQueriableField = ({ queriable }: EntityField) => queriable !== fa
 
 export const isCustomField = (field: EntityField): field is CustomField => field.kind === 'custom';
 
-/** True if field is computed (generateAs); not user-settable in insert/update. */
-export const isGenerateAsField = (field: EntityField) => !!field.generateAs;
-
-/** True if field exists as a column in the DB (excludes expression-only fields). */
-export const isStoredInDatabase = (field: EntityField) => field.generateAs?.type !== 'expression';
+/** True if field exists as a column in the DB (excludes custom and expression-only fields). */
+export const isStoredInDatabase = (field: EntityField) => !isCustomField(field) && field.generateAs?.type !== 'expression';
 
 export const isVisible = ({ hidden }: EntityField) => hidden !== true;
 
