@@ -1,5 +1,5 @@
 import CodeBlockWriter from 'code-block-writer';
-import { EntityField, get, getColumnName, isCustomField, isInTable, isRootModel, not } from '..';
+import { and, EntityField, get, getColumnName, isDynamicField, isInTable, isRootModel, isStoredInDatabase, not } from '..';
 import { Models } from '../models/models';
 import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../utils/dates';
 
@@ -60,7 +60,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
     writer
       .write(`export type ${model.name} = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isCustomField))) {
+        for (const field of fields.filter(isStoredInDatabase)) {
           writer
             .write(`'${getColumnName(field)}': ${getFieldType(field, dateLibrary)}${field.nonNull ? '' : ' | null'};`)
             .newLine();
@@ -71,7 +71,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
     writer
       .write(`export type ${model.name}Initializer = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isCustomField)).filter(isInTable)) {
+        for (const field of fields.filter(and(isInTable, not(isDynamicField)))) {
           writer
             .write(
               `'${getColumnName(field)}'${field.nonNull && field.defaultValue === undefined ? '' : '?'}: ${getFieldType(
@@ -88,7 +88,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
     writer
       .write(`export type ${model.name}Mutator = `)
       .inlineBlock(() => {
-        for (const field of fields.filter(not(isCustomField)).filter(isInTable)) {
+        for (const field of fields.filter(and(isInTable, not(isDynamicField)))) {
           writer
             .write(
               `'${getColumnName(field)}'?: ${getFieldType(field, dateLibrary, true)}${field.list ? ' | string' : ''}${
@@ -104,7 +104,7 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
       writer
         .write(`export type ${model.name}Seed = `)
         .inlineBlock(() => {
-          for (const field of fields.filter(not(isCustomField))) {
+          for (const field of fields.filter(not(isDynamicField))) {
             if (model.parent && field.name === 'type') {
               continue;
             }

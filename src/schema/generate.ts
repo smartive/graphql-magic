@@ -1,6 +1,14 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
 import { Models } from '../models/models';
-import { isQueriableField, isRootModel, typeToField } from '../models/utils';
+import {
+  and,
+  isCreatable,
+  isQueriableField,
+  isRootModel,
+  isStoredInDatabase,
+  isUpdatable,
+  typeToField,
+} from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar, union } from './utils';
 
 export const generateDefinitions = ({
@@ -133,18 +141,16 @@ export const generateDefinitions = ({
           types.push(
             input(
               `Create${model.name}`,
-              model.fields
-                .filter(({ creatable }) => creatable)
-                .map((field) =>
-                  field.kind === 'relation'
-                    ? { name: `${field.name}Id`, type: 'ID', nonNull: field.nonNull }
-                    : {
-                        name: field.name,
-                        type: field.kind === 'json' ? `Create${field.type}` : field.type,
-                        list: field.list,
-                        nonNull: field.nonNull && field.defaultValue === undefined,
-                      },
-                ),
+              model.fields.filter(and(isCreatable, isStoredInDatabase)).map((field) =>
+                field.kind === 'relation'
+                  ? { name: `${field.name}Id`, type: 'ID', nonNull: field.nonNull }
+                  : {
+                      name: field.name,
+                      type: field.kind === 'json' ? `Create${field.type}` : field.type,
+                      list: field.list,
+                      nonNull: field.nonNull && field.defaultValue === undefined,
+                    },
+              ),
             ),
           );
         }
@@ -153,17 +159,15 @@ export const generateDefinitions = ({
           types.push(
             input(
               `Update${model.name}`,
-              model.fields
-                .filter(({ updatable }) => updatable)
-                .map((field) =>
-                  field.kind === 'relation'
-                    ? { name: `${field.name}Id`, type: 'ID' }
-                    : {
-                        name: field.name,
-                        type: field.kind === 'json' ? `Update${field.type}` : field.type,
-                        list: field.list,
-                      },
-                ),
+              model.fields.filter(and(isUpdatable, isStoredInDatabase)).map((field) =>
+                field.kind === 'relation'
+                  ? { name: `${field.name}Id`, type: 'ID' }
+                  : {
+                      name: field.name,
+                      type: field.kind === 'json' ? `Update${field.type}` : field.type,
+                      list: field.list,
+                    },
+              ),
             ),
           );
         }
