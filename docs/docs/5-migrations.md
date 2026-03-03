@@ -37,6 +37,10 @@ If an entity defines [constraints](./2-models.md#constraints) with `kind: 'check
 
 Constraint names in the database follow the pattern `{table}_{constraintName}_check_{index}`.
 
+When comparing existing check constraints, `graphql-magic` asks PostgreSQL to canonicalize expressions before comparing them. This avoids churn for semantically equivalent expressions that differ in formatting or identifier quoting.
+
+If canonicalization fails (for example due invalid syntax or permission/DDL limitations), `graphql-magic` logs a warning and conservatively treats the constraint as changed, so `check-needs-migration` reports that a migration is needed.
+
 ## Running migrations
 
 Migrations themselves are managed with `knex` (see the [knex migration docs](https://knexjs.org/guide/migrations.html)).
