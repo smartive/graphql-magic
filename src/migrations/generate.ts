@@ -237,7 +237,6 @@ export class MigrationGenerator {
           this.updateFields(model, existingFields, up, down);
 
           if (model.constraints?.length) {
-            const existingMap = this.existingCheckConstraints[model.name];
             for (let i = 0; i < model.constraints.length; i++) {
               const entry = model.constraints[i];
               if (entry.kind !== 'check') {
@@ -246,25 +245,29 @@ export class MigrationGenerator {
               validateCheckConstraint(model, entry);
               const table = model.name;
               const constraintName = this.getCheckConstraintName(model, entry, i);
-              const newExpression = entry.expression;
-              const existingExpression = existingMap?.get(constraintName);
-              if (existingExpression === undefined) {
+              const existingConstraint = this.findExistingConstraint(table, entry, constraintName);
+              if (!existingConstraint) {
                 up.push(() => {
-                  this.addCheckConstraint(table, constraintName, newExpression);
+                  this.addCheckConstraint(table, constraintName, entry.expression);
                 });
                 down.push(() => {
                   this.dropCheckConstraint(table, constraintName);
                 });
               } else if (
-                this.normalizeCheckExpression(existingExpression) !== this.normalizeCheckExpression(newExpression)
+                !(await this.equalExpressions(
+                  table,
+                  existingConstraint.constraintName,
+                  existingConstraint.expression,
+                  entry.expression,
+                ))
               ) {
                 up.push(() => {
-                  this.dropCheckConstraint(table, constraintName);
-                  this.addCheckConstraint(table, constraintName, newExpression);
+                  this.dropCheckConstraint(table, existingConstraint.constraintName);
+                  this.addCheckConstraint(table, constraintName, entry.expression);
                 });
                 down.push(() => {
                   this.dropCheckConstraint(table, constraintName);
-                  this.addCheckConstraint(table, constraintName, existingExpression);
+                  this.addCheckConstraint(table, existingConstraint.constraintName, existingConstraint.expression);
                 });
               }
             }
@@ -763,7 +766,182 @@ export class MigrationGenerator {
   }
 
   private normalizeCheckExpression(expr: string): string {
-    return expr.replace(/\s+/g, ' ').trim();
+    let normalized = expr.replace(/\s+/g, ' ').trim();
+    while (this.isWrappedByOuterParentheses(normalized)) {
+      normalized = normalized.slice(1, -1).trim();
+    }
+
+    return normalized;
+  }
+
+  private isWrappedByOuterParentheses(expr: string): boolean {
+    if (!expr.startsWith('(') || !expr.endsWith(')')) {
+      return false;
+    }
+
+    let depth = 0;
+    let inSingleQuote = false;
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+      const next = expr[i + 1];
+
+      if (char === "'") {
+        if (inSingleQuote && next === "'") {
+          i++;
+          continue;
+        }
+        inSingleQuote = !inSingleQuote;
+        continue;
+      }
+
+      if (inSingleQuote) {
+        continue;
+      }
+
+      if (char === '(') {
+        depth++;
+      } else if (char === ')') {
+        depth--;
+        if (depth === 0 && i !== expr.length - 1) {
+          return false;
+        }
+        if (depth < 0) {
+          return false;
+        }
+      }
+    }
+
+    return depth === 0;
+  }
+
+  private findExistingConstraint(
+    table: string,
+    entry: { kind: 'check'; name: string; expression: string },
+    preferredConstraintName: string,
+  ): { constraintName: string; expression: string } | null {
+    const existingMap = this.existingCheckConstraints[table];
+    if (!existingMap) {
+      return null;
+    }
+
+    const preferredExpression = existingMap.get(preferredConstraintName);
+    if (preferredExpression !== undefined) {
+      return {
+        constraintName: preferredConstraintName,
+        expression: preferredExpression,
+      };
+    }
+
+    const normalizedNewExpression = this.normalizeCheckExpression(entry.expression);
+    const constraintPrefix = `${table}_${entry.name}_${entry.kind}_`;
+
+    for (const [constraintName, expression] of existingMap.entries()) {
+      if (!constraintName.startsWith(constraintPrefix)) {
+        continue;
+      }
+      if (this.normalizeCheckExpression(expression) !== normalizedNewExpression) {
+        continue;
+      }
+
+      return { constraintName, expression };
+    }
+
+    return null;
+  }
+
+  private async equalExpressions(
+    table: string,
+    constraintName: string,
+    existingExpression: string,
+    newExpression: string,
+  ): Promise<boolean> {
+    try {
+      const [canonicalExisting, canonicalNew] = await Promise.all([
+        this.canonicalizeCheckExpressionWithPostgres(table, existingExpression),
+        this.canonicalizeCheckExpressionWithPostgres(table, newExpression),
+      ]);
+
+      return canonicalExisting === canonicalNew;
+    } catch (error) {
+      console.warn(
+        `Failed to canonicalize check constraint "${constraintName}" on table "${table}". Treating it as changed.`,
+        error,
+      );
+
+      return false;
+    }
+  }
+
+  private async canonicalizeCheckExpressionWithPostgres(table: string, expression: string): Promise<string> {
+    const sourceTableIdentifier = table
+      .split('.')
+      .map((part) => this.quoteIdentifier(part))
+      .join('.');
+
+    const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    const tableSlug = table.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+    const tempTableName = `gqm_tmp_check_${tableSlug}_${uniqueSuffix}`;
+    const tempTableIdentifier = this.quoteIdentifier(tempTableName);
+
+    const constraintName = `gqm_tmp_check_${uniqueSuffix}`;
+    const constraintIdentifier = this.quoteIdentifier(constraintName);
+
+    const trx = await this.knex.transaction();
+
+    try {
+      await trx.raw(`CREATE TEMP TABLE ${tempTableIdentifier} (LIKE ${sourceTableIdentifier}) ON COMMIT DROP`);
+      await trx.raw(`ALTER TABLE ${tempTableIdentifier} ADD CONSTRAINT ${constraintIdentifier} CHECK (${expression})`);
+      const result = await trx.raw(
+        `SELECT pg_get_constraintdef(c.oid, true) AS constraint_definition
+         FROM pg_constraint c
+         JOIN pg_class t
+           ON t.oid = c.conrelid
+         WHERE t.relname = ?
+           AND c.conname = ?
+         ORDER BY c.oid DESC
+         LIMIT 1`,
+        [tempTableName, constraintName],
+      );
+
+      const rows: { constraint_definition: string }[] =
+        'rows' in result && Array.isArray((result as { rows: unknown }).rows)
+          ? (result as { rows: { constraint_definition: string }[] }).rows
+          : [];
+      const definition = rows[0]?.constraint_definition;
+      if (!definition) {
+        throw new Error(`Could not read canonical check definition for expression: ${expression}`);
+      }
+
+      return this.normalizeCheckExpression(this.extractCheckExpressionFromDefinition(definition));
+    } finally {
+      try {
+        await trx.rollback();
+      } catch {
+        // no-op: transaction may already be closed by driver after failure
+      }
+    }
+  }
+
+  private extractCheckExpressionFromDefinition(definition: string): string {
+    const trimmed = definition.trim();
+    const match = trimmed.match(/^CHECK\s*\(([\s\S]*)\)$/i);
+    if (!match) {
+      return trimmed;
+    }
+
+    return match[1];
+  }
+
+  private quoteIdentifier(identifier: string): string {
+    return `"${identifier.replace(/"/g, '""')}"`;
+  }
+
+  private quoteQualifiedIdentifier(identifier: string): string {
+    return identifier
+      .split('.')
+      .map((part) => this.quoteIdentifier(part))
+      .join('.');
   }
 
   /** Escape expression for embedding inside a template literal in generated code */
