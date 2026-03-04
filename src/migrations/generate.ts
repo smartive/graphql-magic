@@ -128,14 +128,18 @@ export class MigrationGenerator {
     const up: Callbacks = [];
     const down: Callbacks = [];
 
-    const needsBtreeGist = models.entities.some((model) =>
+    const wantsBtreeGist = models.entities.some((model) =>
       model.constraints?.some((c) => c.kind === 'exclude' && c.elements.some((el) => 'column' in el && el.operator === '=')),
     );
-    if (needsBtreeGist) {
-      up.unshift(() => {
-        this.writer.writeLine(`await knex.raw('CREATE EXTENSION IF NOT EXISTS btree_gist');`);
-        this.writer.blankLine();
-      });
+    if (wantsBtreeGist) {
+      const extResult = await schema.knex('pg_extension').where('extname', 'btree_gist').select('oid').first();
+      const btreeGistInstalled = !!extResult;
+      if (!btreeGistInstalled) {
+        up.unshift(() => {
+          this.writer.writeLine(`await knex.raw('CREATE EXTENSION IF NOT EXISTS btree_gist');`);
+          this.writer.blankLine();
+        });
+      }
     }
 
     this.createEnums(
@@ -875,7 +879,33 @@ export class MigrationGenerator {
   }
 
   private normalizeCheckExpression(expr: string): string {
-    return expr.replace(/\s+/g, ' ').trim();
+    let s = expr.replace(/\s+/g, ' ').trim();
+    while (s.length >= 2 && s.startsWith('(') && s.endsWith(')')) {
+      let depth = 0;
+      let match = true;
+      for (let i = 0; i < s.length; i++) {
+        if (s[i] === '(') {
+          depth++;
+        } else if (s[i] === ')') {
+          depth--;
+        }
+        if (depth === 0 && i < s.length - 1) {
+          match = false;
+          break;
+        }
+      }
+      if (!match || depth !== 0) {
+        break;
+      }
+      s = s.slice(1, -1).trim();
+    }
+
+    return s
+      .replace(/\s*\(\s*/g, '(')
+      .replace(/\s*\)\s*/g, ')')
+      .replace(/\s+AND\s+/gi, ' AND ')
+      .replace(/\s+OR\s+/gi, ' OR ')
+      .trim();
   }
 
   private normalizeExcludeDef(def: string): string {
