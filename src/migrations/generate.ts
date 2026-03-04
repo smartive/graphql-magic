@@ -341,11 +341,7 @@ export class MigrationGenerator {
                   });
                   down.push(() => {
                     this.dropCheckConstraint(table, constraintName);
-                    this.addCheckConstraint(
-                      table,
-                      existingConstraint.constraintName,
-                      existingConstraint.expression,
-                    );
+                    this.addCheckConstraint(table, existingConstraint.constraintName, existingConstraint.expression);
                   });
                 }
               } else if (entry.kind === 'exclude') {
@@ -919,6 +915,8 @@ export class MigrationGenerator {
 
   private static readonly LITERAL_PLACEHOLDER = '\uE000';
 
+  private static readonly IDENT_PLACEHOLDER = '\uE001';
+
   private normalizeSqlIdentifiers(s: string): string {
     const literals: string[] = [];
     let result = s.replace(/'([^']|'')*'/g, (lit) => {
@@ -926,10 +924,21 @@ export class MigrationGenerator {
 
       return `${MigrationGenerator.LITERAL_PLACEHOLDER}${literals.length - 1}${MigrationGenerator.LITERAL_PLACEHOLDER}`;
     });
-    result = result.replace(/"([^"]*)"/g, (_, ident) => `"${ident.toLowerCase()}"`);
+    const quotedIdents: string[] = [];
+    result = result.replace(/"([^"]*)"/g, (_, ident) => {
+      quotedIdents.push(`"${ident.toLowerCase()}"`);
+
+      return `${MigrationGenerator.IDENT_PLACEHOLDER}${quotedIdents.length - 1}${MigrationGenerator.IDENT_PLACEHOLDER}`;
+    });
     result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g, (match) =>
       MigrationGenerator.SQL_KEYWORDS.has(match.toLowerCase()) ? match : `"${match.toLowerCase()}"`,
     );
+    for (let i = 0; i < quotedIdents.length; i++) {
+      result = result.replace(
+        new RegExp(`${MigrationGenerator.IDENT_PLACEHOLDER}${i}${MigrationGenerator.IDENT_PLACEHOLDER}`, 'g'),
+        quotedIdents[i],
+      );
+    }
     for (let i = 0; i < literals.length; i++) {
       result = result.replace(
         new RegExp(`${MigrationGenerator.LITERAL_PLACEHOLDER}${i}${MigrationGenerator.LITERAL_PLACEHOLDER}`, 'g'),
@@ -941,13 +950,61 @@ export class MigrationGenerator {
   }
 
   private normalizeExcludeDef(def: string): string {
-    const s = def
+    let s = def
       .replace(/\s+/g, ' ')
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
+      .replace(/::\s*timestamp\s+with\s+time\s+zone\b/gi, '::timestamptz')
+      .replace(/::\s*timestamp\s+without\s+time\s+zone\b/gi, '::timestamp')
       .trim();
 
+    const whereMatch = s.match(/\bWHERE\s*\(/i);
+    if (whereMatch) {
+      const openParen = (whereMatch.index ?? 0) + whereMatch[0].length - 1;
+      const closeParen = this.findMatchingParen(s, openParen);
+      if (closeParen !== -1) {
+        let cond = s.slice(openParen + 1, closeParen).trim();
+        while (this.isWrappedByOuterParentheses(cond)) {
+          cond = cond.slice(1, -1).trim();
+        }
+        s = s.slice(0, openParen + 1) + cond + s.slice(closeParen);
+      }
+    }
+
     return this.normalizeSqlIdentifiers(s);
+  }
+
+  private findMatchingParen(s: string, openIndex: number): number {
+    let depth = 1;
+    let inSingleQuote = false;
+    for (let i = openIndex + 1; i < s.length; i++) {
+      const char = s[i];
+      const next = s[i + 1];
+
+      if (char === "'") {
+        if (inSingleQuote && next === "'") {
+          i++;
+          continue;
+        }
+        inSingleQuote = !inSingleQuote;
+        continue;
+      }
+
+      if (inSingleQuote) {
+        continue;
+      }
+
+      if (char === '(') {
+        depth++;
+      } else if (char === ')') {
+        depth--;
+        if (depth === 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
   }
 
   private normalizeTriggerDef(def: string): string {

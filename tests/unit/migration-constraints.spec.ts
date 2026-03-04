@@ -100,7 +100,12 @@ const createProductModels = (constraints: { kind: 'check'; name: string; express
 };
 
 const createGenerator = (rows: CheckRow[], models: Models) => {
-  const raw = jest.fn().mockResolvedValue({ rows });
+  const raw = jest
+    .fn()
+    .mockResolvedValueOnce({ rows })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValue({ rows: [] });
   const knexLike = Object.assign(
     jest.fn().mockReturnValue({
       where: jest.fn().mockReturnValue({
@@ -258,6 +263,47 @@ describe('MigrationGenerator check constraints', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(warnSpy).toHaveBeenCalled();
+  });
+});
+
+describe('MigrationGenerator exclude constraints', () => {
+  const excludeModels = new Models([
+    {
+      kind: 'entity',
+      name: 'PortfolioAllocation',
+      updatable: false,
+      fields: [
+        { name: 'portfolioId', type: 'UUID' },
+        { name: 'startDate', type: 'DateTime' },
+        { name: 'endDate', type: 'DateTime' },
+        { name: 'deleted', type: 'Boolean' },
+      ],
+      constraints: [
+        {
+          kind: 'exclude' as const,
+          name: 'no_overlap_per_portfolio',
+          using: 'gist' as const,
+          elements: [
+            { column: 'portfolioId', operator: '=' as const },
+            {
+              expression: 'tstzrange("startDate", COALESCE("endDate", \'infinity\'::timestamptz))',
+              operator: '&&' as const,
+            },
+          ],
+          where: '"deleted" = false',
+          deferrable: 'INITIALLY DEFERRED' as const,
+        },
+      ],
+    },
+  ]);
+
+  it('normalizes equivalent EXCLUDE defs (type alias, WHERE parens, identifier quoting)', () => {
+    const dbDef = `EXCLUDE USING gist ("portfolioId" WITH =, tstzrange("startDate", COALESCE("endDate", 'infinity'::timestamp with time zone)) WITH &&) WHERE ((deleted = false)) DEFERRABLE INITIALLY DEFERRED`;
+    const modelDef = `EXCLUDE USING gist ("portfolioId" WITH =, tstzrange("startDate", COALESCE("endDate", 'infinity'::timestamptz)) WITH &&) WHERE ("deleted" = false) DEFERRABLE INITIALLY DEFERRED`;
+    const gen = new MigrationGenerator({} as never, excludeModels);
+    const norm1 = (gen as any).normalizeExcludeDef(dbDef);
+    const norm2 = (gen as any).normalizeExcludeDef(modelDef);
+    expect(norm1).toBe(norm2);
   });
 });
 
