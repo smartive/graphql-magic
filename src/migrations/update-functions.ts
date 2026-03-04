@@ -68,6 +68,7 @@ export const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction
     JOIN pg_namespace n ON p.pronamespace = n.oid
     WHERE n.nspname = 'public'
     AND NOT EXISTS (SELECT 1 FROM pg_aggregate a WHERE a.aggfnoid = p.oid)
+    AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')
     ORDER BY p.proname, pg_get_function_identity_arguments(p.oid)
   `);
 
@@ -84,6 +85,7 @@ export const getDatabaseFunctions = async (knex: Knex): Promise<DatabaseFunction
     JOIN pg_aggregate a ON p.oid = a.aggfnoid
     JOIN pg_namespace n ON p.pronamespace = n.oid
     WHERE n.nspname = 'public'
+    AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')
     ORDER BY p.proname, pg_get_function_identity_arguments(p.oid)
   `);
 

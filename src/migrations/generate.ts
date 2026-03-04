@@ -128,14 +128,18 @@ export class MigrationGenerator {
     const up: Callbacks = [];
     const down: Callbacks = [];
 
-    const needsBtreeGist = models.entities.some((model) =>
+    const wantsBtreeGist = models.entities.some((model) =>
       model.constraints?.some((c) => c.kind === 'exclude' && c.elements.some((el) => 'column' in el && el.operator === '=')),
     );
-    if (needsBtreeGist) {
-      up.unshift(() => {
-        this.writer.writeLine(`await knex.raw('CREATE EXTENSION IF NOT EXISTS btree_gist');`);
-        this.writer.blankLine();
-      });
+    if (wantsBtreeGist) {
+      const extResult = await schema.knex('pg_extension').where('extname', 'btree_gist').select('oid').first();
+      const btreeGistInstalled = !!extResult;
+      if (!btreeGistInstalled) {
+        up.unshift(() => {
+          this.writer.writeLine(`await knex.raw('CREATE EXTENSION IF NOT EXISTS btree_gist');`);
+          this.writer.blankLine();
+        });
+      }
     }
 
     this.createEnums(
