@@ -878,6 +878,50 @@ export class MigrationGenerator {
     return `${model.name}_${entry.name}_${entry.kind}_${index}`;
   }
 
+  private static readonly SQL_KEYWORDS = new Set([
+    'and',
+    'or',
+    'not',
+    'in',
+    'is',
+    'null',
+    'true',
+    'false',
+    'between',
+    'like',
+    'exists',
+    'all',
+    'any',
+    'asc',
+    'desc',
+    'with',
+    'using',
+    'as',
+    'on',
+    'infinity',
+    'extract',
+    'current_date',
+    'current_timestamp',
+  ]);
+
+  private normalizeSqlIdentifiers(s: string): string {
+    const literals: string[] = [];
+    let result = s.replace(/'([^']|'')*'/g, (lit) => {
+      literals.push(lit);
+
+      return `\x00L${literals.length - 1}\x00`;
+    });
+    result = result.replace(/"([^"]*)"/g, (_, ident) => `"${ident.toLowerCase()}"`);
+    result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g, (match) =>
+      MigrationGenerator.SQL_KEYWORDS.has(match.toLowerCase()) ? match : `"${match.toLowerCase()}"`,
+    );
+    for (let i = 0; i < literals.length; i++) {
+      result = result.replace(new RegExp(`\x00L${i}\x00`, 'g'), literals[i]);
+    }
+
+    return result;
+  }
+
   private normalizeCheckExpression(expr: string): string {
     let s = expr.replace(/\s+/g, ' ').trim();
     while (s.length >= 2 && s.startsWith('(') && s.endsWith(')')) {
@@ -900,20 +944,24 @@ export class MigrationGenerator {
       s = s.slice(1, -1).trim();
     }
 
-    return s
+    s = s
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
       .replace(/\s+AND\s+/gi, ' AND ')
       .replace(/\s+OR\s+/gi, ' OR ')
       .trim();
+
+    return this.normalizeSqlIdentifiers(s);
   }
 
   private normalizeExcludeDef(def: string): string {
-    return def
+    const s = def
       .replace(/\s+/g, ' ')
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
       .trim();
+
+    return this.normalizeSqlIdentifiers(s);
   }
 
   private normalizeTriggerDef(def: string): string {
