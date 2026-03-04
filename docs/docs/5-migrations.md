@@ -28,14 +28,20 @@ Fields with `generateAs` are handled specially in migrations:
 
 - **`type: 'expression'`**: These fields do **not** create database columns. They are computed at query time and will not appear in migration files. This means you can add or remove expression fields without needing a migration.
 
-### Check constraints
+### Constraints
 
-If an entity defines [constraints](./2-models.md#constraints) with `kind: 'check'`, the migration generator will:
+If an entity defines [constraints](./2-models.md#constraints), the migration generator will:
 
-- **New tables**: add each check constraint in the `up` migration.
-- **Existing tables**: add new constraints, and for existing constraints, if the expression changed, drop and re-add the constraint with the new expression.
+- **New tables**: add each constraint in the `up` migration.
+- **Existing tables**: add new constraints, and for existing constraints, if the definition changed, drop and re-add the constraint.
 
-Constraint names in the database follow the pattern `{table}_{constraintName}_check_{index}`.
+Constraint names follow the pattern `{table}_{constraintName}_{kind}_{index}`.
+
+**Check constraints** (`kind: 'check'`): Expression changes trigger a migration.
+
+**EXCLUDE constraints** (`kind: 'exclude'`): When any exclude constraint uses column grouping (`{ column, operator: '=' }`), `CREATE EXTENSION IF NOT EXISTS btree_gist` is added automatically.
+
+**Constraint triggers** (`kind: 'constraint_trigger'`): The referenced function must exist in `functions.ts`; it is created by the functions migration before the trigger.
 
 When comparing existing check constraints, `graphql-magic` asks PostgreSQL to canonicalize expressions before comparing them. This avoids churn for semantically equivalent expressions that differ in formatting or identifier quoting.
 

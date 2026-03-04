@@ -18,6 +18,7 @@ import {
   summonByName,
   typeToField,
   validateCheckConstraint,
+  validateExcludeConstraint,
 } from '../models/utils';
 import { getColumnName } from '../resolvers';
 import { Value } from '../values';
@@ -41,6 +42,10 @@ export class MigrationGenerator {
   private columns: Record<string, Column[]> = {};
   /** table name -> constraint name -> check clause expression */
   private existingCheckConstraints: Record<string, Map<string, string>> = {};
+  /** table name -> constraint name -> exclude definition (normalized) */
+  private existingExcludeConstraints: Record<string, Map<string, string>> = {};
+  /** table name -> constraint name -> trigger definition (normalized) */
+  private existingConstraintTriggers: Record<string, Map<string, string>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -83,8 +88,55 @@ export class MigrationGenerator {
       this.existingCheckConstraints[tableName].set(row.constraint_name, row.check_clause);
     }
 
+    const excludeResult = await schema.knex.raw(
+      `SELECT c.conrelid::regclass::text as table_name, c.conname as constraint_name, pg_get_constraintdef(c.oid) as constraint_def
+       FROM pg_constraint c
+       JOIN pg_namespace n ON c.connamespace = n.oid
+       WHERE n.nspname = 'public' AND c.contype = 'x'`,
+    );
+    const excludeRows: { table_name: string; constraint_name: string; constraint_def: string }[] =
+      'rows' in excludeResult && Array.isArray((excludeResult as { rows: unknown }).rows)
+        ? (excludeResult as { rows: { table_name: string; constraint_name: string; constraint_def: string }[] }).rows
+        : [];
+    for (const row of excludeRows) {
+      const tableName = row.table_name.split('.').pop()?.replace(/^"|"$/g, '') ?? row.table_name;
+      if (!this.existingExcludeConstraints[tableName]) {
+        this.existingExcludeConstraints[tableName] = new Map();
+      }
+      this.existingExcludeConstraints[tableName].set(row.constraint_name, this.normalizeExcludeDef(row.constraint_def));
+    }
+
+    const triggerResult = await schema.knex.raw(
+      `SELECT c.conrelid::regclass::text as table_name, c.conname as constraint_name, pg_get_triggerdef(t.oid) as trigger_def
+       FROM pg_constraint c
+       JOIN pg_trigger t ON t.tgconstraint = c.oid
+       JOIN pg_namespace n ON c.connamespace = n.oid
+       WHERE n.nspname = 'public' AND c.contype = 't'`,
+    );
+    const triggerRows: { table_name: string; constraint_name: string; trigger_def: string }[] =
+      'rows' in triggerResult && Array.isArray((triggerResult as { rows: unknown }).rows)
+        ? (triggerResult as { rows: { table_name: string; constraint_name: string; trigger_def: string }[] }).rows
+        : [];
+    for (const row of triggerRows) {
+      const tableName = row.table_name.split('.').pop()?.replace(/^"|"$/g, '') ?? row.table_name;
+      if (!this.existingConstraintTriggers[tableName]) {
+        this.existingConstraintTriggers[tableName] = new Map();
+      }
+      this.existingConstraintTriggers[tableName].set(row.constraint_name, this.normalizeTriggerDef(row.trigger_def));
+    }
+
     const up: Callbacks = [];
     const down: Callbacks = [];
+
+    const needsBtreeGist = models.entities.some((model) =>
+      model.constraints?.some((c) => c.kind === 'exclude' && c.elements.some((el) => 'column' in el && el.operator === '=')),
+    );
+    if (needsBtreeGist) {
+      up.unshift(() => {
+        this.writer.writeLine(`await knex.raw('CREATE EXTENSION IF NOT EXISTS btree_gist');`);
+        this.writer.blankLine();
+      });
+    }
 
     this.createEnums(
       this.models.enums.filter((enm) => !enums.includes(lowerFirst(enm.name))),
@@ -178,10 +230,22 @@ export class MigrationGenerator {
               if (entry.kind === 'check') {
                 validateCheckConstraint(model, entry);
                 const table = model.name;
-                const constraintName = this.getCheckConstraintName(model, entry, i);
-                const expression = entry.expression;
+                const constraintName = this.getConstraintName(model, entry, i);
                 up.push(() => {
-                  this.addCheckConstraint(table, constraintName, expression);
+                  this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                });
+              } else if (entry.kind === 'exclude') {
+                validateExcludeConstraint(model, entry);
+                const table = model.name;
+                const constraintName = this.getConstraintName(model, entry, i);
+                up.push(() => {
+                  this.addExcludeConstraint(table, constraintName, entry);
+                });
+              } else if (entry.kind === 'constraint_trigger') {
+                const table = model.name;
+                const constraintName = this.getConstraintName(model, entry, i);
+                up.push(() => {
+                  this.addConstraintTrigger(table, constraintName, entry);
                 });
               }
             }
@@ -237,38 +301,90 @@ export class MigrationGenerator {
           this.updateFields(model, existingFields, up, down);
 
           if (model.constraints?.length) {
+            const existingExcludeMap = this.existingExcludeConstraints[model.name];
+            const existingTriggerMap = this.existingConstraintTriggers[model.name];
             for (let i = 0; i < model.constraints.length; i++) {
               const entry = model.constraints[i];
-              if (entry.kind !== 'check') {
-                continue;
-              }
-              validateCheckConstraint(model, entry);
               const table = model.name;
-              const constraintName = this.getCheckConstraintName(model, entry, i);
-              const existingConstraint = this.findExistingConstraint(table, entry, constraintName);
-              if (!existingConstraint) {
-                up.push(() => {
-                  this.addCheckConstraint(table, constraintName, entry.expression);
-                });
-                down.push(() => {
-                  this.dropCheckConstraint(table, constraintName);
-                });
-              } else if (
-                !(await this.equalExpressions(
-                  table,
-                  existingConstraint.constraintName,
-                  existingConstraint.expression,
-                  entry.expression,
-                ))
-              ) {
-                up.push(() => {
-                  this.dropCheckConstraint(table, existingConstraint.constraintName);
-                  this.addCheckConstraint(table, constraintName, entry.expression);
-                });
-                down.push(() => {
-                  this.dropCheckConstraint(table, constraintName);
-                  this.addCheckConstraint(table, existingConstraint.constraintName, existingConstraint.expression);
-                });
+              const constraintName = this.getConstraintName(model, entry, i);
+              if (entry.kind === 'check') {
+                validateCheckConstraint(model, entry);
+                const existingConstraint = this.findExistingConstraint(table, entry, constraintName);
+                if (!existingConstraint) {
+                  up.push(() => {
+                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                  });
+                  down.push(() => {
+                    this.dropCheckConstraint(table, constraintName);
+                  });
+                } else if (
+                  !(await this.equalExpressions(
+                    table,
+                    existingConstraint.constraintName,
+                    existingConstraint.expression,
+                    entry.expression,
+                  ))
+                ) {
+                  up.push(() => {
+                    this.dropCheckConstraint(table, existingConstraint.constraintName);
+                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                  });
+                  down.push(() => {
+                    this.dropCheckConstraint(table, constraintName);
+                    this.addCheckConstraint(
+                      table,
+                      existingConstraint.constraintName,
+                      existingConstraint.expression,
+                    );
+                  });
+                }
+              } else if (entry.kind === 'exclude') {
+                validateExcludeConstraint(model, entry);
+                const newDef = this.normalizeExcludeDef(this.buildExcludeDef(entry));
+                const existingDef = existingExcludeMap?.get(constraintName);
+                if (existingDef === undefined) {
+                  up.push(() => {
+                    this.addExcludeConstraint(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropExcludeConstraint(table, constraintName);
+                  });
+                } else if (existingDef !== newDef) {
+                  up.push(() => {
+                    this.dropExcludeConstraint(table, constraintName);
+                    this.addExcludeConstraint(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropExcludeConstraint(table, constraintName);
+                    const escaped = this.escapeExpressionForRaw(existingDef);
+                    this.writer.writeLine(
+                      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" ${escaped}\`);`,
+                    );
+                    this.writer.blankLine();
+                  });
+                }
+              } else if (entry.kind === 'constraint_trigger') {
+                const newDef = this.normalizeTriggerDef(this.buildConstraintTriggerDef(table, constraintName, entry));
+                const existingDef = existingTriggerMap?.get(constraintName);
+                if (existingDef === undefined) {
+                  up.push(() => {
+                    this.addConstraintTrigger(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropConstraintTrigger(table, constraintName);
+                  });
+                } else if (existingDef !== newDef) {
+                  up.push(() => {
+                    this.dropConstraintTrigger(table, constraintName);
+                    this.addConstraintTrigger(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropConstraintTrigger(table, constraintName);
+                    const escaped = existingDef.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+                    this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
+                    this.writer.blankLine();
+                  });
+                }
               }
             }
           }
@@ -761,7 +877,7 @@ export class MigrationGenerator {
     this.writer.writeLine(`table.renameColumn('${from}', '${to}');`);
   }
 
-  private getCheckConstraintName(model: EntityModel, entry: { kind: string; name: string }, index: number): string {
+  private getConstraintName(model: EntityModel, entry: { kind: string; name: string }, index: number): string {
     return `${model.name}_${entry.name}_${entry.kind}_${index}`;
   }
 
@@ -944,20 +1060,127 @@ export class MigrationGenerator {
       .join('.');
   }
 
+  private normalizeExcludeDef(def: string): string {
+    return def
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\(\s*/g, '(')
+      .replace(/\s*\)\s*/g, ')')
+      .trim();
+  }
+
+  private normalizeTriggerDef(def: string): string {
+    return def
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\(\s*/g, '(')
+      .replace(/\s*\)\s*/g, ')')
+      .trim();
+  }
+
   /** Escape expression for embedding inside a template literal in generated code */
   private escapeExpressionForRaw(expr: string): string {
     return expr.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
   }
 
-  private addCheckConstraint(table: string, constraintName: string, expression: string) {
+  private addCheckConstraint(
+    table: string,
+    constraintName: string,
+    expression: string,
+    deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE',
+  ) {
     const escaped = this.escapeExpressionForRaw(expression);
+    const deferrableClause = deferrable ? ` DEFERRABLE ${deferrable}` : '';
     this.writer.writeLine(
-      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" CHECK (${escaped})\`);`,
+      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" CHECK (${escaped})${deferrableClause}\`);`,
     );
     this.writer.blankLine();
   }
 
   private dropCheckConstraint(table: string, constraintName: string) {
+    this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
+    this.writer.blankLine();
+  }
+
+  private buildExcludeDef(entry: {
+    using: string;
+    elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+    where?: string;
+    deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+  }): string {
+    const elementsStr = entry.elements
+      .map((el) => ('column' in el ? `"${el.column}" WITH ${el.operator}` : `${el.expression} WITH ${el.operator}`))
+      .join(', ');
+    const whereClause = entry.where ? ` WHERE (${entry.where})` : '';
+    const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
+
+    return `EXCLUDE USING ${entry.using} (${elementsStr})${whereClause}${deferrableClause}`;
+  }
+
+  private addExcludeConstraint(
+    table: string,
+    constraintName: string,
+    entry: {
+      using: string;
+      elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+      where?: string;
+      deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+    },
+  ) {
+    const def = this.buildExcludeDef(entry);
+    const escaped = this.escapeExpressionForRaw(def);
+    this.writer.writeLine(`await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" ${escaped}\`);`);
+    this.writer.blankLine();
+  }
+
+  private dropExcludeConstraint(table: string, constraintName: string) {
+    this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
+    this.writer.blankLine();
+  }
+
+  private buildConstraintTriggerDef(
+    table: string,
+    constraintName: string,
+    entry: {
+      when: 'AFTER' | 'BEFORE';
+      events: ('INSERT' | 'UPDATE')[];
+      forEach: 'ROW' | 'STATEMENT';
+      deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+      function: { name: string; args?: string[] };
+    },
+  ): string {
+    const eventsStr = entry.events.join(' OR ');
+    const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
+    const argsStr = entry.function.args?.length ? entry.function.args.map((a) => `"${a}"`).join(', ') : '';
+    const executeClause = argsStr
+      ? `EXECUTE FUNCTION ${entry.function.name}(${argsStr})`
+      : `EXECUTE FUNCTION ${entry.function.name}()`;
+
+    return `CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach}${deferrableClause} ${executeClause}`;
+  }
+
+  private addConstraintTrigger(
+    table: string,
+    constraintName: string,
+    entry: {
+      when: 'AFTER' | 'BEFORE';
+      events: ('INSERT' | 'UPDATE')[];
+      forEach: 'ROW' | 'STATEMENT';
+      deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+      function: { name: string; args?: string[] };
+    },
+  ) {
+    const eventsStr = entry.events.join(' OR ');
+    const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
+    const argsStr = entry.function.args?.length ? entry.function.args.map((a) => `"${a}"`).join(', ') : '';
+    const executeClause = argsStr
+      ? `EXECUTE FUNCTION ${entry.function.name}(${argsStr})`
+      : `EXECUTE FUNCTION ${entry.function.name}()`;
+    this.writer.writeLine(
+      `await knex.raw(\`CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach}${deferrableClause} ${executeClause}\`);`,
+    );
+    this.writer.blankLine();
+  }
+
+  private dropConstraintTrigger(table: string, constraintName: string) {
     this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
     this.writer.blankLine();
   }

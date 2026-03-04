@@ -165,7 +165,26 @@ export type ModelDefinition = {
        */
       manyToManyRelation?: boolean;
 
-      constraints?: { kind: 'check'; name: string; expression: string }[];
+      constraints?: (
+        | { kind: 'check'; name: string; expression: string; deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE' }
+        | {
+            kind: 'exclude';
+            name: string;
+            using: 'gist';
+            elements: ({ column: string; operator: '=' } | { expression: string; operator: '&&' })[];
+            where?: string;
+            deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+          }
+        | {
+            kind: 'constraint_trigger';
+            name: string;
+            when: 'AFTER' | 'BEFORE';
+            events: ('INSERT' | 'UPDATE')[];
+            forEach: 'ROW' | 'STATEMENT';
+            deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+            function: { name: string; args?: string[] };
+          }
+      )[];
 
       // temporary fields for the generation of migrations
       deleted?: true;
