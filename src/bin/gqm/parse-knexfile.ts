@@ -16,5 +16,6 @@ export const parseKnexfile = async () => {
   const sourceFile = project.addSourceFileAtPath(knexfilePath);
   const configDeclaration = findDeclarationInFile(sourceFile, 'knexConfig');
   const config = staticEval(configDeclaration, {});
+
   return config;
 };

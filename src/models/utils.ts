@@ -259,3 +259,23 @@ export const validateCheckConstraint = (model: EntityModel, constraint: { name: 
     }
   }
 };
+
+export const validateExcludeConstraint = (
+  model: EntityModel,
+  constraint: {
+    name: string;
+    elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+  },
+): void => {
+  const validColumnNames = new Set(model.fields.map((f) => getColumnName(f)));
+  for (const el of constraint.elements) {
+    if ('column' in el) {
+      if (!validColumnNames.has(el.column)) {
+        const validList = [...validColumnNames].sort().join(', ');
+        throw new Error(
+          `Exclude constraint "${constraint.name}" references column "${el.column}" which does not exist on model ${model.name}. Valid columns: ${validList}`,
+        );
+      }
+    }
+  }
+};
