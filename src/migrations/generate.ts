@@ -42,10 +42,10 @@ export class MigrationGenerator {
   private columns: Record<string, Column[]> = {};
   /** table name -> constraint name -> check clause expression */
   private existingCheckConstraints: Record<string, Map<string, string>> = {};
-  /** table name -> constraint name -> exclude definition (normalized) */
-  private existingExcludeConstraints: Record<string, Map<string, string>> = {};
-  /** table name -> constraint name -> trigger definition (normalized) */
-  private existingConstraintTriggers: Record<string, Map<string, string>> = {};
+  /** table name -> constraint name -> { normalized, raw } */
+  private existingExcludeConstraints: Record<string, Map<string, { normalized: string; raw: string }>> = {};
+  /** table name -> constraint name -> { normalized, raw } */
+  private existingConstraintTriggers: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -103,7 +103,10 @@ export class MigrationGenerator {
       if (!this.existingExcludeConstraints[tableName]) {
         this.existingExcludeConstraints[tableName] = new Map();
       }
-      this.existingExcludeConstraints[tableName].set(row.constraint_name, this.normalizeExcludeDef(row.constraint_def));
+      this.existingExcludeConstraints[tableName].set(row.constraint_name, {
+        normalized: this.normalizeExcludeDef(row.constraint_def),
+        raw: row.constraint_def,
+      });
     }
 
     const triggerResult = await schema.knex.raw(
@@ -122,7 +125,10 @@ export class MigrationGenerator {
       if (!this.existingConstraintTriggers[tableName]) {
         this.existingConstraintTriggers[tableName] = new Map();
       }
-      this.existingConstraintTriggers[tableName].set(row.constraint_name, this.normalizeTriggerDef(row.trigger_def));
+      this.existingConstraintTriggers[tableName].set(row.constraint_name, {
+        normalized: this.normalizeTriggerDef(row.trigger_def),
+        raw: row.trigger_def,
+      });
     }
 
     const up: Callbacks = [];
@@ -338,22 +344,22 @@ export class MigrationGenerator {
               } else if (entry.kind === 'exclude') {
                 validateExcludeConstraint(model, entry);
                 const newDef = this.normalizeExcludeDef(this.buildExcludeDef(entry));
-                const existingDef = existingExcludeMap?.get(constraintName);
-                if (existingDef === undefined) {
+                const existing = existingExcludeMap?.get(constraintName);
+                if (existing === undefined) {
                   up.push(() => {
                     this.addExcludeConstraint(table, constraintName, entry);
                   });
                   down.push(() => {
                     this.dropExcludeConstraint(table, constraintName);
                   });
-                } else if (existingDef !== newDef) {
+                } else if (existing.normalized !== newDef) {
                   up.push(() => {
                     this.dropExcludeConstraint(table, constraintName);
                     this.addExcludeConstraint(table, constraintName, entry);
                   });
                   down.push(() => {
                     this.dropExcludeConstraint(table, constraintName);
-                    const escaped = this.escapeExpressionForRaw(existingDef);
+                    const escaped = this.escapeExpressionForRaw(existing.raw);
                     this.writer.writeLine(
                       `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" ${escaped}\`);`,
                     );
@@ -362,22 +368,22 @@ export class MigrationGenerator {
                 }
               } else if (entry.kind === 'constraint_trigger') {
                 const newDef = this.normalizeTriggerDef(this.buildConstraintTriggerDef(table, constraintName, entry));
-                const existingDef = existingTriggerMap?.get(constraintName);
-                if (existingDef === undefined) {
+                const existing = existingTriggerMap?.get(constraintName);
+                if (existing === undefined) {
                   up.push(() => {
                     this.addConstraintTrigger(table, constraintName, entry);
                   });
                   down.push(() => {
                     this.dropConstraintTrigger(table, constraintName);
                   });
-                } else if (existingDef !== newDef) {
+                } else if (existing.normalized !== newDef) {
                   up.push(() => {
                     this.dropConstraintTrigger(table, constraintName);
                     this.addConstraintTrigger(table, constraintName, entry);
                   });
                   down.push(() => {
                     this.dropConstraintTrigger(table, constraintName);
-                    const escaped = existingDef.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+                    const escaped = existing.raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
                     this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
                     this.writer.blankLine();
                   });
@@ -904,26 +910,30 @@ export class MigrationGenerator {
     'current_timestamp',
   ]);
 
+  private static readonly LITERAL_PLACEHOLDER = '\uE000';
+
   private normalizeSqlIdentifiers(s: string): string {
     const literals: string[] = [];
     let result = s.replace(/'([^']|'')*'/g, (lit) => {
       literals.push(lit);
 
-      return `\x00L${literals.length - 1}\x00`;
+      return `${MigrationGenerator.LITERAL_PLACEHOLDER}${literals.length - 1}${MigrationGenerator.LITERAL_PLACEHOLDER}`;
     });
     result = result.replace(/"([^"]*)"/g, (_, ident) => `"${ident.toLowerCase()}"`);
     result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g, (match) =>
       MigrationGenerator.SQL_KEYWORDS.has(match.toLowerCase()) ? match : `"${match.toLowerCase()}"`,
     );
     for (let i = 0; i < literals.length; i++) {
-      result = result.replace(new RegExp(`\x00L${i}\x00`, 'g'), literals[i]);
+      result = result.replace(
+        new RegExp(`${MigrationGenerator.LITERAL_PLACEHOLDER}${i}${MigrationGenerator.LITERAL_PLACEHOLDER}`, 'g'),
+        literals[i],
+      );
     }
 
     return result;
   }
 
-  private normalizeCheckExpression(expr: string): string {
-    let s = expr.replace(/\s+/g, ' ').trim();
+  private stripOuterParens(s: string): string {
     while (s.length >= 2 && s.startsWith('(') && s.endsWith(')')) {
       let depth = 0;
       let match = true;
@@ -944,6 +954,41 @@ export class MigrationGenerator {
       s = s.slice(1, -1).trim();
     }
 
+    return s;
+  }
+
+  private splitAtTopLevel(s: string, sep: string): string[] {
+    const parts: string[] = [];
+    let depth = 0;
+    let start = 0;
+    const sepLen = sep.length;
+    for (let i = 0; i <= s.length - sepLen; i++) {
+      if (s[i] === '(') {
+        depth++;
+      } else if (s[i] === ')') {
+        depth--;
+      }
+      if (depth === 0 && s.slice(i, i + sepLen).toLowerCase() === sep.toLowerCase()) {
+        parts.push(s.slice(start, i).trim());
+        start = i + sepLen;
+        i += sepLen - 1;
+      }
+    }
+    parts.push(s.slice(start).trim());
+
+    return parts.filter(Boolean);
+  }
+
+  private normalizeCheckExpression(expr: string): string {
+    let s = expr.replace(/\s+/g, ' ').trim();
+    const normalizeParts = (str: string, separator: string): string =>
+      this.splitAtTopLevel(str, separator)
+        .map((p) => this.stripOuterParens(p))
+        .join(separator);
+    s = this.stripOuterParens(s);
+    s = normalizeParts(s, ' OR ');
+    s = this.stripOuterParens(s);
+    s = normalizeParts(s, ' AND ');
     s = s
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
@@ -969,6 +1014,7 @@ export class MigrationGenerator {
       .replace(/\s+/g, ' ')
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
+      .replace(/\bON\s+[a-zA-Z_][a-zA-Z0-9_]*\./gi, 'ON ')
       .trim();
   }
 
