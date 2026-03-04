@@ -1154,7 +1154,7 @@ export class MigrationGenerator {
       ? `EXECUTE FUNCTION ${entry.function.name}(${argsStr})`
       : `EXECUTE FUNCTION ${entry.function.name}()`;
 
-    return `CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach}${deferrableClause} ${executeClause}`;
+    return `CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}"${deferrableClause} FOR EACH ${entry.forEach} ${executeClause}`;
   }
 
   private addConstraintTrigger(
@@ -1175,7 +1175,7 @@ export class MigrationGenerator {
       ? `EXECUTE FUNCTION ${entry.function.name}(${argsStr})`
       : `EXECUTE FUNCTION ${entry.function.name}()`;
     this.writer.writeLine(
-      `await knex.raw(\`CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach}${deferrableClause} ${executeClause}\`);`,
+      `await knex.raw(\`CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}"${deferrableClause} FOR EACH ${entry.forEach} ${executeClause}\`);`,
     );
     this.writer.blankLine();
   }
