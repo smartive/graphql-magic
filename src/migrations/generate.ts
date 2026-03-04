@@ -1302,7 +1302,7 @@ export class MigrationGenerator {
   }
 
   private dropConstraintTrigger(table: string, constraintName: string) {
-    this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
+    this.writer.writeLine(`await knex.raw('DROP TRIGGER IF EXISTS "${constraintName}" ON "${table}"');`);
     this.writer.blankLine();
   }
 
