@@ -264,7 +264,7 @@ export const validateExcludeConstraint = (
   model: EntityModel,
   constraint: {
     name: string;
-    elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+    elements: readonly ({ column: string; operator: string } | { expression: string; operator: string })[];
   },
 ): void => {
   const validColumnNames = new Set(model.fields.map((f) => getColumnName(f)));

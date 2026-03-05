@@ -1243,7 +1243,7 @@ export class MigrationGenerator {
 
   private buildExcludeDef(entry: {
     using: string;
-    elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+    elements: readonly ({ column: string; operator: string } | { expression: string; operator: string })[];
     where?: string;
     deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
     notValid?: boolean;
@@ -1263,7 +1263,7 @@ export class MigrationGenerator {
     constraintName: string,
     entry: {
       using: string;
-      elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
+      elements: readonly ({ column: string; operator: string } | { expression: string; operator: string })[];
       where?: string;
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       notValid?: boolean;
