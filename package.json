@@ -75,7 +75,7 @@
     "@types/lodash": "4.17.24",
     "@types/luxon": "3.7.1",
     "@types/pg": "8.18.0",
-    "conventional-changelog-conventionalcommits": "9.1.0",
+    "conventional-changelog-conventionalcommits": "9.2.0",
     "create-ts-index": "1.14.0",
     "del-cli": "7.0.0",
     "esbuild": "0.27.3",
