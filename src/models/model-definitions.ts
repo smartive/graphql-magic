@@ -166,14 +166,21 @@ export type ModelDefinition = {
       manyToManyRelation?: boolean;
 
       constraints?: (
-        | { kind: 'check'; name: string; expression: string; deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE' }
+        | {
+            kind: 'check';
+            name: string;
+            expression: string;
+            deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+            notValid?: boolean;
+          }
         | {
             kind: 'exclude';
             name: string;
             using: 'gist';
-            elements: ({ column: string; operator: '=' } | { expression: string; operator: '&&' })[];
+            elements: readonly ({ column: string; operator: '=' } | { expression: string; operator: '&&' })[];
             where?: string;
             deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+            notValid?: boolean;
           }
         | {
             kind: 'constraint_trigger';

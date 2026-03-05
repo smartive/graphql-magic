@@ -138,12 +138,13 @@ Optional array of database constraints for this entity. Supported kinds: `check`
 - **`name`**: A short name for the constraint (used in migration constraint names).
 - **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns.
 - **`deferrable`** (optional): `'INITIALLY DEFERRED'` or `'INITIALLY IMMEDIATE'`.
+- **`notValid`** (optional): When `true`, adds the constraint with `NOT VALID`, allowing zero-downtime migrations (existing rows are not validated; use `VALIDATE CONSTRAINT` later).
 
 #### EXCLUDE constraints (`kind: 'exclude'`)
 
 Enforce non-overlapping values per group (e.g. no overlapping date ranges per portfolio). Requires the `btree_gist` extension (created automatically when needed).
 
-- **`name`**, **`using`** (typically `'gist'`), **`elements`** (e.g. `{ column: 'portfolioId', operator: '=' }` for grouping, or `{ expression: 'tsrange(...)', operator: '&&' }` for ranges), **`where`** (optional), **`deferrable`** (optional).
+- **`name`**, **`using`** (typically `'gist'`), **`elements`** (e.g. `{ column: 'portfolioId', operator: '=' }` for grouping, or `{ expression: 'tsrange(...)', operator: '&&' }` for ranges), **`where`** (optional), **`deferrable`** (optional), **`notValid`** (optional; PostgreSQL 15+).
 
 #### Constraint triggers (`kind: 'constraint_trigger'`)
 

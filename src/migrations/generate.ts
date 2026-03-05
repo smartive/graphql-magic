@@ -40,8 +40,8 @@ export class MigrationGenerator {
   });
   private schema: SchemaInspectorType;
   private columns: Record<string, Column[]> = {};
-  /** table name -> constraint name -> check clause expression */
-  private existingCheckConstraints: Record<string, Map<string, string>> = {};
+  /** table name -> constraint name -> { expression, notValid } */
+  private existingCheckConstraints: Record<string, Map<string, { expression: string; notValid: boolean }>> = {};
   /** table name -> constraint name -> { normalized, raw } */
   private existingExcludeConstraints: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   /** table name -> constraint name -> { normalized, raw } */
@@ -69,23 +69,33 @@ export class MigrationGenerator {
     }
 
     const checkResult = await schema.knex.raw(
-      `SELECT tc.table_name, tc.constraint_name, cc.check_clause
-       FROM information_schema.table_constraints tc
-       JOIN information_schema.check_constraints cc
-         ON tc.constraint_schema = cc.constraint_schema AND tc.constraint_name = cc.constraint_name
-       WHERE tc.table_schema = ? AND tc.constraint_type = ?`,
-      ['public', 'CHECK'],
+      `SELECT t.relname as table_name, c.conname as constraint_name,
+              pg_get_constraintdef(c.oid, true) as constraint_def, c.convalidated
+       FROM pg_constraint c
+       JOIN pg_namespace n ON c.connamespace = n.oid
+       JOIN pg_class t ON c.conrelid = t.oid
+       WHERE n.nspname = ? AND c.contype = ?`,
+      ['public', 'c'],
     );
-    const rows: { table_name: string; constraint_name: string; check_clause: string }[] =
+    type CheckConstraintRow = {
+      table_name: string;
+      constraint_name: string;
+      constraint_def: string;
+      convalidated: boolean;
+    };
+    const checkRows: CheckConstraintRow[] =
       'rows' in checkResult && Array.isArray((checkResult as { rows: unknown }).rows)
-        ? (checkResult as { rows: { table_name: string; constraint_name: string; check_clause: string }[] }).rows
+        ? (checkResult as { rows: CheckConstraintRow[] }).rows
         : [];
-    for (const row of rows) {
+    for (const row of checkRows) {
       const tableName = row.table_name;
       if (!this.existingCheckConstraints[tableName]) {
         this.existingCheckConstraints[tableName] = new Map();
       }
-      this.existingCheckConstraints[tableName].set(row.constraint_name, row.check_clause);
+      this.existingCheckConstraints[tableName].set(row.constraint_name, {
+        expression: this.extractCheckExpressionFromDefinition(row.constraint_def),
+        notValid: !row.convalidated,
+      });
     }
 
     const excludeResult = await schema.knex.raw(
@@ -242,7 +252,7 @@ export class MigrationGenerator {
                 const table = model.name;
                 const constraintName = this.getConstraintName(model, entry, i);
                 up.push(() => {
-                  this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                  this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable, entry.notValid);
                 });
               } else if (entry.kind === 'exclude') {
                 validateExcludeConstraint(model, entry);
@@ -322,7 +332,7 @@ export class MigrationGenerator {
                 const existingConstraint = this.findExistingConstraint(table, entry, constraintName);
                 if (!existingConstraint) {
                   up.push(() => {
-                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable, entry.notValid);
                   });
                   down.push(() => {
                     this.dropCheckConstraint(table, constraintName);
@@ -333,15 +343,22 @@ export class MigrationGenerator {
                     existingConstraint.constraintName,
                     existingConstraint.expression,
                     entry.expression,
-                  ))
+                  )) ||
+                  existingConstraint.notValid !== (entry.notValid ?? false)
                 ) {
                   up.push(() => {
                     this.dropCheckConstraint(table, existingConstraint.constraintName);
-                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable);
+                    this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable, entry.notValid);
                   });
                   down.push(() => {
                     this.dropCheckConstraint(table, constraintName);
-                    this.addCheckConstraint(table, existingConstraint.constraintName, existingConstraint.expression);
+                    this.addCheckConstraint(
+                      table,
+                      existingConstraint.constraintName,
+                      existingConstraint.expression,
+                      undefined,
+                      existingConstraint.notValid,
+                    );
                   });
                 }
               } else if (entry.kind === 'exclude') {
@@ -1071,24 +1088,25 @@ export class MigrationGenerator {
     table: string,
     entry: { kind: 'check'; name: string; expression: string },
     preferredConstraintName: string,
-  ): { constraintName: string; expression: string } | null {
+  ): { constraintName: string; expression: string; notValid: boolean } | null {
     const existingMap = this.existingCheckConstraints[table];
     if (!existingMap) {
       return null;
     }
 
-    const preferredExpression = existingMap.get(preferredConstraintName);
-    if (preferredExpression !== undefined) {
+    const preferred = existingMap.get(preferredConstraintName);
+    if (preferred !== undefined) {
       return {
         constraintName: preferredConstraintName,
-        expression: preferredExpression,
+        expression: preferred.expression,
+        notValid: preferred.notValid,
       };
     }
 
     const normalizedNewExpression = this.normalizeCheckExpression(entry.expression);
     const constraintPrefix = `${table}_${entry.name}_${entry.kind}_`;
 
-    for (const [constraintName, expression] of existingMap.entries()) {
+    for (const [constraintName, { expression, notValid }] of existingMap.entries()) {
       if (!constraintName.startsWith(constraintPrefix)) {
         continue;
       }
@@ -1096,7 +1114,7 @@ export class MigrationGenerator {
         continue;
       }
 
-      return { constraintName, expression };
+      return { constraintName, expression, notValid };
     }
 
     return null;
@@ -1207,11 +1225,13 @@ export class MigrationGenerator {
     constraintName: string,
     expression: string,
     deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE',
+    notValid?: boolean,
   ) {
     const escaped = this.escapeExpressionForRaw(expression);
     const deferrableClause = deferrable ? ` DEFERRABLE ${deferrable}` : '';
+    const notValidClause = notValid ? ` NOT VALID` : '';
     this.writer.writeLine(
-      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" CHECK (${escaped})${deferrableClause}\`);`,
+      `await knex.raw(\`ALTER TABLE "${table}" ADD CONSTRAINT "${constraintName}" CHECK (${escaped})${deferrableClause}${notValidClause}\`);`,
     );
     this.writer.blankLine();
   }
@@ -1226,14 +1246,16 @@ export class MigrationGenerator {
     elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
     where?: string;
     deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+    notValid?: boolean;
   }): string {
     const elementsStr = entry.elements
       .map((el) => ('column' in el ? `"${el.column}" WITH ${el.operator}` : `${el.expression} WITH ${el.operator}`))
       .join(', ');
     const whereClause = entry.where ? ` WHERE (${entry.where})` : '';
     const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
+    const notValidClause = entry.notValid ? ` NOT VALID` : '';
 
-    return `EXCLUDE USING ${entry.using} (${elementsStr})${whereClause}${deferrableClause}`;
+    return `EXCLUDE USING ${entry.using} (${elementsStr})${whereClause}${deferrableClause}${notValidClause}`;
   }
 
   private addExcludeConstraint(
@@ -1244,6 +1266,7 @@ export class MigrationGenerator {
       elements: ({ column: string; operator: string } | { expression: string; operator: string })[];
       where?: string;
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
+      notValid?: boolean;
     },
   ) {
     const def = this.buildExcludeDef(entry);
