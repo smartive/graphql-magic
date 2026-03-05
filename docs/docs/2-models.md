@@ -137,6 +137,7 @@ Optional array of database constraints for this entity. Supported kinds: `check`
 
 - **`name`**: A short name for the constraint (used in migration constraint names).
 - **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns.
+- **`message`** (optional): Human-readable message for when the constraint fails. Not used by graphql-magic; available for application-level error mapping.
 - **`deferrable`** (optional): `'INITIALLY DEFERRED'` or `'INITIALLY IMMEDIATE'`.
 - **`notValid`** (optional): When `true`, adds the constraint with `NOT VALID`, allowing zero-downtime migrations (existing rows are not validated; use `VALIDATE CONSTRAINT` later).
 

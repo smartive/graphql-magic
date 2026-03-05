@@ -1195,7 +1195,7 @@ export class MigrationGenerator {
   }
 
   private extractCheckExpressionFromDefinition(definition: string): string {
-    const trimmed = definition.trim();
+    const trimmed = definition.trim().replace(/\s+NOT\s+VALID\s*$/i, '');
     const match = trimmed.match(/^CHECK\s*\(([\s\S]*)\)$/i);
     if (!match) {
       return trimmed;
@@ -1285,7 +1285,7 @@ export class MigrationGenerator {
     constraintName: string,
     entry: {
       when: 'AFTER' | 'BEFORE';
-      events: ('INSERT' | 'UPDATE')[];
+      events: readonly ('INSERT' | 'UPDATE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       function: { name: string; args?: string[] };
@@ -1306,7 +1306,7 @@ export class MigrationGenerator {
     constraintName: string,
     entry: {
       when: 'AFTER' | 'BEFORE';
-      events: ('INSERT' | 'UPDATE')[];
+      events: readonly ('INSERT' | 'UPDATE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       function: { name: string; args?: string[] };
