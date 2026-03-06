@@ -262,6 +262,7 @@ export class MigrationGenerator {
                   this.addExcludeConstraint(table, constraintName, entry);
                 });
               } else if (entry.kind === 'constraint_trigger') {
+                this.validateConstraintTrigger(model, entry);
                 const table = model.name;
                 const constraintName = this.getConstraintName(model, entry, i);
                 up.push(() => {
@@ -387,6 +388,7 @@ export class MigrationGenerator {
                   });
                 }
               } else if (entry.kind === 'constraint_trigger') {
+                this.validateConstraintTrigger(model, entry);
                 const newDef = this.normalizeTriggerDef(this.buildConstraintTriggerDef(table, constraintName, entry));
                 const existing = existingTriggerMap?.get(constraintName);
                 if (existing === undefined) {
@@ -1299,6 +1301,31 @@ export class MigrationGenerator {
       : `EXECUTE FUNCTION ${entry.function.name}()`;
 
     return `CREATE CONSTRAINT TRIGGER "${constraintName}" ${entry.when} ${eventsStr} ON "${table}"${deferrableClause} FOR EACH ${entry.forEach} ${executeClause}`;
+  }
+
+  private validateConstraintTrigger(
+    model: EntityModel,
+    entry: {
+      name: string;
+      function: { name: string; args?: string[] };
+    },
+  ): void {
+    const fnName = entry.function.name;
+    if (!this.parsedFunctions || this.parsedFunctions.length === 0) {
+      throw new Error(
+        `Constraint trigger "${entry.name}" on model ${model.name} references function "${fnName}" which must be defined in functions.ts. Ensure functions.ts exists and defines the function.`,
+      );
+    }
+    const defined = this.parsedFunctions.find((pf) => pf.name === fnName);
+    if (!defined) {
+      const validList = this.parsedFunctions
+        .map((pf) => pf.name)
+        .sort()
+        .join(', ');
+      throw new Error(
+        `Constraint trigger "${entry.name}" on model ${model.name} references function "${fnName}" which is not defined in functions.ts. Defined functions: ${validList || '(none)'}.`,
+      );
+    }
   }
 
   private addConstraintTrigger(
