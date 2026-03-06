@@ -40,6 +40,7 @@ import {
   summonByName,
   typeToField,
   validateCheckConstraint,
+  validateExcludeConstraint,
 } from './utils';
 
 // These might one day become classes
@@ -357,7 +358,7 @@ export class EntityModel extends Model {
   defaultOrderBy?: OrderBy[];
   fields: EntityField[];
 
-  constraints?: { kind: 'check'; name: string; expression: string }[];
+  constraints?: EntityModelDefinition['constraints'];
 
   // temporary fields for the generation of migrations
   deleted?: true;
@@ -392,6 +393,8 @@ export class EntityModel extends Model {
       for (const constraint of this.constraints) {
         if (constraint.kind === 'check') {
           validateCheckConstraint(this, constraint);
+        } else if (constraint.kind === 'exclude') {
+          validateExcludeConstraint(this, constraint);
         }
       }
     }

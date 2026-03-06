@@ -64,7 +64,8 @@ type MockColumn = {
 type CheckRow = {
   table_name: string;
   constraint_name: string;
-  check_clause: string;
+  constraint_def: string;
+  convalidated: boolean;
 };
 
 const normalizeForCanonicalizationMock = (expr: string) => {
@@ -86,7 +87,9 @@ const baseColumnsByTable: Record<string, MockColumn[]> = {
   ],
 };
 
-const createProductModels = (constraints: { kind: 'check'; name: string; expression: string }[]) => {
+const createProductModels = (
+  constraints: { kind: 'check'; name: string; expression: string; notValid?: boolean }[],
+) => {
   const definitions: ModelDefinitions = [
     {
       kind: 'entity',
@@ -100,7 +103,12 @@ const createProductModels = (constraints: { kind: 'check'; name: string; express
 };
 
 const createGenerator = (rows: CheckRow[], models: Models) => {
-  const raw = jest.fn().mockResolvedValue({ rows });
+  const raw = jest
+    .fn()
+    .mockResolvedValueOnce({ rows })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValue({ rows: [] });
   const knexLike = Object.assign(
     jest.fn().mockReturnValue({
       where: jest.fn().mockReturnValue({
@@ -140,7 +148,8 @@ describe('MigrationGenerator check constraints', () => {
         {
           table_name: 'Product',
           constraint_name: 'Product_score_non_negative_check_0',
-          check_clause: ' (( "score"   >=   0 )) ',
+          constraint_def: 'CHECK ( (( "score"   >=   0 )) )',
+          convalidated: true,
         },
       ],
       models,
@@ -180,7 +189,8 @@ describe('MigrationGenerator check constraints', () => {
         {
           table_name: 'Product',
           constraint_name: 'Product_period_start_before_end_check_0',
-          check_clause: '((deleted = true) OR ("endDate" IS NULL) OR ("startDate" <= "endDate"))',
+          constraint_def: 'CHECK (((deleted = true) OR ("endDate" IS NULL) OR ("startDate" <= "endDate")))',
+          convalidated: true,
         },
       ],
       models,
@@ -201,12 +211,14 @@ describe('MigrationGenerator check constraints', () => {
         {
           table_name: 'Product',
           constraint_name: 'Product_first_check_1',
-          check_clause: '(("score" >= 0))',
+          constraint_def: 'CHECK ((("score" >= 0)))',
+          convalidated: true,
         },
         {
           table_name: 'Product',
           constraint_name: 'Product_second_check_0',
-          check_clause: '(("score" <= 100))',
+          constraint_def: 'CHECK ((("score" <= 100)))',
+          convalidated: true,
         },
       ],
       models,
@@ -224,7 +236,8 @@ describe('MigrationGenerator check constraints', () => {
         {
           table_name: 'Product',
           constraint_name: 'Product_score_non_negative_check_0',
-          check_clause: '"score" > 0',
+          constraint_def: 'CHECK (("score" > 0))',
+          convalidated: true,
         },
       ],
       models,
@@ -235,6 +248,44 @@ describe('MigrationGenerator check constraints', () => {
     expect(generator.needsMigration).toBe(true);
     expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check_0"');
     expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0)');
+  });
+
+  it('appends NOT VALID when notValid is true', async () => {
+    const models = createProductModels([
+      { kind: 'check', name: 'score_non_negative', expression: '"score" >= 0', notValid: true },
+    ]);
+    const generator = createGenerator([], models);
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(
+      'ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID',
+    );
+  });
+
+  it('detects when notValid has changed', async () => {
+    const models = createProductModels([
+      { kind: 'check', name: 'score_non_negative', expression: '"score" >= 0', notValid: true },
+    ]);
+    const generator = createGenerator(
+      [
+        {
+          table_name: 'Product',
+          constraint_name: 'Product_score_non_negative_check_0',
+          constraint_def: 'CHECK (("score" >= 0))',
+          convalidated: true,
+        },
+      ],
+      models,
+    );
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check_0"');
+    expect(migration).toContain(
+      'ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID',
+    );
   });
 
   it('warns and treats constraint as changed when canonicalization fails', async () => {
@@ -248,7 +299,8 @@ describe('MigrationGenerator check constraints', () => {
         {
           table_name: 'Product',
           constraint_name: 'Product_score_non_negative_check_0',
-          check_clause: '"score" >= 0',
+          constraint_def: 'CHECK (("score" >= 0))',
+          convalidated: true,
         },
       ],
       models,
@@ -258,6 +310,47 @@ describe('MigrationGenerator check constraints', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(warnSpy).toHaveBeenCalled();
+  });
+});
+
+describe('MigrationGenerator exclude constraints', () => {
+  const excludeModels = new Models([
+    {
+      kind: 'entity',
+      name: 'PortfolioAllocation',
+      updatable: false,
+      fields: [
+        { name: 'portfolioId', type: 'UUID' },
+        { name: 'startDate', type: 'DateTime' },
+        { name: 'endDate', type: 'DateTime' },
+        { name: 'deleted', type: 'Boolean' },
+      ],
+      constraints: [
+        {
+          kind: 'exclude' as const,
+          name: 'no_overlap_per_portfolio',
+          using: 'gist' as const,
+          elements: [
+            { column: 'portfolioId', operator: '=' as const },
+            {
+              expression: 'tstzrange("startDate", COALESCE("endDate", \'infinity\'::timestamptz))',
+              operator: '&&' as const,
+            },
+          ],
+          where: '"deleted" = false',
+          deferrable: 'INITIALLY DEFERRED' as const,
+        },
+      ],
+    },
+  ]);
+
+  it('normalizes equivalent EXCLUDE defs (type alias, WHERE parens, identifier quoting)', () => {
+    const dbDef = `EXCLUDE USING gist ("portfolioId" WITH =, tstzrange("startDate", COALESCE("endDate", 'infinity'::timestamp with time zone)) WITH &&) WHERE ((deleted = false)) DEFERRABLE INITIALLY DEFERRED`;
+    const modelDef = `EXCLUDE USING gist ("portfolioId" WITH =, tstzrange("startDate", COALESCE("endDate", 'infinity'::timestamptz)) WITH &&) WHERE ("deleted" = false) DEFERRABLE INITIALLY DEFERRED`;
+    const gen = new MigrationGenerator({} as never, excludeModels);
+    const norm1 = (gen as any).normalizeExcludeDef(dbDef);
+    const norm2 = (gen as any).normalizeExcludeDef(modelDef);
+    expect(norm1).toBe(norm2);
   });
 });
 

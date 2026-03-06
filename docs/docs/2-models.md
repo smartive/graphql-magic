@@ -131,11 +131,27 @@ An array of fields. See [fields](./fields)
 
 ### `constraints`
 
-Optional array of database check constraints for this entity. Only `check` constraints are supported. Each constraint has:
+Optional array of database constraints for this entity. Supported kinds: `check`, `exclude`, `constraint_trigger`.
 
-- **`kind`**: `'check'`
+#### Check constraints (`kind: 'check'`)
+
 - **`name`**: A short name for the constraint (used in migration constraint names).
-- **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns; unquoted identifiers are not checked.
+- **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns.
+- **`message`** (optional): Human-readable message for when the constraint fails. Not used by graphql-magic; available for application-level error mapping.
+- **`deferrable`** (optional): `'INITIALLY DEFERRED'` or `'INITIALLY IMMEDIATE'`.
+- **`notValid`** (optional): When `true`, adds the constraint with `NOT VALID`, allowing zero-downtime migrations (existing rows are not validated; use `VALIDATE CONSTRAINT` later).
+
+#### EXCLUDE constraints (`kind: 'exclude'`)
+
+Enforce non-overlapping values per group (e.g. no overlapping date ranges per portfolio). Requires the `btree_gist` extension (created automatically when needed).
+
+- **`name`**, **`using`** (typically `'gist'`), **`elements`** (e.g. `{ column: 'portfolioId', operator: '=' }` for grouping, or `{ expression: 'tsrange(...)', operator: '&&' }` for ranges), **`where`** (optional), **`deferrable`** (optional), **`notValid`** (optional; PostgreSQL 15+).
+
+#### Constraint triggers (`kind: 'constraint_trigger'`)
+
+Deferrable triggers for validation (e.g. contiguous periods). The function must be defined in `functions.ts`.
+
+- **`name`**, **`when`** (`'AFTER'` or `'BEFORE'`), **`events`** (`['INSERT', 'UPDATE']`), **`forEach`** (`'ROW'` or `'STATEMENT'`), **`deferrable`** (optional), **`function`** (`{ name: string; args?: string[] }`).
 
 Example: ensure a numeric field is non-negative and a status is one of the allowed values:
 
@@ -155,7 +171,7 @@ Example: ensure a numeric field is non-negative and a status is one of the allow
 }
 ```
 
-When you generate a migration, check constraints are created on new tables and added, changed, or left unchanged on existing tables. Changing the expression generates a migration that drops and re-adds the constraint.
+When you generate a migration, constraints are created on new tables and added, changed, or left unchanged on existing tables.
 
 ## Scalars
 

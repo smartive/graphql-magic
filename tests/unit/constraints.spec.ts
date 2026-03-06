@@ -1,7 +1,11 @@
 import { ModelDefinitions, Models } from '../../src/models';
-import { extractColumnReferencesFromCheckExpression, validateCheckConstraint } from '../../src/models/utils';
+import {
+  extractColumnReferencesFromCheckExpression,
+  validateCheckConstraint,
+  validateExcludeConstraint,
+} from '../../src/models/utils';
 
-describe('check constraints', () => {
+describe('constraints', () => {
   const modelDefinitions: ModelDefinitions = [
     {
       kind: 'entity',
@@ -78,6 +82,98 @@ describe('check constraints', () => {
           expression: '"nope" = 1',
         }),
       ).toThrow(/Valid columns:.*\bscore\b.*\bstatus\b/);
+    });
+  });
+
+  describe('validateExcludeConstraint', () => {
+    it('does not throw when column elements reference valid columns', () => {
+      expect(() =>
+        validateExcludeConstraint(productModel, {
+          name: 'valid',
+          elements: [
+            { column: 'score', operator: '=' },
+            { expression: 'tsrange("startDate", "endDate")', operator: '&&' },
+          ],
+        }),
+      ).not.toThrow();
+    });
+
+    it('does not throw when only expression elements', () => {
+      expect(() =>
+        validateExcludeConstraint(productModel, {
+          name: 'valid',
+          elements: [{ expression: 'tsrange(now(), now())', operator: '&&' }],
+        }),
+      ).not.toThrow();
+    });
+
+    it('uses relation column name when validating', () => {
+      expect(() =>
+        validateExcludeConstraint(productModel, {
+          name: 'valid',
+          elements: [{ column: 'parentId', operator: '=' }],
+        }),
+      ).not.toThrow();
+    });
+
+    it('throws when column element references missing column', () => {
+      expect(() =>
+        validateExcludeConstraint(productModel, {
+          name: 'bad',
+          elements: [{ column: 'unknown_column', operator: '=' }],
+        }),
+      ).toThrow(
+        /Exclude constraint "bad" references column "unknown_column" which does not exist on model Product/,
+      );
+    });
+  });
+
+  describe('exclude and constraint_trigger constraints', () => {
+    const allocationDefinitions: ModelDefinitions = [
+      {
+        kind: 'entity',
+        name: 'PortfolioAllocation',
+        fields: [
+          { name: 'portfolio', kind: 'relation', type: 'Portfolio', reverse: 'allocations' },
+          { name: 'startDate', type: 'DateTime' },
+          { name: 'endDate', type: 'DateTime' },
+          { name: 'deleted', type: 'Boolean', nonNull: true, defaultValue: false },
+        ],
+        constraints: [
+          {
+            kind: 'exclude',
+            name: 'no_overlap_per_portfolio',
+            using: 'gist',
+            elements: [
+              { column: 'portfolioId', operator: '=' },
+              {
+                expression: 'tsrange("startDate", COALESCE("endDate", \'infinity\'::timestamptz))',
+                operator: '&&',
+              },
+            ],
+            where: '"deleted" = false',
+            deferrable: 'INITIALLY DEFERRED',
+          },
+          {
+            kind: 'constraint_trigger',
+            name: 'contiguous_periods',
+            when: 'AFTER',
+            events: ['INSERT', 'UPDATE'],
+            forEach: 'ROW',
+            deferrable: 'INITIALLY DEFERRED',
+            function: { name: 'contiguous_periods_check' },
+          },
+        ],
+      },
+      {
+        kind: 'entity',
+        name: 'Portfolio',
+        fields: [{ name: 'name', type: 'String' }],
+      },
+    ];
+
+    it('constructs models with exclude and constraint_trigger without throwing', () => {
+      expect(() => new Models(allocationDefinitions)).not.toThrow();
     });
   });
 });
