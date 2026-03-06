@@ -7,12 +7,11 @@ const modelDefinitions: ModelDefinitions = [
   {
     kind: 'entity',
     name: 'User',
-    fields: [
-    ]
+    fields: [],
   },
-]
+];
 
-export const models = new Models(modelDefinitions)
+export const models = new Models(modelDefinitions);
 ```
 
 Models can have the following kinds:
@@ -86,9 +85,9 @@ the following GraphQL query becomes possible
 
 ```graphql
 query {
-    post(where: { id: "bf9496bb-9302-4528-aebc-c97ae49c52fa"}) {
-        title
-    }
+  post(where: { id: "bf9496bb-9302-4528-aebc-c97ae49c52fa" }) {
+    title
+  }
 }
 ```
 
@@ -111,9 +110,9 @@ the following GraphQL query becomes possible
 
 ```graphql
 query {
-    posts {
-        title
-    }
+  posts {
+    title
+  }
 }
 ```
 
@@ -137,7 +136,7 @@ Optional array of database constraints for this entity. Supported kinds: `check`
 
 - **`name`**: A short name for the constraint (used in migration constraint names).
 - **`expression`**: A PostgreSQL boolean expression. Column names **must** be double-quoted (e.g. `"score"`) so they are validated against the model’s columns.
-- **`message`** (optional): Human-readable message for when the constraint fails. Not used by graphql-magic; available for application-level error mapping.
+- **`message`**: Human-readable message for when the constraint fails. Not used by graphql-magic; available for application-level error mapping.
 - **`deferrable`** (optional): `'INITIALLY DEFERRED'` or `'INITIALLY IMMEDIATE'`.
 - **`notValid`** (optional): When `true`, adds the constraint with `NOT VALID`, allowing zero-downtime migrations (existing rows are not validated; use `VALIDATE CONSTRAINT` later).
 
@@ -198,7 +197,7 @@ An enum that is available as type in the database:
 
 ## Raw enums
 
-An enum that is *not* available as type in the database:
+An enum that is _not_ available as type in the database:
 
 ```ts
 {
@@ -238,7 +237,7 @@ Types that can be inherited from, e.g.
 
 ## Objects
 
-Custom types that *don't* correspond to database tables. To be used e.g. as return types for custom resolvers or JSON fields. These can also be used to extend `Query` or `Mutation` which are themselves of that type. E.g.
+Custom types that _don't_ correspond to database tables. To be used e.g. as return types for custom resolvers or JSON fields. These can also be used to extend `Query` or `Mutation` which are themselves of that type. E.g.
 
 ```ts
 {
@@ -273,10 +272,10 @@ will make this query possible:
 
 ```graphql
 query {
-    stats {
-        usersCount
-        postsCount
-    }
+  stats {
+    usersCount
+    postsCount
+  }
 }
 ```
 

@@ -87,9 +87,7 @@ const baseColumnsByTable: Record<string, MockColumn[]> = {
   ],
 };
 
-const createProductModels = (
-  constraints: { kind: 'check'; name: string; expression: string; notValid?: boolean }[],
-) => {
+const createProductModels = (constraints: { kind: 'check'; name: string; expression: string; notValid?: boolean }[]) => {
   const definitions: ModelDefinitions = [
     {
       kind: 'entity',
@@ -163,9 +161,7 @@ describe('MigrationGenerator check constraints', () => {
   it('does not detect changes for equivalent expressions with quoted vs unquoted lowercase identifiers', async () => {
     jest
       .spyOn(MigrationGenerator.prototype as any, 'canonicalizeCheckExpressionWithPostgres')
-      .mockImplementation(
-        async () => '(deleted = true) OR ("endDate" IS NULL) OR ("startDate" <= "endDate")',
-      );
+      .mockImplementation(async () => '(deleted = true) OR ("endDate" IS NULL) OR ("startDate" <= "endDate")');
     const models = new Models([
       {
         kind: 'entity',
@@ -258,9 +254,7 @@ describe('MigrationGenerator check constraints', () => {
 
     const migration = await generator.generate();
 
-    expect(migration).toContain(
-      'ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID',
-    );
+    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID');
   });
 
   it('detects when notValid has changed', async () => {
@@ -283,9 +277,7 @@ describe('MigrationGenerator check constraints', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check_0"');
-    expect(migration).toContain(
-      'ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID',
-    );
+    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID');
   });
 
   it('warns and treats constraint as changed when canonicalization fails', async () => {
@@ -351,6 +343,77 @@ describe('MigrationGenerator exclude constraints', () => {
     const norm1 = (gen as any).normalizeExcludeDef(dbDef);
     const norm2 = (gen as any).normalizeExcludeDef(modelDef);
     expect(norm1).toBe(norm2);
+  });
+});
+
+describe('MigrationGenerator constraint_trigger validation', () => {
+  const triggerModels = new Models([
+    {
+      kind: 'entity',
+      name: 'PortfolioAllocation',
+      fields: [
+        { name: 'portfolioId', type: 'UUID' },
+        { name: 'startDate', type: 'DateTime' },
+        { name: 'endDate', type: 'DateTime' },
+      ],
+      constraints: [
+        {
+          kind: 'constraint_trigger' as const,
+          name: 'contiguous_periods',
+          when: 'AFTER' as const,
+          events: ['INSERT', 'UPDATE'] as const,
+          forEach: 'ROW' as const,
+          deferrable: 'INITIALLY DEFERRED' as const,
+          function: { name: 'contiguous_periods_check' },
+        },
+      ],
+    },
+  ]);
+
+  const parsedFunctionsWithMatch = [
+    { name: 'contiguous_periods_check', signature: '', body: '', fullDefinition: '', isAggregate: false },
+  ];
+
+  const parsedFunctionsWithoutMatch = [
+    { name: 'other_function', signature: '', body: '', fullDefinition: '', isAggregate: false },
+  ];
+
+  const createTriggerGenerator = (
+    parsedFunctions: { name: string; signature: string; body: string; fullDefinition: string; isAggregate: boolean }[],
+  ) => {
+    const raw = jest.fn().mockResolvedValue({ rows: [] });
+    const knexMock = Object.assign(
+      jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue([]) }),
+      }),
+      { raw },
+    );
+    const generator = new MigrationGenerator(knexMock as never, triggerModels, parsedFunctions);
+    (generator as unknown as { schema: unknown }).schema = {
+      knex: knexMock,
+      tables: jest.fn().mockResolvedValue([]),
+      columnInfo: jest.fn().mockResolvedValue([]),
+    };
+    return generator;
+  };
+
+  it('throws when function is not defined in functions.ts', async () => {
+    const generator = createTriggerGenerator(parsedFunctionsWithoutMatch);
+    await expect(generator.generate()).rejects.toThrow(
+      /Constraint trigger "contiguous_periods" on model PortfolioAllocation references function "contiguous_periods_check" which is not defined in functions.ts/,
+    );
+  });
+
+  it('throws when functions.ts is empty or missing', async () => {
+    const generator = createTriggerGenerator([]);
+    await expect(generator.generate()).rejects.toThrow(
+      /references function "contiguous_periods_check" which must be defined in functions.ts/,
+    );
+  });
+
+  it('does not throw when function is defined in functions.ts', async () => {
+    const generator = createTriggerGenerator(parsedFunctionsWithMatch);
+    await expect(generator.generate()).resolves.not.toThrow();
   });
 });
 
