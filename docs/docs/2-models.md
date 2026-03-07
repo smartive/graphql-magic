@@ -144,13 +144,13 @@ Optional array of database constraints for this entity. Supported kinds: `check`
 
 Enforce non-overlapping values per group (e.g. no overlapping date ranges per portfolio). Requires the `btree_gist` extension (created automatically when needed).
 
-- **`name`**, **`using`** (typically `'gist'`), **`elements`** (e.g. `{ column: 'portfolioId', operator: '=' }` for grouping, or `{ expression: 'tsrange(...)', operator: '&&' }` for ranges), **`where`** (optional), **`deferrable`** (optional), **`notValid`** (optional; PostgreSQL 15+).
+- **`name`**, **`using`** (typically `'gist'`), **`elements`** (e.g. `{ column: 'portfolioId', operator: '=' }` for grouping, or `{ expression: 'tsrange(...)', operator: '&&' }` for ranges), **`where`** (optional), **`message`** (optional; human-readable message for when the constraint fails; not used by graphql-magic; available for application-level error mapping), **`deferrable`** (optional), **`notValid`** (optional; PostgreSQL 15+).
 
 #### Constraint triggers (`kind: 'constraint_trigger'`)
 
 Deferrable triggers for validation (e.g. contiguous periods). The function must be defined in `functions.ts`.
 
-- **`name`**, **`when`** (`'AFTER'` or `'BEFORE'`), **`events`** (`['INSERT', 'UPDATE']`), **`forEach`** (`'ROW'` or `'STATEMENT'`), **`deferrable`** (optional), **`function`** (`{ name: string; args?: string[] }`).
+- **`name`**, **`when`** (`'AFTER'` or `'BEFORE'`), **`events`** (`['INSERT', 'UPDATE', 'DELETE']`; any combination), **`forEach`** (`'ROW'` or `'STATEMENT'`), **`deferrable`** (optional), **`function`** (`{ name: string; args?: string[] }`).
 
 Example: ensure a numeric field is non-negative and a status is one of the allowed values:
 

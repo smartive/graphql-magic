@@ -188,6 +188,7 @@ export type ConstraintDefinition =
       using: 'gist';
       elements: readonly ({ column: string; operator: '=' } | { expression: string; operator: '&&' })[];
       where?: string;
+      message?: string;
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       notValid?: boolean;
     }
@@ -195,7 +196,7 @@ export type ConstraintDefinition =
       kind: 'constraint_trigger';
       name: string;
       when: 'AFTER' | 'BEFORE';
-      events: readonly ('INSERT' | 'UPDATE')[];
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       function: { name: string; args?: string[] };
