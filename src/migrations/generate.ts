@@ -1287,7 +1287,7 @@ export class MigrationGenerator {
     constraintName: string,
     entry: {
       when: 'AFTER' | 'BEFORE';
-      events: readonly ('INSERT' | 'UPDATE')[];
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       function: { name: string; args?: string[] };
@@ -1333,7 +1333,7 @@ export class MigrationGenerator {
     constraintName: string,
     entry: {
       when: 'AFTER' | 'BEFORE';
-      events: readonly ('INSERT' | 'UPDATE')[];
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
       function: { name: string; args?: string[] };
