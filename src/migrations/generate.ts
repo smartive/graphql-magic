@@ -1026,13 +1026,40 @@ export class MigrationGenerator {
     return -1;
   }
 
+  private static readonly TRIGGER_EVENT_ORDER: readonly ('INSERT' | 'UPDATE' | 'DELETE')[] = [
+    'INSERT',
+    'UPDATE',
+    'DELETE',
+  ];
+
+  private static sortTriggerEvents(
+    events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[],
+  ): ('INSERT' | 'UPDATE' | 'DELETE')[] {
+    return [...events].sort(
+      (a, b) =>
+        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) -
+        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
+    );
+  }
+
   private normalizeTriggerDef(def: string): string {
-    const s = def
+    let s = def
       .replace(/\s+/g, ' ')
       .replace(/\s*\(\s*/g, '(')
       .replace(/\s*\)\s*/g, ')')
       .replace(/\bON\s+[a-zA-Z_][a-zA-Z0-9_]*\./gi, 'ON ')
       .trim();
+
+    const eventsMatch = s.match(/\b(AFTER|BEFORE)\s+((?:INSERT|UPDATE|DELETE)(?:\s+OR\s+(?:INSERT|UPDATE|DELETE))+)\s+ON\b/i);
+    if (eventsMatch) {
+      const events = eventsMatch[2].split(/\s+OR\s+/).map((e) => e.toUpperCase());
+      const sorted = [...events].sort(
+        (a, b) =>
+          MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a as 'INSERT' | 'UPDATE' | 'DELETE') -
+          MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b as 'INSERT' | 'UPDATE' | 'DELETE'),
+      );
+      s = s.replace(eventsMatch[2], sorted.join(' OR '));
+    }
 
     return this.normalizeSqlIdentifiers(s);
   }
@@ -1282,6 +1309,13 @@ export class MigrationGenerator {
     this.writer.blankLine();
   }
 
+  private sortTriggerEvents(events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[]): ('INSERT' | 'UPDATE' | 'DELETE')[] {
+    return [...events].sort(
+      (a, b) =>
+        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) - MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
+    );
+  }
+
   private buildConstraintTriggerDef(
     table: string,
     constraintName: string,
@@ -1293,7 +1327,7 @@ export class MigrationGenerator {
       function: { name: string; args?: string[] };
     },
   ): string {
-    const eventsStr = entry.events.join(' OR ');
+    const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');
     const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
     const argsStr = entry.function.args?.length ? entry.function.args.map((a) => `"${a}"`).join(', ') : '';
     const executeClause = argsStr
@@ -1339,7 +1373,7 @@ export class MigrationGenerator {
       function: { name: string; args?: string[] };
     },
   ) {
-    const eventsStr = entry.events.join(' OR ');
+    const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');
     const deferrableClause = entry.deferrable ? ` DEFERRABLE ${entry.deferrable}` : '';
     const argsStr = entry.function.args?.length ? entry.function.args.map((a) => `"${a}"`).join(', ') : '';
     const executeClause = argsStr
