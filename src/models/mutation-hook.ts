@@ -11,7 +11,7 @@ export type Trigger = 'mutation' | 'direct-call' | 'cascade' | 'set-null';
 export type MutationContext<DateType extends AnyDateType = AnyDateType> = Pick<
   Context<DateType>,
   'knex' | 'now' | 'user' | 'timeZone' | 'mutationHook' | 'models' | 'permissions'
->;
+> & { args?: Record<string, unknown> };
 
 export type MutationHook<DateType extends AnyDateType = AnyDateType> = (args: {
   model: EntityModel;
@@ -19,6 +19,7 @@ export type MutationHook<DateType extends AnyDateType = AnyDateType> = (args: {
   trigger: Trigger;
   when: 'before' | 'after';
   data: { prev: Entity; input: Entity; normalizedInput: Entity; next: Entity };
+  args?: Record<string, unknown>;
   ctx: MutationContext<DateType>;
 }) => Promise<void> | void;
 

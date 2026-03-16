@@ -249,6 +249,7 @@ export const generateDefinitions = ({
                 type: `Create${model.name}`,
                 nonNull: true,
               },
+              ...((model.creatable && model.creatable !== true && model.creatable.args) || []),
             ],
           });
         }
@@ -269,6 +270,7 @@ export const generateDefinitions = ({
                 type: `Update${model.name}`,
                 nonNull: true,
               },
+              ...((model.updatable && model.updatable !== true && model.updatable.args) || []),
             ],
           });
         }

@@ -18,14 +18,14 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     switch (mutation) {
       case 'create': {
-        const id = await createEntity(modelName, args.data, ctx, 'mutation');
+        const id = await createEntity(modelName, args.data, { ...ctx, args }, 'mutation');
 
         return await resolve(ctx, id);
       }
       case 'update': {
         const id = args.where.id;
 
-        await updateEntity(modelName, id, args.data, ctx, 'mutation');
+        await updateEntity(modelName, id, args.data, { ...ctx, args }, 'mutation');
 
         return await resolve(ctx, id);
       }
@@ -81,6 +81,7 @@ export const createEntity = async (
       trigger,
       when: 'before',
       data: { prev: {}, input, normalizedInput, next: normalizedInput },
+      args: ctx.args ?? {},
       ctx,
     });
 
@@ -114,6 +115,7 @@ export const createEntity = async (
       trigger,
       when: 'after',
       data: { prev: {}, input, normalizedInput, next: normalizedInput },
+      args: ctx.args ?? {},
       ctx,
     });
 
@@ -164,6 +166,7 @@ export const updateEntity = async (
         trigger,
         when: 'before',
         data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+        args: ctx.args ?? {},
         ctx,
       });
       await doUpdate(model, currentEntity, normalizedInput, ctx);
@@ -173,6 +176,7 @@ export const updateEntity = async (
         trigger,
         when: 'after',
         data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+        args: ctx.args ?? {},
         ctx,
       });
     }
