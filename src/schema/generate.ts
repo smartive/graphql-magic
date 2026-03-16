@@ -290,6 +290,7 @@ export const generateDefinitions = ({
                 name: 'dryRun',
                 type: 'Boolean',
               },
+              ...((model.deletable && model.deletable !== true && model.deletable.args) || []),
             ],
           });
           mutations.push({
@@ -302,6 +303,7 @@ export const generateDefinitions = ({
                 type: `${model.name}WhereUnique`,
                 nonNull: true,
               },
+              ...((model.deletable && model.deletable !== true && model.deletable.restoreArgs) || []),
             ],
           });
         }

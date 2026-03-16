@@ -165,6 +165,8 @@ export type ModelDefinition = {
             deleted?: Partial<BooleanFieldDefinition>;
             deletedBy?: Partial<RelationFieldDefinition>;
             deletedAt?: Partial<DateTimeFieldDefinition>;
+            args?: readonly Field[];
+            restoreArgs?: readonly Field[];
           };
       aggregatable?: boolean;
       displayField?: string;

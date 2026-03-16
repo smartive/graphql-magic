@@ -45,16 +45,26 @@ export const generateMutations = (models: Models) => {
     }
 
     if (deletable) {
+      const deleteExtraArgs = deletable !== true && deletable.args ? deletable.args : [];
+      const deleteVariables = deleteExtraArgs.length ? `$id: ID!, ${argsToVariables(deleteExtraArgs)}` : `$id: ID!`;
+      const deleteMutationArgs = deleteExtraArgs.length
+        ? `where: { id: $id }, ${argsToMutationArgs(deleteExtraArgs)}`
+        : `where: { id: $id }`;
       parts.push(
         `export const DELETE_${constantCase(
           name,
-        )} = gql\`\n  mutation Delete${name}Mutation($id: ID!) {\n    delete${name}(where: { id: $id })\n  }\n\`;`,
+        )} = gql\`\n  mutation Delete${name}Mutation(${deleteVariables}) {\n    delete${name}(${deleteMutationArgs})\n  }\n\`;`,
       );
 
+      const restoreExtraArgs = deletable !== true && deletable.restoreArgs ? deletable.restoreArgs : [];
+      const restoreVariables = restoreExtraArgs.length ? `$id: ID!, ${argsToVariables(restoreExtraArgs)}` : `$id: ID!`;
+      const restoreMutationArgs = restoreExtraArgs.length
+        ? `where: { id: $id }, ${argsToMutationArgs(restoreExtraArgs)}`
+        : `where: { id: $id }`;
       parts.push(
         `export const RESTORE_${constantCase(
           name,
-        )} = gql\`\n  mutation Restore${name}Mutation($id: ID!) {\n    restore${name}(where: { id: $id })\n  }\n\`;`,
+        )} = gql\`\n  mutation Restore${name}Mutation(${restoreVariables}) {\n    restore${name}(${restoreMutationArgs})\n  }\n\`;`,
       );
     }
   }
