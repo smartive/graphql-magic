@@ -18,14 +18,14 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     switch (mutation) {
       case 'create': {
-        const id = await createEntity(modelName, args.data, ctx, 'mutation');
+        const id = await createEntity(modelName, args.data, ctx, { trigger: 'mutation', args });
 
         return await resolve(ctx, id);
       }
       case 'update': {
         const id = args.where.id;
 
-        await updateEntity(modelName, id, args.data, ctx, 'mutation');
+        await updateEntity(modelName, id, args.data, ctx, { trigger: 'mutation', args });
 
         return await resolve(ctx, id);
       }
@@ -35,6 +35,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
         await deleteEntity(modelName, id, ctx, {
           dryRun: args.dryRun,
           trigger: 'mutation',
+          args,
         });
 
         return id;
@@ -42,7 +43,7 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'restore': {
         const id = args.where.id;
 
-        await restoreEntity(modelName, id, ctx, 'mutation');
+        await restoreEntity(modelName, id, ctx, { trigger: 'mutation', args });
 
         return id;
       }
@@ -53,7 +54,7 @@ export const createEntity = async (
   modelName: string,
   input: Entity,
   ctx: MutationContext,
-  trigger: Trigger = 'direct-call',
+  { args, trigger = 'direct-call' }: { args?: Record<string, unknown>; trigger?: Trigger } = {},
 ) =>
   withTransaction(ctx, async (ctx) => {
     const model = ctx.models.getModel(modelName, 'entity');
@@ -81,6 +82,7 @@ export const createEntity = async (
       trigger,
       when: 'before',
       data: { prev: {}, input, normalizedInput, next: normalizedInput },
+      args,
       ctx,
     });
 
@@ -114,6 +116,7 @@ export const createEntity = async (
       trigger,
       when: 'after',
       data: { prev: {}, input, normalizedInput, next: normalizedInput },
+      args,
       ctx,
     });
 
@@ -125,11 +128,12 @@ export const updateEntities = async (
   where: Record<string, unknown>,
   updateFields: Entity,
   ctx: MutationContext,
+  { args }: { args?: Record<string, unknown> } = {},
 ) =>
   withTransaction(ctx, async (ctx) => {
     const entities = await ctx.knex(modelName).where(where).select('id');
     for (const entity of entities) {
-      await updateEntity(modelName, entity.id, updateFields, ctx);
+      await updateEntity(modelName, entity.id, updateFields, ctx, args);
     }
   });
 
@@ -138,7 +142,7 @@ export const updateEntity = async (
   id: string,
   input: Entity,
   ctx: MutationContext,
-  trigger: Trigger = 'direct-call',
+  { args, trigger = 'direct-call' }: { args?: Record<string, unknown>; trigger?: Trigger } = {},
 ) =>
   withTransaction(ctx, async (ctx) => {
     const model = ctx.models.getModel(modelName, 'entity');
@@ -164,6 +168,7 @@ export const updateEntity = async (
         trigger,
         when: 'before',
         data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+        args,
         ctx,
       });
       await doUpdate(model, currentEntity, normalizedInput, ctx);
@@ -173,6 +178,7 @@ export const updateEntity = async (
         trigger,
         when: 'after',
         data: { prev: currentEntity, input, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+        args,
         ctx,
       });
     }
@@ -180,12 +186,18 @@ export const updateEntity = async (
 
 type Callbacks = (() => Promise<void>)[];
 
-export const deleteEntities = async (modelName: string, where: Record<string, unknown>, ctx: MutationContext) =>
+export const deleteEntities = async (
+  modelName: string,
+  where: Record<string, unknown>,
+  ctx: MutationContext,
+  args?: Record<string, unknown>,
+) =>
   withTransaction(ctx, async (ctx) => {
     const entities = await ctx.knex(modelName).where(where).select('id');
     for (const entity of entities) {
       await deleteEntity(modelName, entity.id, ctx, {
         trigger: 'direct-call',
+        args,
       });
     }
   });
@@ -197,9 +209,11 @@ export const deleteEntity = async (
   {
     dryRun = false,
     trigger = 'direct-call',
+    args,
   }: {
     dryRun?: boolean;
     trigger?: Trigger;
+    args?: Record<string, unknown>;
   } = {},
 ) =>
   withTransaction(ctx, async (ctx) => {
@@ -239,6 +253,7 @@ export const deleteEntity = async (
 
     const mutationHook = ctx.mutationHook;
     const deleteCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
+      const isDeleteRoot = currentModel.name === rootModel.name && currentEntity.id === entity.id;
       if (!(currentModel.name in toDelete)) {
         toDelete[currentModel.name] = {};
       }
@@ -263,6 +278,7 @@ export const deleteEntity = async (
               trigger: currentTrigger,
               when: 'before',
               data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+              ...(isDeleteRoot ? { args } : {}),
               ctx,
             });
           });
@@ -278,6 +294,7 @@ export const deleteEntity = async (
               trigger: currentTrigger,
               when: 'after',
               data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+              ...(isDeleteRoot ? { args } : {}),
               ctx,
             });
           });
@@ -407,7 +424,12 @@ export const deleteEntity = async (
     }
   });
 
-export const restoreEntity = async (modelName: string, id: string, ctx: MutationContext, trigger: Trigger = 'direct-call') =>
+export const restoreEntity = async (
+  modelName: string,
+  id: string,
+  ctx: MutationContext,
+  { args, trigger = 'direct-call' }: { args?: Record<string, unknown>; trigger?: Trigger } = {},
+) =>
   withTransaction(ctx, async (ctx) => {
     const model = ctx.models.getModel(modelName, 'entity');
     const rootModel = model.rootModel;
@@ -433,6 +455,7 @@ export const restoreEntity = async (modelName: string, id: string, ctx: Mutation
     const afterHooks: Callbacks = [];
 
     const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
+      const isRestoreRoot = currentModel.name === rootModel.name && currentEntity.id === entity.id;
       if (entity.deleteRootId || currentEntity.deleteRootId) {
         if (!(currentEntity.deleteRootType === model.name && currentEntity.deleteRootId === entity.id)) {
           return;
@@ -465,6 +488,7 @@ export const restoreEntity = async (modelName: string, id: string, ctx: Mutation
             trigger: currentTrigger,
             when: 'before',
             data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+            ...(isRestoreRoot ? { args } : {}),
             ctx,
           });
         });
@@ -496,6 +520,7 @@ export const restoreEntity = async (modelName: string, id: string, ctx: Mutation
             trigger: currentTrigger,
             when: 'after',
             data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
+            ...(isRestoreRoot ? { args } : {}),
             ctx,
           });
         });

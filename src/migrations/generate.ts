@@ -1026,19 +1026,11 @@ export class MigrationGenerator {
     return -1;
   }
 
-  private static readonly TRIGGER_EVENT_ORDER: readonly ('INSERT' | 'UPDATE' | 'DELETE')[] = [
-    'INSERT',
-    'UPDATE',
-    'DELETE',
-  ];
+  private static readonly TRIGGER_EVENT_ORDER: readonly ('INSERT' | 'UPDATE' | 'DELETE')[] = ['INSERT', 'UPDATE', 'DELETE'];
 
-  private static sortTriggerEvents(
-    events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[],
-  ): ('INSERT' | 'UPDATE' | 'DELETE')[] {
+  private static sortTriggerEvents(events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[]): ('INSERT' | 'UPDATE' | 'DELETE')[] {
     return [...events].sort(
-      (a, b) =>
-        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) -
-        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
+      (a, b) => MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) - MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
     );
   }
 
@@ -1050,7 +1042,9 @@ export class MigrationGenerator {
       .replace(/\bON\s+[a-zA-Z_][a-zA-Z0-9_]*\./gi, 'ON ')
       .trim();
 
-    const eventsMatch = s.match(/\b(AFTER|BEFORE)\s+((?:INSERT|UPDATE|DELETE)(?:\s+OR\s+(?:INSERT|UPDATE|DELETE))+)\s+ON\b/i);
+    const eventsMatch = s.match(
+      /\b(AFTER|BEFORE)\s+((?:INSERT|UPDATE|DELETE)(?:\s+OR\s+(?:INSERT|UPDATE|DELETE))+)\s+ON\b/i,
+    );
     if (eventsMatch) {
       const events = eventsMatch[2].split(/\s+OR\s+/).map((e) => e.toUpperCase());
       const sorted = [...events].sort(
@@ -1311,8 +1305,7 @@ export class MigrationGenerator {
 
   private sortTriggerEvents(events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[]): ('INSERT' | 'UPDATE' | 'DELETE')[] {
     return [...events].sort(
-      (a, b) =>
-        MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) - MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
+      (a, b) => MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(a) - MigrationGenerator.TRIGGER_EVENT_ORDER.indexOf(b),
     );
   }
 

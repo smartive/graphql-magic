@@ -19,6 +19,7 @@ export type MutationHook<DateType extends AnyDateType = AnyDateType> = (args: {
   trigger: Trigger;
   when: 'before' | 'after';
   data: { prev: Entity; input: Entity; normalizedInput: Entity; next: Entity };
+  args?: Record<string, unknown>;
   ctx: MutationContext<DateType>;
 }) => Promise<void> | void;
 

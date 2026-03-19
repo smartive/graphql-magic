@@ -249,6 +249,7 @@ export const generateDefinitions = ({
                 type: `Create${model.name}`,
                 nonNull: true,
               },
+              ...((model.creatable && model.creatable !== true && model.creatable.args) || []),
             ],
           });
         }
@@ -269,6 +270,7 @@ export const generateDefinitions = ({
                 type: `Update${model.name}`,
                 nonNull: true,
               },
+              ...((model.updatable && model.updatable !== true && model.updatable.args) || []),
             ],
           });
         }
@@ -288,6 +290,7 @@ export const generateDefinitions = ({
                 name: 'dryRun',
                 type: 'Boolean',
               },
+              ...((model.deletable && model.deletable !== true && model.deletable.args) || []),
             ],
           });
           mutations.push({
@@ -300,6 +303,7 @@ export const generateDefinitions = ({
                 type: `${model.name}WhereUnique`,
                 nonNull: true,
               },
+              ...((model.deletable && model.deletable !== true && model.deletable.restoreArgs) || []),
             ],
           });
         }

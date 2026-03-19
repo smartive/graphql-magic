@@ -344,14 +344,28 @@ export class EntityModel extends Model {
   interfaces?: string[];
   queriable?: boolean;
   listQueriable?: boolean | { args?: readonly Field[] };
-  creatable?: boolean | { createdBy?: Partial<RelationFieldDefinition>; createdAt?: Partial<DateTimeFieldDefinition> };
-  updatable?: boolean | { updatedBy?: Partial<RelationFieldDefinition>; updatedAt?: Partial<DateTimeFieldDefinition> };
+  creatable?:
+    | boolean
+    | {
+        createdBy?: Partial<RelationFieldDefinition>;
+        createdAt?: Partial<DateTimeFieldDefinition>;
+        args?: readonly Field[];
+      };
+  updatable?:
+    | boolean
+    | {
+        updatedBy?: Partial<RelationFieldDefinition>;
+        updatedAt?: Partial<DateTimeFieldDefinition>;
+        args?: readonly Field[];
+      };
   deletable?:
     | boolean
     | {
         deleted?: Partial<BooleanFieldDefinition>;
         deletedBy?: Partial<RelationFieldDefinition>;
         deletedAt?: Partial<DateTimeFieldDefinition>;
+        args?: readonly Field[];
+        restoreArgs?: readonly Field[];
       };
   aggregatable?: boolean;
   displayField?: string;
