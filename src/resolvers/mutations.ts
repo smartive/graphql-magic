@@ -455,6 +455,7 @@ export const restoreEntity = async (
     const afterHooks: Callbacks = [];
 
     const restoreCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
+      const isRestoreRoot = currentModel.name === rootModel.name && currentEntity.id === entity.id;
       if (entity.deleteRootId || currentEntity.deleteRootId) {
         if (!(currentEntity.deleteRootType === model.name && currentEntity.deleteRootId === entity.id)) {
           return;
@@ -487,7 +488,7 @@ export const restoreEntity = async (
             trigger: currentTrigger,
             when: 'before',
             data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
-            args,
+            ...(isRestoreRoot ? { args } : {}),
             ctx,
           });
         });
@@ -519,7 +520,7 @@ export const restoreEntity = async (
             trigger: currentTrigger,
             when: 'after',
             data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
-            args,
+            ...(isRestoreRoot ? { args } : {}),
             ctx,
           });
         });
