@@ -209,6 +209,7 @@ export const deleteEntity = async (
   {
     dryRun = false,
     trigger = 'direct-call',
+    args,
   }: {
     dryRun?: boolean;
     trigger?: Trigger;
@@ -251,12 +252,8 @@ export const deleteEntity = async (
     const afterHooks: Callbacks = [];
 
     const mutationHook = ctx.mutationHook;
-    const deleteCascade = async (
-      currentModel: EntityModel,
-      currentEntity: Entity,
-      currentTrigger: Trigger,
-      args?: Record<string, unknown>,
-    ) => {
+    const deleteCascade = async (currentModel: EntityModel, currentEntity: Entity, currentTrigger: Trigger) => {
+      const isDeleteRoot = currentModel.name === rootModel.name && currentEntity.id === entity.id;
       if (!(currentModel.name in toDelete)) {
         toDelete[currentModel.name] = {};
       }
@@ -281,7 +278,7 @@ export const deleteEntity = async (
               trigger: currentTrigger,
               when: 'before',
               data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
-              args,
+              ...(isDeleteRoot ? { args } : {}),
               ctx,
             });
           });
@@ -297,7 +294,7 @@ export const deleteEntity = async (
               trigger: currentTrigger,
               when: 'after',
               data: { prev: currentEntity, input: {}, normalizedInput, next: { ...currentEntity, ...normalizedInput } },
-              args,
+              ...(isDeleteRoot ? { args } : {}),
               ctx,
             });
           });
@@ -342,7 +339,6 @@ export const deleteEntity = async (
                         trigger: 'set-null',
                         when: 'before',
                         data: { prev: descendant, input: {}, normalizedInput, next: { ...descendant, ...normalizedInput } },
-                        args,
                         ctx,
                       });
                     });
@@ -358,7 +354,6 @@ export const deleteEntity = async (
                         trigger: 'set-null',
                         when: 'after',
                         data: { prev: descendant, input: {}, normalizedInput, next: { ...descendant, ...normalizedInput } },
-                        args,
                         ctx,
                       });
                     });
