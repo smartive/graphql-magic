@@ -1,7 +1,6 @@
 import { Knex } from 'knex';
 import { pick } from 'lodash';
 import { getColumnName, isInTable, modelNeedsTable } from '../../../src';
-import { SeedData } from '../../generated/db';
 import { models } from '../models';
 
 export const ADMIN_ID = '04e45b48-04cf-4b38-bb25-b9af5ae0b2c4';
@@ -16,7 +15,7 @@ export const QUESTION_ID = '3d0f3254-282f-4f1f-95e3-c1f699f3c1e5';
 export const ANSWER_ID = 'f2d7b3f1-8ea1-4c2c-91ec-024432da1b0d';
 export const REVIEW_ID = '817c55de-2f77-4159-bd44-9837d868f889';
 
-export const seed: SeedData = {
+export const seed = {
   User: [
     {
       id: ADMIN_ID,
@@ -42,6 +41,7 @@ export const seed: SeedData = {
       float: 0,
       list: ['A'],
       xyz: 1,
+      time: '14:30:00+02:00',
     },
     {
       id: SOME_ID_2,
@@ -50,6 +50,7 @@ export const seed: SeedData = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
+      time: '09:15:00Z',
     },
     {
       id: SOME_ID_3,
@@ -57,6 +58,7 @@ export const seed: SeedData = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
+      time: '23:45:00+00:00',
     },
     {
       id: SOME_ID_4,
@@ -64,6 +66,7 @@ export const seed: SeedData = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
+      time: '00:05:30-05:00',
     },
   ],
   Question: [

@@ -54,6 +54,7 @@ exports[`query can be executed 1`] = `
       },
       "field": null,
       "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+      "time": "09:15:00+00",
       "xyz": 2,
     },
     {
@@ -68,6 +69,7 @@ exports[`query can be executed 1`] = `
       },
       "field": "Some value",
       "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+      "time": "14:30:00+02",
       "xyz": 1,
     },
   ],
@@ -329,6 +331,23 @@ exports[`query processes reverseFilters correctly 1`] = `
           "float": 0.5,
         },
       ],
+    },
+  ],
+}
+`;
+
+exports[`query returns Time values for SomeObject 1`] = `
+{
+  "manyObjects": [
+    {
+      "id": "fc4e013e-4cb0-4ef8-9f2e-3d475bdf2b90",
+      "time": "09:15:00+00",
+      "xyz": 2,
+    },
+    {
+      "id": "604ab55d-ec3e-4857-9f27-219158f80e64",
+      "time": "14:30:00+02",
+      "xyz": 1,
     },
   ],
 }

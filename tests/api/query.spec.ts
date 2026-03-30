@@ -12,6 +12,7 @@ describe('query', () => {
               id
               field
               xyz
+              time
               another {
                 id
                 manyObjects(where: { id: "${SOME_ID}" }) {
@@ -22,6 +23,22 @@ describe('query', () => {
             }
           }
         `)
+      ).toMatchSnapshot();
+    });
+  });
+
+  it('returns Time values for SomeObject', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query GetTimes {
+            manyObjects(where: { another: { id: "${ANOTHER_ID}" } }, orderBy: [{ xyz: DESC }]) {
+              id
+              xyz
+              time
+            }
+          }
+        `),
       ).toMatchSnapshot();
     });
   });
