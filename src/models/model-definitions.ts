@@ -26,6 +26,7 @@ type FieldDefinitionBase2 =
           endOfDay?: boolean;
           endOfMonth?: boolean;
         }
+      | { type: 'Time' }
       | ({
           type: 'Int';
           intType?: 'currency';
@@ -112,6 +113,7 @@ export type IDFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'ID' }
 export type BooleanFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'Boolean' }>;
 export type StringFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'String' }>;
 export type DateTimeFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'DateTime' }>;
+export type TimeFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'Time' }>;
 export type IntFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'Int' }>;
 export type FloatFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'Float' }>;
 export type UploadFieldDefinition = Extract<PrimitiveFieldDefinition, { type: 'Upload' }>;

@@ -10,6 +10,7 @@ export const PRIMITIVE_TYPES = {
   Int: 'number',
   Float: 'number',
   String: 'string',
+  Time: 'string',
 };
 
 const OPTIONAL_SEED_FIELDS = ['createdAt', 'createdById', 'updatedAt', 'updatedById', 'deletedAt', 'deletedById'];

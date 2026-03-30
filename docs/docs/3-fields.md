@@ -27,9 +27,12 @@ Primitive fields are fields where `kind` is either undefined or set to `'primiti
 - `ID`
 - `Boolean`
 - `String` with optional fields `stringType` and `maxLength`
+- `Time` (mapped to PostgreSQL `time with time zone`)
 - `Int` with optional fields `intType`
 - `Float` with optional fields `floatType`, `double`, `precision`, `scale`
 - `Upload`
+
+`Time` values are expected in a fixed timezone-aware format: `HH:mm:ss[.fraction]+/-HH:mm` or `Z`.
 
 Examples:
 

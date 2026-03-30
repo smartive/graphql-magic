@@ -16,6 +16,7 @@ export const generateGraphqlApiTypes = async (dateLibrary: DateLibrary) => {
     config: {
       scalars: {
         DateTime: DATE_CLASS[dateLibrary],
+        Time: 'string',
       },
     },
   });
@@ -43,6 +44,7 @@ export const generateGraphqlClientTypes = async () => {
       },
       scalars: {
         DateTime: 'string',
+        Time: 'string',
       },
       ignoreNoDocuments: true,
     },
