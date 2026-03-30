@@ -41,7 +41,7 @@ export const up = async (knex: Knex) => {
     table.decimal('float', 1, 1).notNullable();
     table.specificType('list', '"someEnum"[]').notNullable();
     table.integer('xyz').notNullable();
-    table.specificType('time', 'time with time zone').nullable();
+    table.specificType('time', 'time without time zone').nullable();
     table.timestamp('createdAt').notNullable();
     table.uuid('createdById').notNullable();
     table.index('createdById');
@@ -71,7 +71,7 @@ export const up = async (knex: Knex) => {
     table.index('anotherId');
     table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
     table.integer('xyz').notNullable();
-    table.specificType('time', 'time with time zone').nullable();
+    table.specificType('time', 'time without time zone').nullable();
   });
 
   await knex.schema.createTable('Reaction', (table) => {

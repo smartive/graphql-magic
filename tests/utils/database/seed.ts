@@ -41,7 +41,7 @@ export const seed = {
       float: 0,
       list: ['A'],
       xyz: 1,
-      time: '14:30:00+02:00',
+      time: '14:30',
     },
     {
       id: SOME_ID_2,
@@ -50,7 +50,7 @@ export const seed = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
-      time: '09:15:00Z',
+      time: '09:15',
     },
     {
       id: SOME_ID_3,
@@ -58,7 +58,7 @@ export const seed = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
-      time: '23:45:00+00:00',
+      time: '23:45',
     },
     {
       id: SOME_ID_4,
@@ -66,7 +66,7 @@ export const seed = {
       float: 0.5,
       list: ['B'],
       xyz: 2,
-      time: '00:05:30-05:00',
+      time: '00:05',
     },
   ],
   Question: [

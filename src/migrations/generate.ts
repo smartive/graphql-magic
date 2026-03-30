@@ -1566,7 +1566,7 @@ export class MigrationGenerator {
             col(`table.timestamp('${name}')`);
             break;
           case 'Time':
-            col(`table.specificType('${name}', 'time with time zone')`);
+            col(`table.specificType('${name}', 'time without time zone')`);
             break;
           case 'ID':
             col(`table.uuid('${name}')`);
@@ -1670,7 +1670,7 @@ export class MigrationGenerator {
         }
       }
       if (field.type === 'Time') {
-        if (!['time with time zone', 'timetz'].includes(col.data_type)) {
+        if (!['time without time zone', 'time'].includes(col.data_type)) {
           return true;
         }
       }
