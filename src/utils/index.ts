@@ -2,3 +2,4 @@
 
 export * from './dates';
 export * from './rules';
+export * from './time';

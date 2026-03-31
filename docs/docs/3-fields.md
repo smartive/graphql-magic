@@ -32,7 +32,7 @@ Primitive fields are fields where `kind` is either undefined or set to `'primiti
 - `Float` with optional fields `floatType`, `double`, `precision`, `scale`
 - `Upload`
 
-`Time` values are expected in a fixed format: `HH:mm`.
+`Time` values are expected in a strict 24-hour format: `HH:mm` (from `00:00` to `23:59`).
 
 Examples:
 

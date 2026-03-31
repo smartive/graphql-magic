@@ -10,13 +10,18 @@ export const generateGraphqlApiTypes = async (dateLibrary: DateLibrary) => {
     documents: undefined,
     generates: {
       [`${generatedFolderPath}/api/index.ts`]: {
-        plugins: ['typescript', 'typescript-resolvers', { add: { content: DATE_CLASS_IMPORT[dateLibrary] } }],
+        plugins: [
+          'typescript',
+          'typescript-resolvers',
+          { add: { content: DATE_CLASS_IMPORT[dateLibrary] } },
+          { add: { content: `import type { Time } from '@smartive/graphql-magic';` } },
+        ],
       },
     },
     config: {
       scalars: {
         DateTime: DATE_CLASS[dateLibrary],
-        Time: 'string',
+        Time: 'Time',
       },
     },
   });
@@ -31,7 +36,11 @@ export const generateGraphqlClientTypes = async () => {
     documents: [graphqlQueriesPath, `${generatedFolderPath}/client/mutations.ts`],
     generates: {
       [`${generatedFolderPath}/client/index.ts`]: {
-        plugins: ['typescript', 'typescript-operations'],
+        plugins: [
+          'typescript',
+          'typescript-operations',
+          { add: { content: `import type { Time } from '@smartive/graphql-magic';` } },
+        ],
       },
     },
     config: {
@@ -44,7 +53,7 @@ export const generateGraphqlClientTypes = async () => {
       },
       scalars: {
         DateTime: 'string',
-        Time: 'string',
+        Time: 'Time',
       },
       ignoreNoDocuments: true,
     },
