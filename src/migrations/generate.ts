@@ -20,7 +20,6 @@ import {
   validateCheckConstraint,
   validateExcludeConstraint,
 } from '../models/utils';
-import { getColumnName } from '../resolvers';
 import { Value } from '../values';
 import { ParsedFunction } from './types';
 import {
@@ -676,26 +675,30 @@ export class MigrationGenerator {
 
     if (isUpdatableModel(model)) {
       const updatableFields = fields.filter(and(isUpdatableField, isStoredInDatabase));
-      if (!updatableFields.length) {
+      const revisionFieldsNeedingAlter = updatableFields.filter((field) => this.revisionFieldNeedsSchemaAlter(model, field));
+      if (!revisionFieldsNeedingAlter.length) {
         return;
       }
 
       up.push(() => {
         this.alterTable(`${model.name}Revision`, () => {
-          for (const [index, field] of updatableFields.entries()) {
-            this.columnRaw(field, { alter: true }, index);
+          for (const [index, field] of revisionFieldsNeedingAlter.entries()) {
+            this.columnRaw(field, { alter: true, setNonNull: false }, index);
           }
         });
       });
 
       down.push(() => {
         this.alterTable(`${model.name}Revision`, () => {
-          for (const [index, field] of updatableFields.entries()) {
+          for (const [index, field] of revisionFieldsNeedingAlter.entries()) {
             this.columnRaw(
               field,
-              { alter: true },
+              { alter: true, setNonNull: false },
               index,
-              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
+              summonByName(
+                this.columns[`${model.name}Revision`],
+                field.kind === 'relation' ? `${field.name}Id` : field.name,
+              ),
             );
           }
         });
@@ -730,25 +733,29 @@ export class MigrationGenerator {
 
     if (isUpdatableModel(model)) {
       const updatableFields = fields.filter(and(isUpdatableField, isStoredInDatabase));
-      if (!updatableFields.length) {
+      const revisionFieldsNeedingAlter = updatableFields.filter((field) => this.revisionFieldNeedsSchemaAlter(model, field));
+      if (!revisionFieldsNeedingAlter.length) {
         return;
       }
 
       up.push(() => {
         this.alterTable(`${model.name}Revision`, () => {
-          for (const field of updatableFields) {
-            this.column(field, { alter: true });
+          for (const field of revisionFieldsNeedingAlter) {
+            this.column(field, { alter: true, setUnique: false, setNonNull: false, foreign: false });
           }
         });
       });
 
       down.push(() => {
         this.alterTable(`${model.name}Revision`, () => {
-          for (const field of updatableFields) {
+          for (const field of revisionFieldsNeedingAlter) {
             this.column(
               field,
-              { alter: true },
-              summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
+              { alter: true, setUnique: false, setNonNull: false, foreign: false },
+              summonByName(
+                this.columns[`${model.name}Revision`],
+                field.kind === 'relation' ? `${field.name}Id` : field.name,
+              ),
             );
           }
         });
@@ -774,7 +781,7 @@ export class MigrationGenerator {
       }
 
       for (const field of model.fields.filter(and(isUpdatableField, not(isInherited), isStoredInDatabase))) {
-        this.column(field, { setUnique: false, setDefault: false });
+        this.column(field, { setUnique: false, setDefault: false, setNonNull: false, foreign: false });
       }
     });
   }
@@ -786,45 +793,9 @@ export class MigrationGenerator {
         // Create missing revision columns
         this.alterTable(revisionTable, () => {
           for (const field of missingRevisionFields) {
-            this.column(field, { setUnique: false, setNonNull: false, setDefault: false });
+            this.column(field, { setUnique: false, setNonNull: false, setDefault: false, foreign: false });
           }
         });
-
-        // Insert data for missing revisions columns
-        const revisionFieldsWithDataToCopy = missingRevisionFields.filter(
-          (field) =>
-            this.columns[model.name].find((col) => col.name === getColumnName(field)) ||
-            field.defaultValue !== undefined ||
-            field.nonNull,
-        );
-        if (revisionFieldsWithDataToCopy.length) {
-          this.writer
-            .write(`await knex('${model.name}Revision').update(`)
-            .inlineBlock(() => {
-              for (const { name, kind: type } of revisionFieldsWithDataToCopy) {
-                const col = type === 'relation' ? `${name}Id` : name;
-                this.writer
-                  .write(
-                    `${col}: knex.raw('(select "${col}" from "${model.name}" where "${model.name}".id = "${
-                      model.name
-                    }Revision"."${typeToField(model.name)}Id")'),`,
-                  )
-                  .newLine();
-              }
-            })
-            .write(');')
-            .newLine()
-            .blankLine();
-        }
-
-        const nonNullableMissingRevisionFields = missingRevisionFields.filter(({ nonNull }) => nonNull);
-        if (nonNullableMissingRevisionFields.length) {
-          this.alterTable(revisionTable, () => {
-            for (const field of nonNullableMissingRevisionFields) {
-              this.column(field, { setUnique: false, setDefault: false, alter: true });
-            }
-          });
-        }
       });
 
       down.push(() => {
@@ -1616,24 +1587,32 @@ export class MigrationGenerator {
   }
 
   private hasChanged(model: EntityModel, field: EntityField) {
+    return this.hasChangedOnTable(model.name, field, { respectNullability: true });
+  }
+
+  private hasChangedOnTable(tableName: string, field: EntityField, { respectNullability }: { respectNullability: boolean }) {
     if (field.generateAs?.type === 'expression') {
       return false;
     }
 
-    const col = this.getColumn(model.name, field.kind === 'relation' ? `${field.name}Id` : field.name);
+    const col = this.getColumn(tableName, field.kind === 'relation' ? `${field.name}Id` : field.name);
     if (!col) {
       return false;
     }
 
     if (field.generateAs) {
       if (col.generation_expression !== field.generateAs.expression) {
-        throw new Error(
-          `Column ${col.name} has specific type ${col.generation_expression} but expected ${field.generateAs.expression}`,
-        );
+        if (respectNullability) {
+          throw new Error(
+            `Column ${col.name} has specific type ${col.generation_expression} but expected ${field.generateAs.expression}`,
+          );
+        }
+
+        return true;
       }
     }
 
-    if ((!field.nonNull && !col.is_nullable) || (field.nonNull && col.is_nullable)) {
+    if (respectNullability && ((!field.nonNull && !col.is_nullable) || (field.nonNull && col.is_nullable))) {
       return true;
     }
 
@@ -1677,6 +1656,27 @@ export class MigrationGenerator {
     }
 
     return false;
+  }
+
+  private revisionFieldNeedsSchemaAlter(model: EntityModel, field: EntityField) {
+    if (field.generateAs?.type === 'expression') {
+      return false;
+    }
+
+    const tableName = `${model.name}Revision`;
+    const colName = field.kind === 'relation' ? `${field.name}Id` : field.name;
+    const revCol = this.getColumn(tableName, colName);
+    if (!revCol) {
+      return false;
+    }
+
+    if (field.generateAs) {
+      if (revCol.generation_expression !== field.generateAs.expression) {
+        return true;
+      }
+    }
+
+    return this.hasChangedOnTable(tableName, field, { respectNullability: false });
   }
 
   private async handleFunctions(up: Callbacks, down: Callbacks) {
