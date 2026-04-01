@@ -1565,6 +1565,9 @@ export class MigrationGenerator {
           case 'DateTime':
             col(`table.timestamp('${name}')`);
             break;
+          case 'Time':
+            col(`table.specificType('${name}', 'time without time zone')`);
+            break;
           case 'ID':
             col(`table.uuid('${name}')`);
             break;
@@ -1663,6 +1666,11 @@ export class MigrationGenerator {
           return true;
         }
         if (!field.large && field.maxLength && col.max_length && field.maxLength !== col.max_length) {
+          return true;
+        }
+      }
+      if (field.type === 'Time') {
+        if (!['time without time zone', 'time'].includes(col.data_type)) {
           return true;
         }
       }

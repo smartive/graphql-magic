@@ -18,6 +18,7 @@ import {
   PrimitiveFieldDefinition,
   RawEnumModelDefinition,
   StringFieldDefinition,
+  TimeFieldDefinition,
   UnionModelDefinition,
   UploadFieldDefinition,
 } from '..';
@@ -52,6 +53,7 @@ export type IDField = IDFieldDefinition;
 export type BooleanField = BooleanFieldDefinition;
 export type StringField = StringFieldDefinition;
 export type DateTimeField = DateTimeFieldDefinition;
+export type TimeField = TimeFieldDefinition;
 export type IntField = IntFieldDefinition;
 export type FloatField = FloatFieldDefinition;
 export type UploadField = UploadFieldDefinition;
@@ -79,6 +81,10 @@ export class Models {
       {
         kind: 'scalar',
         name: 'DateTime',
+      },
+      {
+        kind: 'scalar',
+        name: 'Time',
       },
       { kind: 'scalar', name: 'Upload' },
       {

@@ -107,6 +107,12 @@ const modelDefinitions: ModelDefinitions = [
         orderable: true,
         filterable: true,
       },
+      {
+        name: 'time',
+        type: 'Time',
+        creatable: true,
+        updatable: true,
+      },
     ],
   },
   {

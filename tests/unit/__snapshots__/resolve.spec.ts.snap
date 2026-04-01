@@ -39,5 +39,6 @@ exports[`resolvers are generated correctly 1`] = `
   "Reaction": {
     "__resolveType": [Function],
   },
+  "Time": "Time",
 }
 `;

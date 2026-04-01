@@ -23,6 +23,11 @@ export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
 
   writer.write(DATE_CLASS_IMPORT[dateLibrary]).blankLine();
 
+  writer.write(`type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';`);
+  writer.write(`type Hour = \`0\${Digit}\` | \`1\${Digit}\` | \`2\${'0' | '1' | '2' | '3'}\`;`);
+  writer.write(`type Minute = \`\${'0' | '1' | '2' | '3' | '4' | '5'}\${Digit}\`;`);
+  writer.write(`export type Time = \`\${Hour}:\${Minute}\`;`).blankLine();
+
   for (const [key, value] of Object.entries(PRIMITIVE_TYPES)) {
     writer.write(`export type ${key} = ${value};`).blankLine();
   }
@@ -149,6 +154,9 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
     case undefined:
       if (field.type === 'DateTime') {
         return (input ? `(${DATE_CLASS[dateLibrary]} | string)` : DATE_CLASS[dateLibrary]) + (field.list ? '[]' : '');
+      }
+      if (field.type === 'Time') {
+        return `Time${field.list ? '[]' : ''}`;
       }
 
       return get(PRIMITIVE_TYPES, field.type) + (field.list ? '[]' : '');

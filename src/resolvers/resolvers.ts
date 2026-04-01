@@ -1,5 +1,7 @@
+import { GraphQLScalarType, Kind } from 'graphql';
 import { Models } from '../models/models';
 import { and, isCreatable, isRootModel, isUpdatable, merge, not, typeToField } from '../models/utils';
+import { parseTime, serializeTime } from '../utils/time';
 import { mutationResolver } from './mutations';
 import { queryResolver } from './resolver';
 
@@ -25,6 +27,19 @@ export const getResolvers = (models: Models) => {
           [`${model.pluralField}_AGGREGATE`]: queryResolver,
         })),
     ]),
+    Time: new GraphQLScalarType({
+      name: 'Time',
+      description: 'Time without date and timezone (HH:mm)',
+      serialize: (value) => (value == null ? value : serializeTime(value)),
+      parseValue: (value) => parseTime(value),
+      parseLiteral: (ast) => {
+        if (ast.kind !== Kind.STRING) {
+          throw new Error(`Invalid literal for Time scalar. Expected STRING, got ${ast.kind}.`);
+        }
+
+        return parseTime(ast.value);
+      },
+    }),
   };
   const mutations = [
     ...models.entities.filter(and(not(isRootModel), isCreatable)).map((model) => ({
