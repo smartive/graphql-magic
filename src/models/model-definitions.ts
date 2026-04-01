@@ -64,6 +64,7 @@ export type EntityFieldDefinition = FieldDefinitionBase &
       | boolean
       | {
           default?: Value;
+          nonNull?: boolean;
         };
     reverseFilterable?: boolean;
     searchable?: boolean;
