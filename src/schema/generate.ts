@@ -78,6 +78,7 @@ export const generateDefinitions = ({
               type: field.type,
               list: true,
               default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
+              nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
             })),
           ...model.fields
             .filter(({ comparable }) => comparable)
@@ -89,9 +90,10 @@ export const generateDefinitions = ({
             ]),
           ...model.relations
             .filter(({ field: { filterable } }) => filterable)
-            .map(({ name, targetModel }) => ({
+            .map(({ name, targetModel, field }) => ({
               name,
               type: `${targetModel.name}Where`,
+              nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
             })),
           ...model.reverseRelations
             .filter(({ field: { reverseFilterable } }) => reverseFilterable)
