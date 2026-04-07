@@ -1,3 +1,4 @@
+import type { Time } from '@smartive/graphql-magic';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -13,6 +14,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   DateTime: { input: string; output: string; }
+  Time: { input: Time; output: Time; }
   Upload: { input: any; output: any; }
 };
 
@@ -51,10 +53,20 @@ export type AnotherObjectOrderBy = {
   name?: InputMaybe<Order>;
 };
 
+export type AnotherObjectSubWhere = {
+  AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
+  NOT?: InputMaybe<AnotherObjectSubWhere>;
+  OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
+  manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
+};
+
 export type AnotherObjectWhere = {
-  AND?: InputMaybe<Array<AnotherObjectWhere>>;
-  NOT?: InputMaybe<AnotherObjectWhere>;
-  OR?: InputMaybe<Array<AnotherObjectWhere>>;
+  AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
+  NOT?: InputMaybe<AnotherObjectSubWhere>;
+  OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
@@ -123,10 +135,18 @@ export type AnswerOrderBy = {
   updatedAt?: InputMaybe<Order>;
 };
 
+export type AnswerSubWhere = {
+  AND?: InputMaybe<Array<AnswerSubWhere>>;
+  NOT?: InputMaybe<AnswerSubWhere>;
+  OR?: InputMaybe<Array<AnswerSubWhere>>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type AnswerWhere = {
-  AND?: InputMaybe<Array<AnswerWhere>>;
-  NOT?: InputMaybe<AnswerWhere>;
-  OR?: InputMaybe<Array<AnswerWhere>>;
+  AND?: InputMaybe<Array<AnswerSubWhere>>;
+  NOT?: InputMaybe<AnswerSubWhere>;
+  OR?: InputMaybe<Array<AnswerSubWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -151,6 +171,7 @@ export type CreateReview = {
 };
 
 export type CreateSomeObject = {
+  time?: InputMaybe<Scalars['Time']['input']>;
   xyz: Scalars['Int']['input'];
 };
 
@@ -435,10 +456,18 @@ export type QuestionOrderBy = {
   updatedAt?: InputMaybe<Order>;
 };
 
+export type QuestionSubWhere = {
+  AND?: InputMaybe<Array<QuestionSubWhere>>;
+  NOT?: InputMaybe<QuestionSubWhere>;
+  OR?: InputMaybe<Array<QuestionSubWhere>>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type QuestionWhere = {
-  AND?: InputMaybe<Array<QuestionWhere>>;
-  NOT?: InputMaybe<QuestionWhere>;
-  OR?: InputMaybe<Array<QuestionWhere>>;
+  AND?: InputMaybe<Array<QuestionSubWhere>>;
+  NOT?: InputMaybe<QuestionSubWhere>;
+  OR?: InputMaybe<Array<QuestionSubWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -505,6 +534,14 @@ export type ReactionOrderBy = {
   updatedAt?: InputMaybe<Order>;
 };
 
+export type ReactionSubWhere = {
+  AND?: InputMaybe<Array<ReactionSubWhere>>;
+  NOT?: InputMaybe<ReactionSubWhere>;
+  OR?: InputMaybe<Array<ReactionSubWhere>>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export enum ReactionType {
   Answer = 'Answer',
   Question = 'Question',
@@ -512,9 +549,9 @@ export enum ReactionType {
 }
 
 export type ReactionWhere = {
-  AND?: InputMaybe<Array<ReactionWhere>>;
-  NOT?: InputMaybe<ReactionWhere>;
-  OR?: InputMaybe<Array<ReactionWhere>>;
+  AND?: InputMaybe<Array<ReactionSubWhere>>;
+  NOT?: InputMaybe<ReactionSubWhere>;
+  OR?: InputMaybe<Array<ReactionSubWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -582,10 +619,22 @@ export type ReviewOrderBy = {
   updatedAt?: InputMaybe<Order>;
 };
 
+export type ReviewSubWhere = {
+  AND?: InputMaybe<Array<ReviewSubWhere>>;
+  NOT?: InputMaybe<ReviewSubWhere>;
+  OR?: InputMaybe<Array<ReviewSubWhere>>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  rating_GT?: InputMaybe<Scalars['Float']['input']>;
+  rating_GTE?: InputMaybe<Scalars['Float']['input']>;
+  rating_LT?: InputMaybe<Scalars['Float']['input']>;
+  rating_LTE?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type ReviewWhere = {
-  AND?: InputMaybe<Array<ReviewWhere>>;
-  NOT?: InputMaybe<ReviewWhere>;
-  OR?: InputMaybe<Array<ReviewWhere>>;
+  AND?: InputMaybe<Array<ReviewSubWhere>>;
+  NOT?: InputMaybe<ReviewSubWhere>;
+  OR?: InputMaybe<Array<ReviewSubWhere>>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
@@ -622,6 +671,7 @@ export type SomeObject = {
   float: Scalars['Float']['output'];
   id: Scalars['ID']['output'];
   list: Array<SomeEnum>;
+  time: Maybe<Scalars['Time']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   updatedBy: User;
   xyz: Scalars['Int']['output'];
@@ -639,10 +689,22 @@ export type SomeObjectOrderBy = {
   xyz?: InputMaybe<Order>;
 };
 
+export type SomeObjectSubWhere = {
+  AND?: InputMaybe<Array<SomeObjectSubWhere>>;
+  NOT?: InputMaybe<SomeObjectSubWhere>;
+  OR?: InputMaybe<Array<SomeObjectSubWhere>>;
+  another?: InputMaybe<AnotherObjectWhere>;
+  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  field?: InputMaybe<Array<Scalars['String']['input']>>;
+  float?: InputMaybe<Array<Scalars['Float']['input']>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+  xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
 export type SomeObjectWhere = {
-  AND?: InputMaybe<Array<SomeObjectWhere>>;
-  NOT?: InputMaybe<SomeObjectWhere>;
-  OR?: InputMaybe<Array<SomeObjectWhere>>;
+  AND?: InputMaybe<Array<SomeObjectSubWhere>>;
+  NOT?: InputMaybe<SomeObjectSubWhere>;
+  OR?: InputMaybe<Array<SomeObjectSubWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
   deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   field?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -674,6 +736,7 @@ export type UpdateReview = {
 
 export type UpdateSomeObject = {
   anotherId?: InputMaybe<Scalars['ID']['input']>;
+  time?: InputMaybe<Scalars['Time']['input']>;
   xyz?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -830,10 +893,17 @@ export type UserupdatedReviewsArgs = {
   where?: InputMaybe<ReviewWhere>;
 };
 
+export type UserSubWhere = {
+  AND?: InputMaybe<Array<UserSubWhere>>;
+  NOT?: InputMaybe<UserSubWhere>;
+  OR?: InputMaybe<Array<UserSubWhere>>;
+  id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type UserWhere = {
-  AND?: InputMaybe<Array<UserWhere>>;
-  NOT?: InputMaybe<UserWhere>;
-  OR?: InputMaybe<Array<UserWhere>>;
+  AND?: InputMaybe<Array<UserSubWhere>>;
+  NOT?: InputMaybe<UserSubWhere>;
+  OR?: InputMaybe<Array<UserSubWhere>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -897,7 +967,12 @@ export type UpdateReviewMutation = { updateReview: { content: string | null, rat
 export type SomeQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SomeQueryQuery = { manyObjects: Array<{ id: string, field: string | null, xyz: number, another: { id: string, manyObjects: Array<{ id: string, field: string | null }> } | null }> };
+export type SomeQueryQuery = { manyObjects: Array<{ id: string, field: string | null, xyz: number, time: Time | null, another: { id: string, manyObjects: Array<{ id: string, field: string | null }> } | null }> };
+
+export type GetTimesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetTimesQuery = { manyObjects: Array<{ id: string, xyz: number, time: Time | null }> };
 
 export type ReverseFiltersQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
