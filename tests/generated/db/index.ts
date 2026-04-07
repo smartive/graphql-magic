@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon';
 
+type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';type Hour = `0${Digit}` | `1${Digit}` | `2${'0' | '1' | '2' | '3'}`;type Minute = `${'0' | '1' | '2' | '3' | '4' | '5'}${Digit}`;export type Time = `${Hour}:${Minute}`;
+
 export type ID = string;
 
 export type Boolean = boolean;
@@ -113,6 +115,7 @@ export type SomeObject = {
   'float': number;
   'list': SomeEnum[];
   'xyz': number;
+  'time': Time | null;
   'createdAt': DateTime;
   'createdById': string;
   'updatedAt': DateTime;
@@ -131,6 +134,7 @@ export type SomeObjectInitializer = {
   'float': number;
   'list': SomeEnum[] | string;
   'xyz': number;
+  'time'?: Time | null;
   'createdAt': (DateTime | string);
   'createdById': string;
   'updatedAt': (DateTime | string);
@@ -149,6 +153,7 @@ export type SomeObjectMutator = {
   'float'?: number;
   'list'?: SomeEnum[] | string;
   'xyz'?: number;
+  'time'?: Time | null;
   'createdAt'?: (DateTime | string);
   'createdById'?: string;
   'updatedAt'?: (DateTime | string);
@@ -167,6 +172,7 @@ export type SomeObjectSeed = {
   'float': number;
   'list': string[] | string;
   'xyz': number;
+  'time'?: Time | null;
   'createdAt'?: (DateTime | string);
   'createdById'?: string;
   'updatedAt'?: (DateTime | string);

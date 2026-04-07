@@ -16,14 +16,24 @@ input AnotherObjectOrderBy {
   deletedAt: Order
 }
 
+input AnotherObjectSubWhere {
+  id: [ID!]
+  deleted: [Boolean!]
+  manyObjects_SOME: SomeObjectWhere
+  manyObjects_NONE: SomeObjectWhere
+  NOT: AnotherObjectSubWhere
+  AND: [AnotherObjectSubWhere!]
+  OR: [AnotherObjectSubWhere!]
+}
+
 input AnotherObjectWhere {
   id: [ID!]
   deleted: [Boolean!]
   manyObjects_SOME: SomeObjectWhere
   manyObjects_NONE: SomeObjectWhere
-  NOT: AnotherObjectWhere
-  AND: [AnotherObjectWhere!]
-  OR: [AnotherObjectWhere!]
+  NOT: AnotherObjectSubWhere
+  AND: [AnotherObjectSubWhere!]
+  OR: [AnotherObjectSubWhere!]
 }
 
 input AnotherObjectWhereUnique {
@@ -56,12 +66,20 @@ input AnswerOrderBy {
   deletedAt: Order
 }
 
+input AnswerSubWhere {
+  id: [ID!]
+  deleted: [Boolean!]
+  NOT: AnswerSubWhere
+  AND: [AnswerSubWhere!]
+  OR: [AnswerSubWhere!]
+}
+
 input AnswerWhere {
   id: [ID!]
   deleted: [Boolean!]
-  NOT: AnswerWhere
-  AND: [AnswerWhere!]
-  OR: [AnswerWhere!]
+  NOT: AnswerSubWhere
+  AND: [AnswerSubWhere!]
+  OR: [AnswerSubWhere!]
 }
 
 input AnswerWhereUnique {
@@ -85,6 +103,7 @@ input CreateReview {
 
 input CreateSomeObject {
   xyz: Int!
+  time: Time
 }
 
 scalar DateTime
@@ -165,12 +184,20 @@ input QuestionOrderBy {
   deletedAt: Order
 }
 
+input QuestionSubWhere {
+  id: [ID!]
+  deleted: [Boolean!]
+  NOT: QuestionSubWhere
+  AND: [QuestionSubWhere!]
+  OR: [QuestionSubWhere!]
+}
+
 input QuestionWhere {
   id: [ID!]
   deleted: [Boolean!]
-  NOT: QuestionWhere
-  AND: [QuestionWhere!]
-  OR: [QuestionWhere!]
+  NOT: QuestionSubWhere
+  AND: [QuestionSubWhere!]
+  OR: [QuestionSubWhere!]
 }
 
 input QuestionWhereUnique {
@@ -203,6 +230,14 @@ input ReactionOrderBy {
   deletedAt: Order
 }
 
+input ReactionSubWhere {
+  id: [ID!]
+  deleted: [Boolean!]
+  NOT: ReactionSubWhere
+  AND: [ReactionSubWhere!]
+  OR: [ReactionSubWhere!]
+}
+
 enum ReactionType {
   Review
   Question
@@ -212,9 +247,9 @@ enum ReactionType {
 input ReactionWhere {
   id: [ID!]
   deleted: [Boolean!]
-  NOT: ReactionWhere
-  AND: [ReactionWhere!]
-  OR: [ReactionWhere!]
+  NOT: ReactionSubWhere
+  AND: [ReactionSubWhere!]
+  OR: [ReactionSubWhere!]
 }
 
 input ReactionWhereUnique {
@@ -248,6 +283,18 @@ input ReviewOrderBy {
   deletedAt: Order
 }
 
+input ReviewSubWhere {
+  id: [ID!]
+  deleted: [Boolean!]
+  rating_GT: Float
+  rating_GTE: Float
+  rating_LT: Float
+  rating_LTE: Float
+  NOT: ReviewSubWhere
+  AND: [ReviewSubWhere!]
+  OR: [ReviewSubWhere!]
+}
+
 input ReviewWhere {
   id: [ID!]
   deleted: [Boolean!]
@@ -255,9 +302,9 @@ input ReviewWhere {
   rating_GTE: Float
   rating_LT: Float
   rating_LTE: Float
-  NOT: ReviewWhere
-  AND: [ReviewWhere!]
-  OR: [ReviewWhere!]
+  NOT: ReviewSubWhere
+  AND: [ReviewSubWhere!]
+  OR: [ReviewSubWhere!]
 }
 
 input ReviewWhereUnique {
@@ -282,6 +329,7 @@ type SomeObject {
   float: Float!
   list(magic: Boolean): [SomeEnum!]!
   xyz: Int!
+  time: Time
   createdAt: DateTime!
   createdBy: User!
   updatedAt: DateTime!
@@ -300,6 +348,18 @@ input SomeObjectOrderBy {
   deletedAt: Order
 }
 
+input SomeObjectSubWhere {
+  id: [ID!]
+  field: [String!]
+  float: [Float!]
+  xyz: [Int!]
+  deleted: [Boolean!]
+  another: AnotherObjectWhere
+  NOT: SomeObjectSubWhere
+  AND: [SomeObjectSubWhere!]
+  OR: [SomeObjectSubWhere!]
+}
+
 input SomeObjectWhere {
   id: [ID!]
   field: [String!]
@@ -307,9 +367,9 @@ input SomeObjectWhere {
   xyz: [Int!]
   deleted: [Boolean!]
   another: AnotherObjectWhere
-  NOT: SomeObjectWhere
-  AND: [SomeObjectWhere!]
-  OR: [SomeObjectWhere!]
+  NOT: SomeObjectSubWhere
+  AND: [SomeObjectSubWhere!]
+  OR: [SomeObjectSubWhere!]
 }
 
 input SomeObjectWhereUnique {
@@ -319,6 +379,8 @@ input SomeObjectWhereUnique {
 type SomeRawObject {
   field: String
 }
+
+scalar Time
 
 input UpdateAnswer {
   content: String
@@ -336,6 +398,7 @@ input UpdateReview {
 input UpdateSomeObject {
   anotherId: ID
   xyz: Int
+  time: Time
 }
 
 scalar Upload
@@ -362,11 +425,18 @@ type User {
   deletedAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
+input UserSubWhere {
+  id: [ID!]
+  NOT: UserSubWhere
+  AND: [UserSubWhere!]
+  OR: [UserSubWhere!]
+}
+
 input UserWhere {
   id: [ID!]
-  NOT: UserWhere
-  AND: [UserWhere!]
-  OR: [UserWhere!]
+  NOT: UserSubWhere
+  AND: [UserSubWhere!]
+  OR: [UserSubWhere!]
 }
 
 input UserWhereUnique {

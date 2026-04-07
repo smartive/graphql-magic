@@ -73,10 +73,10 @@ export class Models {
   public objects: ObjectModel[];
   public entities: EntityModel[];
   public unions: UnionModel[];
-  public definitions: ModelDefinitions;
+  public definitions: ModelDefinition[];
 
   constructor(definitions: ModelDefinitions) {
-    this.definitions = cloneDeep(definitions);
+    this.definitions = cloneDeep(definitions) as ModelDefinition[];
     this.definitions.push(
       {
         kind: 'scalar',

@@ -1288,7 +1288,7 @@ export class MigrationGenerator {
       events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
-      function: { name: string; args?: string[] };
+      function: { name: string; args?: readonly string[] };
     },
   ): string {
     const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');
@@ -1305,7 +1305,7 @@ export class MigrationGenerator {
     model: EntityModel,
     entry: {
       name: string;
-      function: { name: string; args?: string[] };
+      function: { name: string; args?: readonly string[] };
     },
   ): void {
     const fnName = entry.function.name;
@@ -1334,7 +1334,7 @@ export class MigrationGenerator {
       events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
-      function: { name: string; args?: string[] };
+      function: { name: string; args?: readonly string[] };
     },
   ) {
     const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');

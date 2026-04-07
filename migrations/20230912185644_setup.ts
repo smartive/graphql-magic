@@ -67,11 +67,9 @@ export const up = async (knex: Knex) => {
     table.boolean('deleted').notNullable();
     table.string('deleteRootType');
     table.uuid('deleteRootId');
-    table.uuid('anotherId').nullable();
-    table.index('anotherId');
-    table.foreign('anotherId').references('id').inTable('AnotherObject').onDelete('CASCADE');
-    table.integer('xyz').notNullable();
-    table.specificType('time', 'time without time zone').nullable();
+    table.uuid('anotherId');
+    table.integer('xyz');
+    table.specificType('time', 'time without time zone');
   });
 
   await knex.schema.createTable('Reaction', (table) => {
@@ -110,7 +108,7 @@ export const up = async (knex: Knex) => {
     table.boolean('deleted').notNullable();
     table.string('deleteRootType');
     table.uuid('deleteRootId');
-    table.string('content', undefined).nullable();
+    table.string('content', undefined);
   });
 
   await knex.schema.createTable('Review', (table) => {
@@ -122,7 +120,7 @@ export const up = async (knex: Knex) => {
 
   await knex.schema.createTable('ReviewRevision', (table) => {
     table.uuid('id').notNullable().primary();
-    table.decimal('rating', undefined, undefined).nullable();
+    table.decimal('rating', undefined, undefined);
   });
 
 };

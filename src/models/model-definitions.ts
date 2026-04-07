@@ -40,7 +40,7 @@ type FieldDefinitionBase2 =
         } & BaseNumberType)
       | { type: 'Upload' }
     ))
-  | { kind: 'enum'; type: string; possibleValues?: Value[] }
+  | { kind: 'enum'; type: string; possibleValues?: readonly Value[] }
   | { kind: 'custom'; type: string };
 
 export type ObjectFieldDefinition = FieldDefinitionBase & FieldDefinitionBase2;
@@ -132,14 +132,14 @@ export type ModelDefinition = {
   | { kind: 'enum'; values: readonly string[]; deleted?: true }
   | { kind: 'raw-enum'; values: readonly string[] }
   | { kind: 'union'; types: readonly string[] }
-  | { kind: 'interface'; fields: EntityFieldDefinition[] }
+  | { kind: 'interface'; fields: readonly EntityFieldDefinition[] }
   | {
       kind: 'input';
-      fields: ObjectFieldDefinition[];
+      fields: readonly ObjectFieldDefinition[];
     }
   | {
       kind: 'object';
-      fields: ObjectFieldDefinition[];
+      fields: readonly ObjectFieldDefinition[];
     }
   | {
       kind: 'entity';
@@ -173,8 +173,8 @@ export type ModelDefinition = {
           };
       aggregatable?: boolean;
       displayField?: string;
-      defaultOrderBy?: OrderBy[];
-      fields: EntityFieldDefinition[];
+      defaultOrderBy?: readonly OrderBy[];
+      fields: readonly EntityFieldDefinition[];
 
       /**
        * Use this field to explicitly mark/unmark an entity model as a many-to-many relation entity.
@@ -182,7 +182,7 @@ export type ModelDefinition = {
        */
       manyToManyRelation?: boolean;
 
-      constraints?: ConstraintDefinition[];
+      constraints?: readonly ConstraintDefinition[];
 
       // temporary fields for the generation of migrations
       deleted?: true;
@@ -216,7 +216,7 @@ export type ConstraintDefinition =
       events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       deferrable?: 'INITIALLY DEFERRED' | 'INITIALLY IMMEDIATE';
-      function: { name: string; args?: string[] };
+      function: { name: string; args?: readonly string[] };
     };
 
 export type CheckConstraintDefinition = Extract<ConstraintDefinition, { kind: 'check' }>;
@@ -232,4 +232,4 @@ export type InputModelDefinition = Extract<ModelDefinition, { kind: 'input' }>;
 export type EntityModelDefinition = Extract<ModelDefinition, { kind: 'entity' }>;
 export type UnionModelDefinition = Extract<ModelDefinition, { kind: 'union' }>;
 
-export type ModelDefinitions = ModelDefinition[];
+export type ModelDefinitions = readonly ModelDefinition[];
