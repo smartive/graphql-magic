@@ -58,7 +58,13 @@ export const generateDefinitions = ({
               list: !field.toOne,
               nonNull: !field.toOne,
               args: [
-                { name: 'where', type: `${targetModel.name}Where` },
+                {
+                  name: 'where',
+                  type: `${targetModel.name}Where`,
+                  nonNull: targetModel.fields.some(
+                    ({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true,
+                  ),
+                },
                 ...(targetModel.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
                 ...(targetModel.fields.some(({ orderable }) => orderable)
                   ? [{ name: 'orderBy', type: `${targetModel.name}OrderBy`, list: true }]
@@ -210,7 +216,11 @@ export const generateDefinitions = ({
           list: true,
           nonNull: true,
           args: [
-            { name: 'where', type: `${model.name}Where` },
+            {
+              name: 'where',
+              type: `${model.name}Where`,
+              nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
+            },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             ...(model.fields.some(({ orderable }) => orderable)
               ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
@@ -227,7 +237,11 @@ export const generateDefinitions = ({
           type: `${model.name}Aggregate`,
           nonNull: true,
           args: [
-            { name: 'where', type: `${model.name}Where` },
+            {
+              name: 'where',
+              type: `${model.name}Where`,
+              nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
+            },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             { name: 'limit', type: 'Int' },
             { name: 'offset', type: 'Int' },
