@@ -70,58 +70,60 @@ export const generateDefinitions = ({
           ],
           [...(model.parent ? [model.parent] : []), ...(model.interfaces || [])],
         ),
-        input(`${model.name}Where`, [
-          ...model.fields
-            .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
-            .map((field) => ({
-              name: field.name,
-              type: field.type,
+        ...[false, true].map((isSubWhere) =>
+          input(`${model.name}${isSubWhere ? 'Sub' : ''}Where`, [
+            ...model.fields
+              .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
+              .map((field) => ({
+                name: field.name,
+                type: field.type,
+                list: true,
+                default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
+                nonNull: isSubWhere ? false : typeof field.filterable === 'object' && field.filterable.nonNull === true,
+              })),
+            ...model.fields
+              .filter(({ comparable }) => comparable)
+              .flatMap((field) => [
+                { name: `${field.name}_GT`, type: field.type },
+                { name: `${field.name}_GTE`, type: field.type },
+                { name: `${field.name}_LT`, type: field.type },
+                { name: `${field.name}_LTE`, type: field.type },
+              ]),
+            ...model.relations
+              .filter(({ field: { filterable } }) => filterable)
+              .map(({ name, targetModel, field }) => ({
+                name,
+                type: `${targetModel.name}Where`,
+                nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
+              })),
+            ...model.reverseRelations
+              .filter(({ field: { reverseFilterable } }) => reverseFilterable)
+              .flatMap((relation) => [
+                {
+                  name: `${relation.name}_SOME`,
+                  type: `${relation.targetModel.name}Where`,
+                },
+                {
+                  name: `${relation.name}_NONE`,
+                  type: `${relation.targetModel.name}Where`,
+                },
+              ]),
+            {
+              name: 'NOT',
+              type: `${model.name}SubWhere`,
+            },
+            {
+              name: 'AND',
+              type: `${model.name}SubWhere`,
               list: true,
-              default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
-              nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
-            })),
-          ...model.fields
-            .filter(({ comparable }) => comparable)
-            .flatMap((field) => [
-              { name: `${field.name}_GT`, type: field.type },
-              { name: `${field.name}_GTE`, type: field.type },
-              { name: `${field.name}_LT`, type: field.type },
-              { name: `${field.name}_LTE`, type: field.type },
-            ]),
-          ...model.relations
-            .filter(({ field: { filterable } }) => filterable)
-            .map(({ name, targetModel, field }) => ({
-              name,
-              type: `${targetModel.name}Where`,
-              nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
-            })),
-          ...model.reverseRelations
-            .filter(({ field: { reverseFilterable } }) => reverseFilterable)
-            .flatMap((relation) => [
-              {
-                name: `${relation.name}_SOME`,
-                type: `${relation.targetModel.name}Where`,
-              },
-              {
-                name: `${relation.name}_NONE`,
-                type: `${relation.targetModel.name}Where`,
-              },
-            ]),
-          {
-            name: 'NOT',
-            type: `${model.name}Where`,
-          },
-          {
-            name: 'AND',
-            type: `${model.name}Where`,
-            list: true,
-          },
-          {
-            name: 'OR',
-            type: `${model.name}Where`,
-            list: true,
-          },
-        ]),
+            },
+            {
+              name: 'OR',
+              type: `${model.name}SubWhere`,
+              list: true,
+            },
+          ]),
+        ),
         input(
           `${model.name}WhereUnique`,
           model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
