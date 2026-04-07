@@ -31,16 +31,15 @@ export const generatePermissionTypes = (models: Models) => {
     sourceFile.addStatements((writer) =>
       writer.write(`export type ${model.name}Where = `).inlineBlock(() => {
         for (const field of model.fields.filter((field) => field.filterable)) {
-          const optional = typeof field.filterable !== 'object' || field.filterable.nonNull !== true ? '?' : '';
           if (field.kind === 'relation') {
-            writer.writeLine(`${field.name}${optional}: ${field.type}Where,`);
+            writer.writeLine(`${field.name}?: ${field.type}Where,`);
           } else if (!field.kind || field.kind === 'primitive') {
-            writer.writeLine(`${field.name}${optional}: ${PRIMITIVE_TYPES[field.type]} | ${PRIMITIVE_TYPES[field.type]}[],`);
+            writer.writeLine(`${field.name}?: ${PRIMITIVE_TYPES[field.type]} | readonly ${PRIMITIVE_TYPES[field.type]}[],`);
           } else {
             if (field.kind === 'enum') {
               usedEnums.add(field.type);
             }
-            writer.writeLine(`${field.name}${optional}: ${field.type} | ${field.type}[],`);
+            writer.writeLine(`${field.name}?: ${field.type} | readonly ${field.type}[],`);
           }
         }
       }),
