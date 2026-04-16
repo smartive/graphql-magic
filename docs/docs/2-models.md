@@ -116,6 +116,43 @@ query {
 }
 ```
 
+### `aggregatable`
+
+When `aggregatable` is enabled, GraphQL query `<pluralField>_AGGREGATE` becomes available and returns aggregate values.
+
+- Aggregate queries are only exposed when `listQueriable` is enabled.
+- `COUNT` is always available.
+- Field-level aggregate operations can be exposed with the field option `aggregatable`.
+- Supported field operations are `sum`, `avg`, `min`, `max` on numeric primitive fields (`Int`, `Float`).
+- Aggregate queries support `where` and `search` arguments.
+
+Example:
+
+```ts
+{
+    kind: 'entity',
+    name: 'Invoice',
+    listQueriable: true,
+    aggregatable: true,
+    fields: [
+        { name: 'amount', type: 'Float', aggregatable: ['sum', 'avg'] },
+        { name: 'tax', type: 'Float' },
+    ]
+}
+```
+
+This exposes:
+
+```graphql
+query {
+  invoices_AGGREGATE(where: { deleted: [false] }) {
+    COUNT
+    SUM_amount
+    AVG_amount
+  }
+}
+```
+
 ### `displayField`
 
 The name of the field that ought to be used as display value, e.g. a `Post`'s `title`.

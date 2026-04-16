@@ -13,16 +13,54 @@ import {
   isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
-import { getColumnExpression } from './utils';
+import { getAggregateFieldDefinitions, isQueriableByRole } from '../models/utils';
+import { getColumnExpression, getColumnName } from './utils';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   if (node.isAggregate) {
+    const aggregateFields = new Map(getAggregateFieldDefinitions(node.model).map((field) => [field.outputName, field]));
+    const tableAlias = node.ctx.aliases.getShort(node.resultAlias);
+    const role = getRole(node.ctx);
     void query.select(
-      node.selectionSet
-        .filter(isFieldNode)
-        .map((field) =>
-          node.ctx.knex.raw(`COUNT(*) as ??`, [`${node.ctx.aliases.getShort(node.resultAlias)}__${getNameOrAlias(field)}`]),
-        ),
+      node.selectionSet.filter(isFieldNode).flatMap((field) => {
+        const fieldName = field.name.value;
+        if (fieldName === '__typename') {
+          return [];
+        }
+
+        const fieldAlias = `${tableAlias}__${getNameOrAlias(field)}`;
+        if (fieldName === 'COUNT') {
+          return [node.ctx.knex.raw(`COUNT(*) as ??`, [fieldAlias])];
+        }
+
+        const aggregateField = aggregateFields.get(fieldName);
+        if (aggregateField) {
+          const sourceField = node.model.getField(aggregateField.sourceFieldName);
+          if (!isQueriableByRole(sourceField, role)) {
+            throw new PermissionError(
+              role,
+              'READ',
+              `${node.model.name}'s field "${sourceField.name}"`,
+              'field permission not available',
+            );
+          }
+          if (sourceField.generateAs?.type === 'expression') {
+            const sourceColumn = getColumnExpression(node, aggregateField.sourceFieldName);
+
+            return [node.ctx.knex.raw(`SUM(${sourceColumn}) as ??`, [fieldAlias])];
+          }
+
+          return [
+            node.ctx.knex.raw('SUM(??.??) as ??', [
+              node.ctx.aliases.getShort(sourceField.inherited ? node.rootTableAlias : node.tableAlias),
+              getColumnName(sourceField),
+              fieldAlias,
+            ]),
+          ];
+        }
+
+        throw new UserInputError(`Unsupported aggregate field "${fieldName}".`);
+      }),
     );
 
     return;
