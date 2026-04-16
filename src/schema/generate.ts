@@ -252,6 +252,9 @@ export const generateDefinitions = ({
               nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
             },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
+            ...(model.fields.some(({ orderable }) => orderable)
+              ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
+              : []),
             { name: 'limit', type: 'Int' },
             { name: 'offset', type: 'Int' },
           ],

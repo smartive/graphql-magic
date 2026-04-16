@@ -3,6 +3,25 @@ import { ANOTHER_ID, SOME_ID, SOME_ID_2 } from '../utils/database/seed';
 import { withServer } from '../utils/server';
 
 describe('query', () => {
+  it('supports aggregate SUM with pagination for ManyObjects', async () => {
+    await withServer(async (request) => {
+      expect(
+        await request(gql`
+          query AggregateManyObjects {
+            page1: manyObjects_AGGREGATE(limit: 2) {
+              COUNT
+              float_SUM
+            }
+            page2: manyObjects_AGGREGATE(offset: 2, limit: 2) {
+              COUNT
+              float_SUM
+            }
+          }
+        `),
+      ).toMatchSnapshot();
+    });
+  });
+
   it('can be executed', async () => {
     await withServer(async (request) => {
       expect(

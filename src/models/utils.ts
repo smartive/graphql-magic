@@ -110,7 +110,7 @@ export type AggregateFieldDefinition = {
   outputType: 'Float';
 };
 
-export const isQueriableByRole = (field: EntityField, role: string): boolean =>
+export const isQueriableBy = (role: string) => (field: EntityField) =>
   field.queriable !== false &&
   (field.queriable === undefined ||
     field.queriable === true ||
