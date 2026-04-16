@@ -123,8 +123,8 @@ When `aggregatable` is enabled, GraphQL query `<pluralField>_AGGREGATE` becomes 
 - Aggregate queries are only exposed when `listQueriable` is enabled.
 - `COUNT` is always available.
 - Field-level aggregate operations can be exposed with the field option `aggregatable`.
-- Supported field operations are `sum`, `avg`, `min`, `max` on numeric primitive fields (`Int`, `Float`).
-- Aggregate queries support `where` and `search` arguments.
+- Currently supported field operation is `sum` on numeric primitive fields (`Int`, `Float`).
+- Aggregate queries support `where`, `search`, `orderBy`, `limit`, and `offset` and aggregate over the same window as the corresponding list query.
 
 Example:
 
@@ -135,7 +135,7 @@ Example:
     listQueriable: true,
     aggregatable: true,
     fields: [
-        { name: 'amount', type: 'Float', aggregatable: ['sum', 'avg'] },
+        { name: 'amount', type: 'Float', aggregatable: ['sum'] },
         { name: 'tax', type: 'Float' },
     ]
 }
@@ -147,8 +147,7 @@ This exposes:
 query {
   invoices_AGGREGATE(where: { deleted: [false] }) {
     COUNT
-    SUM_amount
-    AVG_amount
+    amount_SUM
   }
 }
 ```

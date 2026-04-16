@@ -54,9 +54,7 @@ describe('aggregate schema generation', () => {
     ) as { fields?: readonly { name: { value: string }; arguments?: readonly { name: { value: string } }[] }[] } | undefined;
     const aggregateQueryField = aggregateQuery?.fields?.find((field) => field.name.value === 'invoices_AGGREGATE');
     const argumentNames = aggregateQueryField?.arguments?.map((arg) => arg.name.value) ?? [];
-    expect(argumentNames).toEqual(expect.arrayContaining(['where']));
-    expect(argumentNames).not.toContain('limit');
-    expect(argumentNames).not.toContain('offset');
+    expect(argumentNames).toEqual(expect.arrayContaining(['where', 'limit', 'offset']));
   });
 
   it('does not expose aggregate operation fields when aggregatable is disabled', () => {
