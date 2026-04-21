@@ -352,3 +352,16 @@ exports[`query returns Time values for SomeObject 1`] = `
   ],
 }
 `;
+
+exports[`query supports aggregate SUM with pagination for ManyObjects 1`] = `
+{
+  "page1": {
+    "COUNT": 2,
+    "float_SUM": 1,
+  },
+  "page2": {
+    "COUNT": 2,
+    "float_SUM": 0.5,
+  },
+}
+`;

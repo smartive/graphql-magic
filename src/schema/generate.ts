@@ -2,6 +2,7 @@ import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } fr
 import { Models } from '../models/models';
 import {
   and,
+  getAggregateFieldDefinitions,
   isCreatable,
   isQueriableField,
   isRootModel,
@@ -183,7 +184,15 @@ export const generateDefinitions = ({
         }
 
         if (model.aggregatable) {
-          types.push(object(`${model.name}Aggregate`, [{ name: 'COUNT', type: 'Int' }]));
+          types.push(
+            object(`${model.name}Aggregate`, [
+              { name: 'COUNT', type: 'Int' },
+              ...getAggregateFieldDefinitions(model).map((field) => ({
+                name: field.outputName,
+                type: field.outputType,
+              })),
+            ]),
+          );
         }
       }
 
@@ -231,7 +240,7 @@ export const generateDefinitions = ({
           ],
         })),
       ...entities
-        .filter(({ aggregatable }) => aggregatable)
+        .filter((model) => model.listQueriable && model.aggregatable)
         .map((model) => ({
           name: `${model.pluralField}_AGGREGATE`,
           type: `${model.name}Aggregate`,
@@ -243,6 +252,9 @@ export const generateDefinitions = ({
               nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
             },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
+            ...(model.fields.some(({ orderable }) => orderable)
+              ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
+              : []),
             { name: 'limit', type: 'Int' },
             { name: 'offset', type: 'Int' },
           ],

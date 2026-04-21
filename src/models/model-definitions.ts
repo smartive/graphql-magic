@@ -9,6 +9,7 @@ type BaseNumberType = {
 };
 
 type FieldDefinitionBase = Omit<Field, 'type'>;
+export type AggregateOperation = 'sum';
 
 type FieldDefinitionBase2 =
   | ({ kind?: 'primitive' | undefined } & (
@@ -92,6 +93,8 @@ export type EntityFieldDefinition = FieldDefinitionBase &
     indent?: boolean;
     // If true the field is hidden in the admin interface
     hidden?: boolean;
+    // Aggregate operations available on this field (used by <Model>_AGGREGATE queries)
+    aggregatable?: readonly AggregateOperation[];
     generateAs?: {
       expression: string;
       type: 'virtual' | 'stored' | 'expression';
@@ -141,7 +144,7 @@ export type ModelDefinition = {
       kind: 'object';
       fields: readonly ObjectFieldDefinition[];
     }
-  | {
+  | ({
       kind: 'entity';
       root?: boolean;
       parent?: string;
@@ -171,7 +174,6 @@ export type ModelDefinition = {
             args?: readonly Field[];
             restoreArgs?: readonly Field[];
           };
-      aggregatable?: boolean;
       displayField?: string;
       defaultOrderBy?: readonly OrderBy[];
       fields: readonly EntityFieldDefinition[];
@@ -187,7 +189,13 @@ export type ModelDefinition = {
       // temporary fields for the generation of migrations
       deleted?: true;
       oldName?: string;
-    }
+    } & (
+      | { aggregatable?: false }
+      | {
+          aggregatable: true;
+          listQueriable: true | { args?: readonly Field[] };
+        }
+    ))
 );
 
 export type ConstraintDefinition =

@@ -63,6 +63,7 @@ const modelDefinitions: ModelDefinitions = [
     description: 'An object',
     queriable: true,
     listQueriable: true,
+    aggregatable: true,
     creatable: true,
     updatable: true,
     deletable: true,
@@ -88,6 +89,7 @@ const modelDefinitions: ModelDefinitions = [
         precision: 1,
         nonNull: true,
         filterable: true,
+        aggregatable: ['sum'],
       },
       {
         kind: 'enum',

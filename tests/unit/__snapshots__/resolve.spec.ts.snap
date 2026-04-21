@@ -27,6 +27,7 @@ exports[`resolvers are generated correctly 1`] = `
     "answer": [Function],
     "answers": [Function],
     "manyObjects": [Function],
+    "manyObjects_AGGREGATE": [Function],
     "me": [Function],
     "question": [Function],
     "questions": [Function],

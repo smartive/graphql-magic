@@ -101,12 +101,46 @@ export const isUpdatable = ({ updatable }: EntityField | EntityModel) => !!updat
 
 export const isCreatable = ({ creatable }: EntityField | EntityModel) => !!creatable;
 
+const isSummableField = (field: EntityField) =>
+  isStoredInDatabase(field) && isPrimitive(field) && ['Int', 'Float'].includes(field.type);
+
+export type AggregateFieldDefinition = {
+  sourceFieldName: string;
+  outputName: string;
+  outputType: 'Float';
+};
+
 export const isQueriableBy = (role: string) => (field: EntityField) =>
   field.queriable !== false &&
   (field.queriable === undefined ||
     field.queriable === true ||
     !field.queriable.roles ||
     field.queriable.roles.includes(role));
+
+export const getAggregateFieldDefinitions = (model: EntityModel): AggregateFieldDefinition[] => {
+  if (!model.aggregatable) {
+    return [];
+  }
+
+  const result: AggregateFieldDefinition[] = [];
+  for (const field of model.fields) {
+    const operations = field.aggregatable || [];
+    for (const operation of operations) {
+      if (operation !== 'sum' || !isSummableField(field)) {
+        throw new Error(`Field "${model.name}.${field.name}" does not support aggregate operation "${operation}".`);
+      }
+
+      result.push({
+        sourceFieldName: field.name,
+        outputName: `${field.name}_SUM`,
+        // SUM over Int can exceed GraphQL Int range, so expose as Float.
+        outputType: 'Float',
+      });
+    }
+  }
+
+  return result;
+};
 
 export const isUpdatableBy = (role: string) => (field: EntityField) =>
   field.updatable && (field.updatable === true || !field.updatable.roles || field.updatable.roles.includes(role));
