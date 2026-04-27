@@ -37,16 +37,18 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
 
   await node.ctx.queryHook?.({ model: node.model, query, args: normalizedArguments, ctx: node.ctx });
 
-  if (limit) {
-    query.limit(limit);
-  }
+  if (!node.isAggregate) {
+    if (limit) {
+      query.limit(limit);
+    }
 
-  if (offset) {
-    query.offset(offset);
-  }
+    if (offset) {
+      query.offset(offset);
+    }
 
-  if (orderBy) {
-    applyOrderBy(node, orderBy, query, joins);
+    if (orderBy) {
+      applyOrderBy(node, orderBy, query, joins);
+    }
   }
 
   if (node.model.parent) {

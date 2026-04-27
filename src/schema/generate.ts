@@ -252,8 +252,6 @@ export const generateDefinitions = ({
               nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
             },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
-            { name: 'limit', type: 'Int' },
-            { name: 'offset', type: 'Int' },
           ],
         })),
       ...objects.filter((model) => model.name === 'Query').flatMap((model) => model.fields),

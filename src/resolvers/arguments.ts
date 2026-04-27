@@ -29,6 +29,8 @@ export type NormalizedArguments = {
   language?: string;
 };
 
+export type AggregateNormalizedArguments = Omit<NormalizedArguments, 'limit' | 'offset' | 'orderBy'>;
+
 function getRawValue(value: ValueNode, values?: VariableValues): Value {
   switch (value.kind) {
     case Kind.LIST:
