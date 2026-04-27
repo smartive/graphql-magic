@@ -124,7 +124,7 @@ When `aggregatable` is enabled, GraphQL query `<pluralField>_AGGREGATE` becomes 
 - `COUNT` is always available.
 - Field-level aggregate operations can be exposed with the field option `aggregatable`.
 - Currently supported field operation is `sum` on numeric primitive fields (`Int`, `Float`).
-- Aggregate queries support `where`, `search`, `orderBy`, `limit`, and `offset` and aggregate over the same window as the corresponding list query.
+- Aggregate query arguments are filtering only: `where`, and `search` when the entity has at least one searchable field. Unlike the list query for the same model, aggregate fields do not accept `orderBy`, `limit`, or `offset`; values are computed over every row that matches the filter (and search), not over a paginated or sorted slice.
 
 Example:
 
