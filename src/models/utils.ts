@@ -101,6 +101,13 @@ export const isUpdatable = ({ updatable }: EntityField | EntityModel) => !!updat
 
 export const isCreatable = ({ creatable }: EntityField | EntityModel) => !!creatable;
 
+export const isQueriableBy = (role: string) => (field: EntityField) =>
+  field.queriable !== false &&
+  (field.queriable === undefined ||
+    field.queriable === true ||
+    !field.queriable.roles ||
+    field.queriable.roles.includes(role));
+
 const isSummableField = (field: EntityField) =>
   isStoredInDatabase(field) && isPrimitive(field) && ['Int', 'Float'].includes(field.type);
 
@@ -109,13 +116,6 @@ export type AggregateFieldDefinition = {
   outputName: string;
   outputType: 'Float';
 };
-
-export const isQueriableByRole = (field: EntityField, role: string): boolean =>
-  field.queriable !== false &&
-  (field.queriable === undefined ||
-    field.queriable === true ||
-    !field.queriable.roles ||
-    field.queriable.roles.includes(role));
 
 export const getAggregateFieldDefinitions = (model: EntityModel): AggregateFieldDefinition[] => {
   if (!model.aggregatable) {

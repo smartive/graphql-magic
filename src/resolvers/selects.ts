@@ -13,7 +13,7 @@ import {
   isFieldNode,
 } from '.';
 import { PermissionError, UserInputError, getRole } from '..';
-import { getAggregateFieldDefinitions, isQueriableByRole } from '../models/utils';
+import { getAggregateFieldDefinitions, isQueriableBy } from '../models/utils';
 import { getColumnExpression, getColumnName } from './utils';
 
 export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
@@ -36,7 +36,7 @@ export const applySelects = (node: ResolverNode, query: Knex.QueryBuilder, joins
         const aggregateField = aggregateFields.get(fieldName);
         if (aggregateField) {
           const sourceField = node.model.getField(aggregateField.sourceFieldName);
-          if (!isQueriableByRole(sourceField, role)) {
+          if (!isQueriableBy(role)(sourceField)) {
             throw new PermissionError(
               role,
               'READ',
