@@ -22,7 +22,7 @@ export const getResolvers = (models: Models) => {
           [model.pluralField]: queryResolver,
         })),
       ...models.entities
-        .filter(({ aggregatable }) => aggregatable)
+        .filter((model) => model.listQueriable && model.aggregatable)
         .map((model) => ({
           [`${model.pluralField}_AGGREGATE`]: queryResolver,
         })),
