@@ -20,7 +20,7 @@ describe('aggregate schema generation', () => {
         listQueriable: true,
         aggregatable: true,
         fields: [
-          { name: 'total', type: 'Float', orderable: true, aggregatable: ['sum'] },
+          { name: 'total', type: 'Float', aggregatable: ['sum'] },
           { name: 'quantity', type: 'Int', aggregatable: ['sum'] },
           { name: 'description', type: 'String' },
         ],
@@ -54,7 +54,7 @@ describe('aggregate schema generation', () => {
     ) as { fields?: readonly { name: { value: string }; arguments?: readonly { name: { value: string } }[] }[] } | undefined;
     const aggregateQueryField = aggregateQuery?.fields?.find((field) => field.name.value === 'invoices_AGGREGATE');
     const argumentNames = aggregateQueryField?.arguments?.map((arg) => arg.name.value) ?? [];
-    expect(argumentNames).toEqual(expect.arrayContaining(['where', 'orderBy', 'limit', 'offset']));
+    expect(argumentNames).toEqual(expect.arrayContaining(['where', 'limit', 'offset']));
   });
 
   it('does not expose aggregate operation fields when aggregatable is disabled', () => {

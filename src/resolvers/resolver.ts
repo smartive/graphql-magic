@@ -7,7 +7,6 @@ import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
-import { normalizeArguments } from './arguments';
 import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
@@ -52,7 +51,7 @@ export const resolve = async (ctx: FullContext, id?: string) => {
     void query.where({ [getColumn(node, 'id')]: id });
   }
 
-  if (!node.isList && !node.isAggregate) {
+  if (!node.isList) {
     void query.limit(1);
   }
 
@@ -78,57 +77,10 @@ export const resolve = async (ctx: FullContext, id?: string) => {
 
 type VerifiedPermissionStacks = Record<string, PermissionStack>;
 
-const AGGREGATE_PAGINATION_SUBQUERY_ALIAS = 'agg_sub';
-
 const buildQuery = async (
   node: FieldResolverNode,
   parentVerifiedPermissionStacks?: VerifiedPermissionStacks,
 ): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks }> => {
-  const normalizedArguments = normalizeArguments(node);
-  const useAggregatePaginationSubquery =
-    node.isAggregate && (normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined);
-
-  if (useAggregatePaginationSubquery) {
-    const listNode: FieldResolverNode = { ...node, isAggregate: false };
-    const innerQuery = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
-
-    const joins: Joins = [];
-    await applyFilters(listNode, innerQuery, joins);
-    const rootShortAlias = node.ctx.aliases.getShort(node.resultAlias);
-    void innerQuery.select(node.ctx.knex.raw('??.*', [rootShortAlias]));
-    applyJoins(node.ctx.aliases, innerQuery, joins);
-
-    const tables = [
-      [node.rootModel.name, node.rootTableAlias] satisfies [string, string],
-      ...joins.map(({ table2Name, table2Alias }) => [table2Name, table2Alias] satisfies [string, string]),
-    ];
-
-    const verifiedPermissionStacks: VerifiedPermissionStacks = {};
-    for (const [table, alias] of tables) {
-      const verifiedPermissionStack = applyPermissions(
-        node.ctx,
-        table,
-        node.ctx.aliases.getShort(alias),
-        innerQuery,
-        'READ',
-        parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
-      );
-
-      if (typeof verifiedPermissionStack !== 'boolean') {
-        verifiedPermissionStacks[alias] = verifiedPermissionStack;
-      }
-    }
-
-    const aggregateNode: FieldResolverNode = {
-      ...node,
-      aggregateSubqueryAlias: AGGREGATE_PAGINATION_SUBQUERY_ALIAS,
-    };
-    const query = node.ctx.knex.from(innerQuery.as(AGGREGATE_PAGINATION_SUBQUERY_ALIAS));
-    applySelects(aggregateNode, query, []);
-
-    return { query, verifiedPermissionStacks };
-  }
-
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
 
   const joins: Joins = [];

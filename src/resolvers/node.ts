@@ -40,9 +40,6 @@ export type ResolverNode = {
   selectionSet: readonly SelectionNode[];
 
   isAggregate: boolean;
-
-  /** When set, SUM uses this SQL alias (paginated aggregate subquery). */
-  aggregateSubqueryAlias?: string;
 };
 
 export type FieldResolverNode = ResolverNode & {
