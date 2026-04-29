@@ -144,13 +144,14 @@ export type ModelDefinition = {
       kind: 'object';
       fields: readonly ObjectFieldDefinition[];
     }
-  | ({
+  | {
       kind: 'entity';
       root?: boolean;
       parent?: string;
       interfaces?: readonly string[];
       queriable?: boolean;
       listQueriable?: boolean | { args?: readonly Field[] };
+      aggregatable?: boolean;
       creatable?:
         | boolean
         | {
@@ -189,13 +190,7 @@ export type ModelDefinition = {
       // temporary fields for the generation of migrations
       deleted?: true;
       oldName?: string;
-    } & (
-      | { aggregatable?: false }
-      | {
-          aggregatable: true;
-          listQueriable: true | { args?: readonly Field[] };
-        }
-    ))
+    }
 );
 
 export type ConstraintDefinition =
