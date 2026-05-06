@@ -4,6 +4,7 @@ import { Knex } from 'knex';
 import { Models } from './models/models';
 import { MutationHook, QueryHook } from './models/mutation-hook';
 import { Permissions } from './permissions/generate';
+import { ScopesConfig } from './permissions/scopes';
 import { AliasGenerator } from './resolvers/utils';
 import { AnyDateType } from './utils';
 
@@ -21,6 +22,7 @@ export type Context<DateType extends AnyDateType = AnyDateType> = {
   user?: User;
   models: Models;
   permissions: Permissions;
+  scopes?: ScopesConfig;
   mutationHook?: MutationHook<DateType>;
   queryHook?: QueryHook<DateType>;
 };

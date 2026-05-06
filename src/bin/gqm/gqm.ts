@@ -20,6 +20,8 @@ import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseFunctionsFile } from './parse-functions';
 import { parseKnexfile } from './parse-knexfile';
 import { parseModels } from './parse-models';
+import { parsePermissionsConfig } from './parse-permissions-config';
+import { parseScopes } from './parse-scopes';
 import { generatePermissionTypes } from './permissions';
 import { readLine } from './readline';
 import { getSetting, writeToFile } from './settings';
@@ -53,11 +55,14 @@ const readCurrentBranch = (): string | undefined => {
     if (statSync(gitDir).isFile()) {
       const pointer = readFileSync(gitDir, 'utf8').trim();
       const match = /^gitdir:\s*(.+)$/.exec(pointer);
-      if (!match) return undefined;
+      if (!match) {
+        return undefined;
+      }
       gitDir = match[1];
     }
     const head = readFileSync(join(gitDir, 'HEAD'), 'utf8').trim();
     const match = /^ref:\s*refs\/heads\/(.+)$/.exec(head);
+
     return match ? match[1] : undefined;
   } catch {
     return undefined;
@@ -106,7 +111,9 @@ program
       const models = await parseModels();
       const functionsPath = await getSetting('functionsPath');
       const parsedFunctions = parseFunctionsFile(functionsPath);
-      const migrations = await new MigrationGenerator(db, models, parsedFunctions).generate();
+      const scopes = await parseScopes();
+      const permissionsConfig = await parsePermissionsConfig();
+      const migrations = await new MigrationGenerator(db, models, parsedFunctions, scopes, permissionsConfig).generate();
 
       writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
     } finally {
@@ -125,7 +132,9 @@ program
       const models = await parseModels();
       const functionsPath = await getSetting('functionsPath');
       const parsedFunctions = parseFunctionsFile(functionsPath);
-      const mg = new MigrationGenerator(db, models, parsedFunctions);
+      const scopes = await parseScopes();
+      const permissionsConfig = await parsePermissionsConfig();
+      const mg = new MigrationGenerator(db, models, parsedFunctions, scopes, permissionsConfig);
       await mg.generate();
 
       if (mg.needsMigration) {

@@ -52,6 +52,17 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   undefined: () => undefined,
   [SyntaxKind.BindingElement]: (node: BindingElement, context) => context[node.getName()],
   [SyntaxKind.VariableDeclaration]: (node, context) => staticEval(node.getInitializer(), context),
+  [SyntaxKind.EnumDeclaration]: (node, context) => {
+    const result: Dictionary<unknown> = {};
+    for (const member of node.getMembers()) {
+      const initializer = member.getInitializer();
+      result[member.getName()] = initializer
+        ? staticEval(initializer, context)
+        : member.getValue();
+    }
+
+    return result;
+  },
   [SyntaxKind.ArrayLiteralExpression]: (node, context) => {
     const values: unknown[] = [];
     for (const value of node.getElements()) {

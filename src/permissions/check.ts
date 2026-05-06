@@ -5,6 +5,7 @@ import { EntityModel } from '../models/models';
 import { get, isRelation, isStoredInDatabase } from '../models/utils';
 import { AliasGenerator, getColumnName, hash, ors } from '../resolvers/utils';
 import { PermissionAction, PermissionLink, PermissionStack } from './generate';
+import { ScopesConfig, getScopeAnchorIdColumn, getScopeViewName } from './scopes';
 
 export const getRole = (ctx: Pick<FullContext, 'user'>) => ctx.user?.role ?? 'UNAUTHENTICATED';
 
@@ -32,7 +33,7 @@ export const getPermissionStack = (
 };
 
 export const applyPermissions = (
-  ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
+  ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex' | 'scopes'>,
   type: string,
   tableAlias: string,
   query: Knex.QueryBuilder,
@@ -67,9 +68,18 @@ export const applyPermissions = (
     return permissionStack;
   }
 
+  // Dedupe chains whose scope-shortcut emission would be identical. When
+  // many chains end at the same anchor with no suffix (e.g. multiple paths
+  // to a scoped model from `me` in a typical role config), each chain
+  // emits the same `EXISTS(SELECT 1 FROM <Anchor>Scope WHERE userId = $me
+  // AND … = $outer.id)` — Postgres evaluates each separately, paying the
+  // same cost N times. Collapsing to one representative chain trims the
+  // predicate without changing semantics.
+  const dedupedStack = ctx.scopes ? dedupeStackForScopes(permissionStack, ctx.scopes) : permissionStack;
+
   ors(
     query,
-    permissionStack.map(
+    dedupedStack.map(
       (links) => (query) =>
         query
           .whereNull(`${tableAlias}.id`)
@@ -86,6 +96,39 @@ export const applyPermissions = (
   );
 
   return permissionStack;
+};
+
+const dedupeStackForScopes = (stack: PermissionStack, scopes: ScopesConfig): PermissionStack => {
+  const seen = new Set<string>();
+  const result: PermissionStack = [];
+  for (const chain of stack) {
+    let latestAnchorIdx = -1;
+    if (chain[0]?.me) {
+      for (let i = chain.length - 1; i > 0; i--) {
+        if (chain[i].type in scopes) {
+          latestAnchorIdx = i;
+          break;
+        }
+      }
+    }
+    let signature: string;
+    if (latestAnchorIdx > 0) {
+      // Scope-shortcut path: signature is the anchor + the suffix (links
+      // after the anchor, which is what the EXISTS subquery actually joins
+      // through). Two chains with the same suffix produce identical SQL
+      // and can be collapsed.
+      signature = `scope:${chain[latestAnchorIdx].type}:${JSON.stringify(chain.slice(latestAnchorIdx + 1))}`;
+    } else {
+      // Non-scope chain: signature is the whole chain.
+      signature = `chain:${JSON.stringify(chain)}`;
+    }
+    if (!seen.has(signature)) {
+      seen.add(signature);
+      result.push(chain);
+    }
+  }
+
+  return result;
 };
 
 /**
@@ -234,13 +277,39 @@ export const checkCanWrite = async (
 };
 
 const permissionLinkQuery = (
-  ctx: Pick<FullContext, 'models' | 'user'>,
+  ctx: Pick<FullContext, 'models' | 'user'> & { scopes?: ScopesConfig },
   subQuery: Knex.QueryBuilder,
   links: PermissionLink[],
   id: Knex.RawBinding | Knex.ValueDict,
   tableAliasForDeleteRoot?: string,
 ) => {
   const aliases = new AliasGenerator();
+
+  // Scope-anchor short-circuit: if any link in the chain (after `me`) is a
+  // declared scope-anchor, replace the prefix from `me` up to and including
+  // the anchor with `FROM <Anchor>Scope WHERE userId = $me`. The view's
+  // pre-computed `(userId, anchorId)` pairs collapse the deep recursive
+  // delegation chain into a single hash-semi-join-friendly lookup.
+  //
+  // We pick the LATEST anchor in the chain (the one closest to the entity
+  // being permission-checked). This minimises the suffix that has to be
+  // joined post-scope-view, which is what Postgres evaluates per outer row.
+  const scopes = ctx.scopes;
+  if (scopes && links[0]?.me && ctx.user) {
+    let anchorIdx = -1;
+    for (let i = links.length - 1; i > 0; i--) {
+      if (links[i].type in scopes) {
+        anchorIdx = i;
+        break;
+      }
+    }
+    if (anchorIdx > 0) {
+      buildScopedQuery(ctx, subQuery, links, anchorIdx, id, tableAliasForDeleteRoot, aliases);
+
+      return;
+    }
+  }
+
   let alias = aliases.getShort();
   const { type, me, where } = links[0];
 
@@ -289,6 +358,78 @@ const permissionLinkQuery = (
       applyWhere(model, subQuery, subAlias, where, aliases);
     }
     alias = subAlias;
+  }
+
+  subQuery.whereRaw(`"${alias}".id = ?`, id);
+};
+
+/**
+ * Build the SQL body of a permission EXISTS subquery using a scope view
+ * to short-circuit the prefix [me, ..., anchor]. Continues iterating the
+ * tail [anchor+1, ..., entity] from the scope view's anchor-id column.
+ */
+const buildScopedQuery = (
+  ctx: Pick<FullContext, 'models' | 'user'>,
+  subQuery: Knex.QueryBuilder,
+  links: PermissionLink[],
+  anchorIdx: number,
+  id: Knex.RawBinding | Knex.ValueDict,
+  tableAliasForDeleteRoot: string | undefined,
+  aliases: AliasGenerator,
+) => {
+  const anchorType = links[anchorIdx].type;
+  const viewName = getScopeViewName(anchorType);
+  const anchorIdColumn = getScopeAnchorIdColumn(anchorType);
+
+  const scopeAlias = aliases.getShort();
+  subQuery.from(`${viewName} as ${scopeAlias}`);
+  subQuery.where({ [`${scopeAlias}.userId`]: ctx.user!.id });
+
+  // If the chain ends AT the anchor (we're permission-checking the anchor
+  // entity itself), no further joins needed.
+  if (anchorIdx === links.length - 1) {
+    subQuery.whereRaw(`"${scopeAlias}"."${anchorIdColumn}" = ?`, id);
+
+    return;
+  }
+
+  // Otherwise, iterate the tail. The first iteration uses the scope view's
+  // anchor-id column instead of `id`, since the view doesn't have an `id`
+  // column corresponding to the anchor.
+  let alias = scopeAlias;
+  let usingScopeView = true;
+  for (let i = anchorIdx + 1; i < links.length; i++) {
+    const { type, foreignKey, reverse, where } = links[i];
+    const model = ctx.models.getModel(type, 'entity');
+    const subAlias = aliases.getShort();
+    const sourceCol = usingScopeView ? anchorIdColumn : reverse ? foreignKey || 'id' : 'id';
+    if (reverse) {
+      subQuery.leftJoin(`${type} as ${subAlias}`, `${alias}.${sourceCol}`, `${subAlias}.id`);
+    } else {
+      subQuery.rightJoin(`${type} as ${subAlias}`, `${alias}.${sourceCol}`, `${subAlias}.${foreignKey || 'id'}`);
+    }
+
+    if (tableAliasForDeleteRoot) {
+      subQuery.where((query) =>
+        query
+          .where({ [`${subAlias}.deleted`]: false })
+          .orWhere((query) =>
+            query
+              .whereNotNull(`${subAlias}.deleteRootType`)
+              .whereNotNull(`${subAlias}.deleteRootId`)
+              .whereRaw(`??."deleteRootType" = ??."deleteRootType"`, [subAlias, tableAliasForDeleteRoot])
+              .whereRaw(`??."deleteRootId" = ??."deleteRootId"`, [subAlias, tableAliasForDeleteRoot]),
+          ),
+      );
+    } else {
+      subQuery.where({ [`${subAlias}.deleted`]: false });
+    }
+
+    if (where) {
+      applyWhere(model, subQuery, subAlias, where, aliases);
+    }
+    alias = subAlias;
+    usingScopeView = false;
   }
 
   subQuery.whereRaw(`"${alias}".id = ?`, id);
