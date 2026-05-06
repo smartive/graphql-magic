@@ -38,6 +38,15 @@ export const applyPermissions = (
   query: Knex.QueryBuilder,
   action: PermissionAction,
   verifiedPermissionStack?: PermissionStack,
+  // When the outer query is known to never carry soft-deleted rows of any
+  // model, the cascade-deletion OR-branch inside permission EXISTS
+  // subqueries is dead code: the outer row's `deleteRootType`/`deleteRootId`
+  // are NULL, so the correlated comparison `inner.deleteRootType =
+  // OUTER.deleteRootType` can never match. Skipping the OR keeps the EXISTS
+  // predicate uncorrelated, which lets Postgres hoist it into a hash
+  // semi-join instead of a nested loop. Big speed-up on deep permission
+  // chains over large tables.
+  outerNonDeleted?: boolean,
 ): boolean | PermissionStack => {
   const permissionStack = getPermissionStack(ctx, type, action);
 
@@ -79,7 +88,7 @@ export const applyPermissions = (
               subQuery,
               links,
               ctx.knex.raw(`"${tableAlias}".id`),
-              ['READ', 'RESTORE'].includes(action) ? tableAlias : undefined,
+              ['READ', 'RESTORE'].includes(action) && !outerNonDeleted ? tableAlias : undefined,
             ),
           ),
     ),

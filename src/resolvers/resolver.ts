@@ -84,7 +84,15 @@ const buildQuery = async (
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
 
   const joins: Joins = [];
-  await applyFilters(node, query, joins);
+  // applyFilters auto-enforces `where.deleted = false` on every deletable
+  // model it walks, unless the caller opted into `where: { deleted: true }`
+  // somewhere. Track that opt-in once for the whole query: if none, no row
+  // visited at the outer level can carry soft-deleted state, which makes
+  // the cascade-deletion OR-branch dead inside permission EXISTS subqueries.
+  // applyPermissions consumes `outerNonDeleted` to skip emitting that
+  // branch, keeping the EXISTS uncorrelated and hash-semi-join-friendly.
+  const optsInToDeleted = { value: false };
+  await applyFilters(node, query, joins, optsInToDeleted);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 
@@ -92,6 +100,8 @@ const buildQuery = async (
     [node.rootModel.name, node.rootTableAlias] satisfies [string, string],
     ...joins.map(({ table2Name, table2Alias }) => [table2Name, table2Alias] satisfies [string, string]),
   ];
+
+  const outerNonDeleted = !optsInToDeleted.value;
 
   const verifiedPermissionStacks: VerifiedPermissionStacks = {};
   for (const [table, alias] of tables) {
@@ -102,6 +112,7 @@ const buildQuery = async (
       query,
       'READ',
       parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
+      outerNonDeleted,
     );
 
     if (typeof verifiedPermissionStack !== 'boolean') {
