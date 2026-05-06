@@ -46,6 +46,21 @@ const DEFAULTS = {
       ensureFileExists(path, `export const functions: string[] = [];\n`);
     },
   },
+  scopesPath: {
+    // Optional file declaring permission scope-anchors (see ScopesConfig).
+    // The migration generator reads this to emit `CREATE MATERIALIZED VIEW`
+    // for each anchor. If the file does not exist, no scope views are
+    // managed.
+    defaultValue: 'src/config/permissions/scopes.ts',
+  },
+  permissionsConfigPath: {
+    // Optional file declaring `permissionsConfig: PermissionsConfig`. The
+    // migration generator reads this to derive scope-view SQL from the
+    // permission tree (one UNION clause per chain reaching the anchor).
+    // Required only if `scopesPath` is set and any anchor relies on auto-
+    // derivation (i.e. didn't provide an explicit `sql` body).
+    defaultValue: 'src/config/permissions/index.ts',
+  },
   generatedFolderPath: {
     question: 'What is the path for generated stuff?',
     defaultValue: 'src/generated',

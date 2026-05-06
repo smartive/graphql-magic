@@ -20,6 +20,14 @@ import {
   validateCheckConstraint,
   validateExcludeConstraint,
 } from '../models/utils';
+import { generatePermissions, PermissionsConfig } from '../permissions/generate';
+import {
+  ScopesConfig,
+  deriveScopeSourceTables,
+  deriveScopeViewSql,
+  getScopeAnchorIdColumn,
+  getScopeViewName,
+} from '../permissions/scopes';
 import { Value } from '../values';
 import { ParsedFunction } from './types';
 import {
@@ -54,6 +62,8 @@ export class MigrationGenerator {
     knex: Knex,
     private models: Models,
     private parsedFunctions?: ParsedFunction[],
+    private scopes?: ScopesConfig,
+    private permissionsConfig?: PermissionsConfig,
   ) {
     this.knex = knex;
     this.schema = SchemaInspector(knex);
@@ -540,6 +550,8 @@ export class MigrationGenerator {
       up,
     );
 
+    await this.handleScopes(up, down);
+
     writer.writeLine(`import { Knex } from 'knex';`);
     if (this.uuidUsed) {
       writer.writeLine(`import { randomUUID } from 'crypto';`);
@@ -560,6 +572,133 @@ export class MigrationGenerator {
     this.migration('down', down.reverse());
 
     return writer.toString();
+  }
+
+  /**
+   * Emit `CREATE MATERIALIZED VIEW "<Anchor>Scope"` migrations for declared
+   * scope-anchors. The SQL body comes from `scope.sql` if explicitly
+   * provided, or is auto-derived from the permissions tree (one UNION
+   * clause per role-chain that reaches the anchor model from `me`).
+   *
+   * Materialized (not plain) because plain views inline the UNION per
+   * outer row when used in a correlated EXISTS, which is dramatically
+   * slower than the original (un-shortcut) permission predicate. The
+   * materialized form gives Postgres a real table with statistics and
+   * indexes, so the EXISTS collapses to a hash semi-join lookup.
+   *
+   * Refresh: AFTER triggers on every source table fire at end of
+   * transaction (DEFERRABLE INITIALLY DEFERRED) and call REFRESH
+   * MATERIALIZED VIEW CONCURRENTLY. Within a transaction, an advisory
+   * xact_lock dedupes so REFRESH runs once even if many rows changed.
+   * Refresh runs inside the writer's commit, so commit latency grows by
+   * the cost of refresh — fine for small/medium scopes (ms-scale on tens
+   * of thousands of rows). Larger scopes can opt out with
+   * `refreshTriggers: false` and refresh externally.
+   *
+   * Source tables come from `scope.sourceTables` if explicitly provided,
+   * or are auto-derived from the permissions tree (every model traversed
+   * by any chain reaching the anchor).
+   *
+   * Emits only when the materialized view doesn't already exist. To
+   * regenerate, drop the materialized view first.
+   */
+  private async handleScopes(up: Callbacks, down: Callbacks) {
+    if (!this.scopes || Object.keys(this.scopes).length === 0) {
+      return;
+    }
+
+    const derivedPermissions = this.permissionsConfig ? generatePermissions(this.models, this.permissionsConfig) : undefined;
+
+    const matResult = await this.knex.raw(`SELECT matviewname FROM pg_matviews WHERE schemaname = 'public'`);
+    const existingMatViews = new Set<string>(
+      'rows' in matResult && Array.isArray((matResult as { rows: unknown }).rows)
+        ? (matResult as { rows: { matviewname: string }[] }).rows.map((r) => r.matviewname)
+        : [],
+    );
+
+    for (const [anchor, config] of Object.entries(this.scopes)) {
+      const viewName = getScopeViewName(anchor);
+      const anchorIdCol = getScopeAnchorIdColumn(anchor);
+
+      const sqlBody = config.sql
+        ? config.sql.trim()
+        : derivedPermissions
+          ? deriveScopeViewSql(this.models, derivedPermissions, anchor)
+          : null;
+
+      if (!sqlBody) {
+        // No SQL provided and no permissions config to derive from.
+        continue;
+      }
+
+      if (existingMatViews.has(viewName)) {
+        continue;
+      }
+
+      const refreshTriggers = config.refreshTriggers !== false;
+      const sourceTables =
+        config.sourceTables ?? (derivedPermissions ? deriveScopeSourceTables(derivedPermissions, anchor) : []);
+
+      this.needsMigration = true;
+      up.push(() => {
+        this.writer.writeLine(`await knex.raw(\`CREATE MATERIALIZED VIEW "${viewName}" AS`);
+        this.writer.writeLine(sqlBody);
+        this.writer.writeLine('`);');
+        this.writer.blankLine();
+        // Unique index serves both REFRESH MATERIALIZED VIEW CONCURRENTLY
+        // (which requires one) and per-userId lookups via the EXISTS short-
+        // circuit.
+        this.writer.writeLine(
+          `await knex.raw(\`CREATE UNIQUE INDEX "${viewName}_userId_${anchorIdCol}" ON "${viewName}" ("userId", "${anchorIdCol}")\`);`,
+        );
+        // Secondary index on the anchor-id column supports reverse lookups.
+        this.writer.writeLine(
+          `await knex.raw(\`CREATE INDEX "${viewName}_${anchorIdCol}" ON "${viewName}" ("${anchorIdCol}")\`);`,
+        );
+        this.writer.blankLine();
+
+        if (refreshTriggers && sourceTables.length > 0) {
+          // Refresh function: pg_try_advisory_xact_lock dedupes so REFRESH
+          // runs at most once per transaction even when the trigger fires
+          // for many rows. The lock auto-releases at txn end.
+          const fnName = `refresh_${viewName}`;
+          this.writer.writeLine(`await knex.raw(\`CREATE OR REPLACE FUNCTION "${fnName}"() RETURNS TRIGGER AS $$`);
+          this.writer.writeLine(`BEGIN`);
+          this.writer.writeLine(`  IF pg_try_advisory_xact_lock(hashtext('refresh:${viewName}')) THEN`);
+          this.writer.writeLine(`    REFRESH MATERIALIZED VIEW CONCURRENTLY "${viewName}";`);
+          this.writer.writeLine(`  END IF;`);
+          this.writer.writeLine(`  RETURN NULL;`);
+          this.writer.writeLine(`END;`);
+          this.writer.writeLine('$$ LANGUAGE plpgsql`);');
+          this.writer.blankLine();
+
+          for (const table of sourceTables) {
+            const triggerName = `${fnName}_on_${table}`;
+            // CONSTRAINT TRIGGER + DEFERRABLE INITIALLY DEFERRED fires
+            // once per row event at end of txn. Multiple fires per txn
+            // are dedup'd by the advisory lock above.
+            this.writer.writeLine(
+              `await knex.raw(\`CREATE CONSTRAINT TRIGGER "${triggerName}" AFTER INSERT OR UPDATE OR DELETE ON "${table}" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION "${fnName}"()\`);`,
+            );
+          }
+          this.writer.blankLine();
+        }
+      });
+
+      down.push(() => {
+        if (refreshTriggers && sourceTables.length > 0) {
+          const fnName = `refresh_${viewName}`;
+          for (const table of sourceTables) {
+            const triggerName = `${fnName}_on_${table}`;
+            this.writer.writeLine(`await knex.raw(\`DROP TRIGGER IF EXISTS "${triggerName}" ON "${table}"\`);`);
+          }
+          this.writer.writeLine(`await knex.raw(\`DROP FUNCTION IF EXISTS "${fnName}"()\`);`);
+          this.writer.blankLine();
+        }
+        this.writer.writeLine(`await knex.raw(\`DROP MATERIALIZED VIEW IF EXISTS "${viewName}"\`);`);
+        this.writer.blankLine();
+      });
+    }
   }
 
   private renameFields(tableName: string, fields: EntityField[], up: Callbacks, down: Callbacks) {
