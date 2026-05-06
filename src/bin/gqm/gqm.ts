@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+import { readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { program } from 'commander';
 import { config } from 'dotenv';
 import knex from 'knex';
-import { simpleGit } from 'simple-git';
 import {
   MigrationGenerator,
   generateDBModels,
@@ -40,6 +41,29 @@ export const gql = (chunks: TemplateStringsArray, ...variables: (string | number
   );
 };`;
 
+// Read the current branch by inspecting `.git/HEAD` directly, so the CLI does
+// not depend on the `git` binary being on PATH (or on a JS git wrapper).
+// Handles both regular checkouts (`.git/` is a directory) and linked worktrees
+// (`.git` is a file containing `gitdir: <path>`). Returns undefined on detached
+// HEAD, missing repo, or anything unparseable — the caller falls back to a
+// readline prompt.
+const readCurrentBranch = (): string | undefined => {
+  try {
+    let gitDir = '.git';
+    if (statSync(gitDir).isFile()) {
+      const pointer = readFileSync(gitDir, 'utf8').trim();
+      const match = /^gitdir:\s*(.+)$/.exec(pointer);
+      if (!match) return undefined;
+      gitDir = match[1];
+    }
+    const head = readFileSync(join(gitDir, 'HEAD'), 'utf8').trim();
+    const match = /^ref:\s*refs\/heads\/(.+)$/.exec(head);
+    return match ? match[1] : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 program.description('The graphql-magic cli.');
 
 program
@@ -64,10 +88,11 @@ program
   .command('generate-migration [<name>] [<date>]')
   .description('Generate Migration')
   .action(async (name, date) => {
-    const git = simpleGit();
-
     if (!name) {
-      name = (await git.branch()).current.split('/').pop();
+      const branch = readCurrentBranch();
+      if (branch) {
+        name = branch.split('/').pop();
+      }
     }
 
     if (!name || ['main', 'staging', 'production'].includes(name)) {
