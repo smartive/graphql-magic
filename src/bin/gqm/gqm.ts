@@ -2,7 +2,7 @@
 
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { program } from 'commander';
+import { parseArgs } from 'node:util';
 import { config } from 'dotenv';
 import knex from 'knex';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../..';
 import { generateFunctionsFromDatabase } from '../../migrations/generate-functions';
 import { updateFunctions } from '../../migrations/update-functions';
-import { DateLibrary } from '../../utils/dates';
+import type { DateLibrary } from '../../utils/dates';
 import { generateGraphqlApiTypes, generateGraphqlClientTypes } from './codegen';
 import { parseFunctionsFile } from './parse-functions';
 import { parseKnexfile } from './parse-knexfile';
@@ -64,118 +64,165 @@ const readCurrentBranch = (): string | undefined => {
   }
 };
 
-program.description('The graphql-magic cli.');
+type Command = {
+  description: string;
+  usage: string;
+  run: (positionals: string[]) => Promise<void>;
+};
 
-program
-  .command('generate')
-  .description('Generate all the things')
-  .action(async () => {
-    await getSetting('knexfilePath');
-    const models = await parseModels();
-    const generatedFolderPath = await getSetting('generatedFolderPath');
-    writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
-    writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models));
-    writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
-    const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
-    writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
-    writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
-    writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionTypes(models));
-    await generateGraphqlApiTypes(dateLibrary);
-    await generateGraphqlClientTypes();
-  });
-
-program
-  .command('generate-migration [<name>] [<date>]')
-  .description('Generate Migration')
-  .action(async (name, date) => {
-    if (!name) {
-      const branch = readCurrentBranch();
-      if (branch) {
-        name = branch.split('/').pop();
-      }
-    }
-
-    if (!name || ['main', 'staging', 'production'].includes(name)) {
-      name = await readLine('Migration name:');
-    }
-
-    const knexfile = await parseKnexfile();
-    const db = knex(knexfile);
-
-    try {
+const commands: Record<string, Command> = {
+  generate: {
+    description: 'Generate all the things',
+    usage: 'gqm generate',
+    run: async () => {
+      await getSetting('knexfilePath');
       const models = await parseModels();
-      const functionsPath = await getSetting('functionsPath');
-      const parsedFunctions = parseFunctionsFile(functionsPath);
-      const migrations = await new MigrationGenerator(db, models, parsedFunctions).generate();
+      const generatedFolderPath = await getSetting('generatedFolderPath');
+      writeToFile(`${generatedFolderPath}/schema.graphql`, printSchemaFromModels(models));
+      writeToFile(`${generatedFolderPath}/client/mutations.ts`, generateMutations(models));
+      writeToFile(`${generatedFolderPath}/client/gql.ts`, gqlTagTemplate);
+      const dateLibrary = (await getSetting('dateLibrary')) as DateLibrary;
+      writeToFile(`${generatedFolderPath}/db/index.ts`, generateDBModels(models, dateLibrary));
+      writeToFile(`${generatedFolderPath}/db/knex.ts`, generateKnexTables(models));
+      writeToFile(`${generatedFolderPath}/permissions.ts`, generatePermissionTypes(models));
+      await generateGraphqlApiTypes(dateLibrary);
+      await generateGraphqlClientTypes();
+    },
+  },
+  'generate-migration': {
+    description: 'Generate Migration',
+    usage: 'gqm generate-migration [<name>] [<date>]',
+    run: async (positionals) => {
+      let [name, date] = positionals;
 
-      writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
-    } finally {
-      await db.destroy();
-    }
-  });
-
-program
-  .command('check-needs-migration')
-  .description('Check if a migration is needed')
-  .action(async () => {
-    const knexfile = await parseKnexfile();
-    const db = knex(knexfile);
-
-    try {
-      const models = await parseModels();
-      const functionsPath = await getSetting('functionsPath');
-      const parsedFunctions = parseFunctionsFile(functionsPath);
-      const mg = new MigrationGenerator(db, models, parsedFunctions);
-      await mg.generate();
-
-      if (mg.needsMigration) {
-        console.error('Migration is needed.');
-        process.exit(1);
+      if (!name) {
+        name = readCurrentBranch()?.split('/').pop() ?? '';
       }
-    } finally {
-      await db.destroy();
-    }
-  });
 
-program
-  .command('generate-functions')
-  .description('Generate functions.ts file from database')
-  .action(async () => {
-    const knexfile = await parseKnexfile();
-    const db = knex(knexfile);
+      if (!name || ['main', 'staging', 'production'].includes(name)) {
+        name = await readLine('Migration name:');
+      }
 
-    try {
-      const functionsPath = await getSetting('functionsPath');
-      const functions = await generateFunctionsFromDatabase(db);
-      writeToFile(functionsPath, functions);
-    } finally {
-      await db.destroy();
-    }
-  });
+      const knexfile = await parseKnexfile();
+      const db = knex(knexfile);
 
-program
-  .command('update-functions')
-  .description('Update database functions from functions.ts file')
-  .action(async () => {
-    const knexfile = await parseKnexfile();
-    const db = knex(knexfile);
+      try {
+        const models = await parseModels();
+        const functionsPath = await getSetting('functionsPath');
+        const parsedFunctions = parseFunctionsFile(functionsPath);
+        const migrations = await new MigrationGenerator(db, models, parsedFunctions).generate();
 
-    try {
-      const functionsPath = await getSetting('functionsPath');
-      const parsedFunctions = parseFunctionsFile(functionsPath);
-      await updateFunctions(db, parsedFunctions);
-    } finally {
-      await db.destroy();
-    }
-  });
+        writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migrations);
+      } finally {
+        await db.destroy();
+      }
+    },
+  },
+  'check-needs-migration': {
+    description: 'Check if a migration is needed',
+    usage: 'gqm check-needs-migration',
+    run: async () => {
+      const knexfile = await parseKnexfile();
+      const db = knex(knexfile);
 
-program
-  .command('*')
-  .description('Invalid command')
-  .action((command) => {
-    console.error(`Invalid command: ${command}\nSee --help for a list of available commands.`);
+      try {
+        const models = await parseModels();
+        const functionsPath = await getSetting('functionsPath');
+        const parsedFunctions = parseFunctionsFile(functionsPath);
+        const mg = new MigrationGenerator(db, models, parsedFunctions);
+        await mg.generate();
+
+        if (mg.needsMigration) {
+          console.error('Migration is needed.');
+          process.exit(1);
+        }
+      } finally {
+        await db.destroy();
+      }
+    },
+  },
+  'generate-functions': {
+    description: 'Generate functions.ts file from database',
+    usage: 'gqm generate-functions',
+    run: async () => {
+      const knexfile = await parseKnexfile();
+      const db = knex(knexfile);
+
+      try {
+        const functionsPath = await getSetting('functionsPath');
+        const functions = await generateFunctionsFromDatabase(db);
+        writeToFile(functionsPath, functions);
+      } finally {
+        await db.destroy();
+      }
+    },
+  },
+  'update-functions': {
+    description: 'Update database functions from functions.ts file',
+    usage: 'gqm update-functions',
+    run: async () => {
+      const knexfile = await parseKnexfile();
+      const db = knex(knexfile);
+
+      try {
+        const functionsPath = await getSetting('functionsPath');
+        const parsedFunctions = parseFunctionsFile(functionsPath);
+        await updateFunctions(db, parsedFunctions);
+      } finally {
+        await db.destroy();
+      }
+    },
+  },
+};
+
+const printHelp = (): void => {
+  const names = Object.keys(commands);
+  const pad = Math.max(...names.map((name) => name.length)) + 2;
+  const lines = [
+    'The graphql-magic cli.',
+    '',
+    'Usage: gqm <command> [arguments]',
+    '',
+    'Commands:',
+    ...names.map((name) => `  ${name.padEnd(pad)}${commands[name].description}`),
+    '',
+    'Run `gqm <command> --help` for command details.',
+  ];
+  console.info(lines.join('\n'));
+};
+
+const printCommandHelp = (command: Command): void => {
+  console.info(`${command.description}\n\nUsage: ${command.usage}`);
+};
+
+const main = async (): Promise<void> => {
+  const [, , subcommand, ...rest] = process.argv;
+
+  if (!subcommand || subcommand === '--help' || subcommand === '-h') {
+    printHelp();
+    return;
+  }
+
+  const command = commands[subcommand];
+  if (!command) {
+    console.error(`Invalid command: ${subcommand}\nSee --help for a list of available commands.`);
     process.exit(1);
+  }
+
+  const { values, positionals } = parseArgs({
+    args: rest,
+    options: {
+      help: { type: 'boolean', short: 'h' },
+    },
+    allowPositionals: true,
   });
 
-// Parse the arguments
-program.parse(process.argv);
+  if (values.help) {
+    printCommandHelp(command);
+    return;
+  }
+
+  await command.run(positionals);
+};
+
+void main();

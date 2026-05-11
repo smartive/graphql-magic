@@ -51,7 +51,6 @@
     "@graphql-codegen/typescript-resolvers": "^5.1.5",
     "@types/node": "^25.0.9",
     "code-block-writer": "^13.0.3",
-    "commander": "^14.0.2",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "graphql": "^16.12.0",
