@@ -78,7 +78,7 @@
     "del-cli": "7.0.0",
     "esbuild": "0.27.3",
     "eslint": "9.39.4",
-    "jest": "30.4.1",
+    "jest": "30.4.2",
     "mock-knex": "0.4.13",
     "prettier": "3.8.3",
     "ts-jest": "29.4.9",
