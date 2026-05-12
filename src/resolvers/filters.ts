@@ -21,7 +21,17 @@ export type FilterNode = {
   tableAlias: string;
 };
 
-export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
+export const applyFilters = async (
+  node: FieldResolverNode,
+  query: Knex.QueryBuilder,
+  joins: Joins,
+  // Mutable holder set to `true` if any nested `where` in this query opts
+  // into `deleted: true`. Used by buildQuery to decide whether the cascade-
+  // deletion OR-branch is worth emitting inside permission EXISTS
+  // subqueries. Per-query (not per-model): one opt-in anywhere flips the
+  // flag for the whole query, which is conservative but trivially simple.
+  optsInToDeleted?: { value: boolean },
+) => {
   const normalizedArguments = normalizeArguments(node);
   // No need for default order by in aggregates
   if (!node.isAggregate) {
@@ -58,7 +68,7 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
   }
 
   const ops: QueryBuilderOps = [];
-  applyWhere(node, where, ops, joins);
+  applyWhere(node, where, ops, joins, optsInToDeleted);
   void apply(query, ops);
 
   if (search) {
@@ -66,7 +76,13 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
   }
 };
 
-const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
+const applyWhere = (
+  node: FilterNode,
+  where: Where | undefined,
+  ops: QueryBuilderOps,
+  joins: Joins,
+  optsInToDeleted?: { value: boolean },
+) => {
   if (node.model.deletable) {
     if (!where) {
       where = {};
@@ -74,6 +90,9 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
     if (where.deleted && (!Array.isArray(where.deleted) || where.deleted.some((v) => v))) {
       if (!getPermissionStack(node.ctx, node.model.name, 'DELETE')) {
         throw new ForbiddenError('You cannot access deleted entries.');
+      }
+      if (optsInToDeleted) {
+        optsInToDeleted.value = true;
       }
     } else {
       where.deleted = false;
@@ -91,14 +110,14 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
 
     if (key === 'NOT') {
       const subOps: QueryBuilderOps = [];
-      applyWhere(node, value as Where, subOps, joins);
+      applyWhere(node, value as Where, subOps, joins, optsInToDeleted);
       ops.push((query) => query.whereNot((subQuery) => apply(subQuery, subOps)));
       continue;
     }
 
     if (key === 'AND') {
       for (const subWhere of value as Where[]) {
-        applyWhere(node, subWhere, ops, joins);
+        applyWhere(node, subWhere, ops, joins, optsInToDeleted);
       }
       continue;
     }
@@ -107,7 +126,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
       const allSubOps: QueryBuilderOps[] = [];
       for (const subWhere of value as Where[]) {
         const subOps: QueryBuilderOps = [];
-        applyWhere(node, subWhere, subOps, joins);
+        applyWhere(node, subWhere, subOps, joins, optsInToDeleted);
         allSubOps.push(subOps);
       }
       ops.push((query) =>
@@ -137,7 +156,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         };
         const subOps: QueryBuilderOps = [];
         const subJoins: Joins = [];
-        applyWhere(subWhereNode, value as Where, subOps, subJoins);
+        applyWhere(subWhereNode, value as Where, subOps, subJoins, optsInToDeleted);
 
         // TODO: make this work with subtypes
         ops.push((query) =>
@@ -198,7 +217,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         tableAlias,
       };
       addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
-      applyWhere(subNode, value as Where, ops, joins);
+      applyWhere(subNode, value as Where, ops, joins, optsInToDeleted);
       continue;
     }
 
