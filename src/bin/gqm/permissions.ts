@@ -48,7 +48,7 @@ export const generatePermissionTypes = (models: Models) => {
     sourceFile.addStatements((writer) =>
       writer.write(`export type ${model.name}Permissions = `).inlineBlock(() => {
         for (const action of ACTIONS) {
-          writer.writeLine(`${action}?: true,`);
+          writer.writeLine(`${action}?: ${action === 'READ' ? 'boolean' : 'true'},`);
         }
         writer.writeLine(`WHERE?: ${model.name}Where,`);
         const relations = [...model.relations, ...model.reverseRelations];

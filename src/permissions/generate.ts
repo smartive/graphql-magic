@@ -10,7 +10,14 @@ export const ACTIONS: PermissionAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE'
  */
 export type PermissionsConfig = Record<string, true | Record<string, PermissionsBlock>>;
 
-export type PermissionsBlock = Partial<Record<PermissionAction, true>> & {
+export type PermissionsBlock = Partial<Record<Exclude<PermissionAction, 'READ'>, true>> & {
+  /**
+   * READ is implicit by default (any block emits a READ chain). Set `READ: false`
+   * on a block to opt out — useful when the same READ path is already covered by
+   * a flatter grant on the same role and the block exists only to declare
+   * mutation actions (UPDATE / DELETE / RESTORE / LINK / CREATE).
+   */
+  READ?: boolean;
   WHERE?: Record<string, any>;
   RELATIONS?: Record<string, PermissionsBlock>;
 };
@@ -53,7 +60,7 @@ export const generatePermissions = (models: Models, config: PermissionsConfig) =
       if (key !== 'me' && !('WHERE' in block)) {
         rolePermissions[type] = {};
         for (const action of ACTIONS) {
-          if (action === 'READ' || action in block) {
+          if (action === 'READ' ? block.READ !== false : action in block) {
             rolePermissions[type][action] = true;
           }
         }
@@ -82,7 +89,7 @@ const addPermissions = (models: Models, permissions: RolePermissions, links: Per
   const model = models.getModel(type, 'entity');
 
   for (const action of ACTIONS) {
-    if (action === 'READ' || action in block) {
+    if (action === 'READ' ? block.READ !== false : action in block) {
       if (!permissions[type]) {
         permissions[type] = {};
       }
