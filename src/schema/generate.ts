@@ -131,10 +131,36 @@ export const generateDefinitions = ({
             },
           ]),
         ),
-        input(
-          `${model.name}WhereUnique`,
-          model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
-        ),
+        input(`${model.name}WhereUnique`, [
+          ...model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
+          // Mandatory filters (filterable: { nonNull: true }) on simple/enum fields — required
+          // on WhereUnique queries too, so callers of `entity(where: { id })` can't bypass the
+          // cascade the plural query enforces.
+          ...model.fields
+            .filter(
+              ({ kind, filterable }) => typeof filterable === 'object' && filterable.nonNull === true && kind !== 'relation',
+            )
+            .map((field) => ({
+              name: field.name,
+              type: field.type,
+              list: true,
+              default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
+              nonNull: true,
+            })),
+          // Same intent for relation FKs marked mandatory-filterable: every singular lookup
+          // must nest the related model's Where, e.g.
+          //   `report(where: { id, relation: { status: [ACTIVE] } })`
+          // Marking a child model's relation FK as `filterable: { nonNull: true }` is what opts
+          // it into this enforcement — the related model's own nested mandatory filters then
+          // apply at the inner Where level.
+          ...model.relations
+            .filter(({ field: { filterable } }) => typeof filterable === 'object' && filterable.nonNull === true)
+            .map(({ name, targetModel }) => ({
+              name,
+              type: `${targetModel.name}Where`,
+              nonNull: true,
+            })),
+        ]),
         ...(model.fields.some(({ orderable }) => orderable)
           ? [
               input(
