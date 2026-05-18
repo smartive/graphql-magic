@@ -131,11 +131,18 @@ export const generateDefinitions = ({
             },
           ]),
         ),
-        input(`${model.name}WhereUnique`, [
+        input(
+          `${model.name}WhereUnique`,
+          model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
+        ),
+        // Singular-query lookup type: WhereUnique fields + mandatory filterables (and
+        // mandatory-filterable relation FKs), every one nonNull so callers of the singular
+        // `entity(where: …)` query can't bypass the cascade the plural `Where` enforces. The
+        // separate name keeps `WhereUnique` as the original simple identifier shape that
+        // mutations (create/update/delete/restore) continue to use without forcing them to
+        // route through the filter-enforcement layer.
+        input(`${model.name}WhereLookup`, [
           ...model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
-          // Mandatory filters (filterable: { nonNull: true }) on simple/enum fields — required
-          // on WhereUnique queries too, so callers of `entity(where: { id })` can't bypass the
-          // cascade the plural query enforces.
           ...model.fields
             .filter(
               ({ kind, filterable }) => typeof filterable === 'object' && filterable.nonNull === true && kind !== 'relation',
@@ -147,12 +154,6 @@ export const generateDefinitions = ({
               default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
               nonNull: true,
             })),
-          // Same intent for relation FKs marked mandatory-filterable: every singular lookup
-          // must nest the related model's Where, e.g.
-          //   `report(where: { id, relation: { status: [ACTIVE] } })`
-          // Marking a child model's relation FK as `filterable: { nonNull: true }` is what opts
-          // it into this enforcement — the related model's own nested mandatory filters then
-          // apply at the inner Where level.
           ...model.relations
             .filter(({ field: { filterable } }) => typeof filterable === 'object' && filterable.nonNull === true)
             .map(({ name, targetModel }) => ({
@@ -238,7 +239,7 @@ export const generateDefinitions = ({
           args: [
             {
               name: 'where',
-              type: `${name}WhereUnique`,
+              type: `${name}WhereLookup`,
               nonNull: true,
             },
           ],
