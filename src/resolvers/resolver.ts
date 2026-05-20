@@ -81,11 +81,13 @@ type VerifiedPermissionStacks = Record<string, PermissionStack>;
 const buildQuery = async (
   node: FieldResolverNode,
   parentVerifiedPermissionStacks?: VerifiedPermissionStacks,
-): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks }> => {
+): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks; paginated: boolean }> => {
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
+  const normalizedArguments = normalizeArguments(node);
+  const paginated = normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined;
 
   const joins: Joins = [];
-  await applyFilters(node, query, joins);
+  await applyFilters(node, query, joins, normalizedArguments);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 
@@ -110,7 +112,7 @@ const buildQuery = async (
     }
   }
 
-  return { query, verifiedPermissionStacks };
+  return { query, verifiedPermissionStacks, paginated };
 };
 
 const applySubQueries = async (
@@ -141,15 +143,13 @@ const applySubQueries = async (
     const isList = isListType(subNode.fieldDefinition.type);
     entries.forEach((entry) => (entry[fieldName] = isList ? [] : null));
     const foreignKey = subNode.foreignKey;
-    const { query, verifiedPermissionStacks } = await buildQuery(subNode, parentVerifiedPermissionStacks);
+    const { query, verifiedPermissionStacks, paginated } = await buildQuery(subNode, parentVerifiedPermissionStacks);
     const shortTableAlias = subNode.ctx.aliases.getShort(subNode.tableAlias);
     const shortResultAlias = subNode.ctx.aliases.getShort(subNode.resultAlias);
     const foreignKeyColumn = `${shortTableAlias}.${foreignKey}`;
-    const subArgs = normalizeArguments(subNode);
-    const needsPerParentPagination = subArgs.limit !== undefined || subArgs.offset !== undefined;
 
     let rawChildren: Record<string, Knex.Value>[];
-    if (!needsPerParentPagination) {
+    if (!paginated) {
       rawChildren = await query
         .select(`${foreignKeyColumn} as ${shortResultAlias}__${foreignKey}`)
         .whereIn(foreignKeyColumn, ids);
