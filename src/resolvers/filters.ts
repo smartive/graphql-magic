@@ -64,6 +64,8 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
   if (search) {
     void applySearch(node, search, query);
   }
+
+  return { paginated: normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined };
 };
 
 const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
