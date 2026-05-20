@@ -7,7 +7,6 @@ import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
-import { normalizeArguments } from './arguments';
 import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
@@ -83,11 +82,8 @@ const buildQuery = async (
   parentVerifiedPermissionStacks?: VerifiedPermissionStacks,
 ): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks; paginated: boolean }> => {
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
-  const normalizedArguments = normalizeArguments(node);
-  const paginated = normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined;
-
   const joins: Joins = [];
-  await applyFilters(node, query, joins, normalizedArguments);
+  const { paginated } = await applyFilters(node, query, joins);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 

@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { EntityModel, FullContext, getPermissionStack } from '..';
 import { ForbiddenError, UserInputError } from '../errors';
-import { NormalizedArguments, OrderBy, Where, normalizeArguments } from './arguments';
+import { OrderBy, Where, normalizeArguments } from './arguments';
 import { FieldResolverNode } from './node';
 import { Joins, QueryBuilderOps, addJoin, apply, applyJoins, getColumn, getColumnExpression, ors } from './utils';
 
@@ -21,12 +21,8 @@ export type FilterNode = {
   tableAlias: string;
 };
 
-export const applyFilters = async (
-  node: FieldResolverNode,
-  query: Knex.QueryBuilder,
-  joins: Joins,
-  normalizedArguments: NormalizedArguments = normalizeArguments(node),
-) => {
+export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
+  const normalizedArguments = normalizeArguments(node);
   // No need for default order by in aggregates
   if (!node.isAggregate) {
     if (!normalizedArguments.orderBy) {
@@ -68,6 +64,8 @@ export const applyFilters = async (
   if (search) {
     void applySearch(node, search, query);
   }
+
+  return { paginated: normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined };
 };
 
 const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
