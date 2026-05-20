@@ -7,6 +7,7 @@ import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
+import { normalizeArguments } from './arguments';
 import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
@@ -143,16 +144,25 @@ const applySubQueries = async (
     const { query, verifiedPermissionStacks } = await buildQuery(subNode, parentVerifiedPermissionStacks);
     const shortTableAlias = subNode.ctx.aliases.getShort(subNode.tableAlias);
     const shortResultAlias = subNode.ctx.aliases.getShort(subNode.resultAlias);
-    const queries = ids.map((id) =>
-      query
-        .clone()
-        .select(`${shortTableAlias}.${foreignKey} as ${shortResultAlias}__${foreignKey}`)
-        .where({ [`${shortTableAlias}.${foreignKey}`]: id }),
-    );
+    const foreignKeyColumn = `${shortTableAlias}.${foreignKey}`;
+    const subArgs = normalizeArguments(subNode);
+    const needsPerParentPagination = subArgs.limit !== undefined || subArgs.offset !== undefined;
 
-    // TODO: make unionAll faster then promise.all...
-    // const rawChildren = await node.ctx.knex.queryBuilder().unionAll(queries, true);
-    const rawChildren = (await Promise.all(queries)).flat();
+    let rawChildren: Record<string, Knex.Value>[];
+    if (!needsPerParentPagination) {
+      rawChildren = await query
+        .select(`${foreignKeyColumn} as ${shortResultAlias}__${foreignKey}`)
+        .whereIn(foreignKeyColumn, ids);
+    } else {
+      rawChildren = [];
+      for (const id of ids) {
+        const rows = await query
+          .clone()
+          .select(`${foreignKeyColumn} as ${shortResultAlias}__${foreignKey}`)
+          .where({ [foreignKeyColumn]: id });
+        rawChildren.push(...rows);
+      }
+    }
     const children = hydrate(subNode, rawChildren);
 
     for (const child of children) {
