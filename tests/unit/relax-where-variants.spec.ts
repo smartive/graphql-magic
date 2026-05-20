@@ -82,10 +82,59 @@ describe('relaxed Where variants (From<F><X>Where)', () => {
       expect(lookup).toContain('parent: BWhere!');
     });
 
-    it('SubWhere stays as-is: AWhereLookup unchanged, ASubWhere _SOME/_NONE still references base BWhere', () => {
+    it('ASubWhere relaxes the relation FK to nullable (boolean composition; outer cascade already enforces it)', () => {
       const schema = buildSchema(definitions);
       const aSubWhere = blockOf(schema, 'input ASubWhere');
-      expect(aSubWhere).toContain('parent: BWhere!');
+      expect(aSubWhere).toContain('parent: BWhere');
+      expect(aSubWhere).not.toContain('parent: BWhere!');
+    });
+  });
+
+  describe('regression: OR branches do not re-require the mandatory cascade', () => {
+    // Reproduces the client-project case: outer XWhere requires `goal: GoalWhere!` (because
+    // `goal` is filterable.nonNull on GoalsHistoryEntry), but each OR branch should NOT
+    // also be forced to repeat `goal:` — the cascade is enforced once at the outer level.
+    const definitions: ModelDefinitions = [
+      {
+        kind: 'entity',
+        name: 'Goal',
+        queriable: true,
+        listQueriable: true,
+        fields: [],
+      },
+      {
+        kind: 'entity',
+        name: 'GoalsHistoryEntry',
+        queriable: true,
+        listQueriable: true,
+        fields: [
+          {
+            name: 'goal',
+            kind: 'relation',
+            type: 'Goal',
+            filterable: { nonNull: true },
+          },
+          {
+            name: 'endDate',
+            type: 'DateTime',
+            filterable: true,
+            comparable: true,
+          },
+        ],
+      },
+    ];
+
+    it('GoalsHistoryEntrySubWhere has goal nullable so OR branches can omit it', () => {
+      const schema = buildSchema(definitions);
+      const subWhere = blockOf(schema, 'input GoalsHistoryEntrySubWhere');
+      expect(subWhere).toContain('goal: GoalWhere');
+      expect(subWhere).not.toContain('goal: GoalWhere!');
+    });
+
+    it('outer GoalsHistoryEntryWhere still requires goal (cascade enforced once)', () => {
+      const schema = buildSchema(definitions);
+      const where = blockOf(schema, 'input GoalsHistoryEntryWhere');
+      expect(where).toContain('goal: GoalWhere!');
     });
   });
 

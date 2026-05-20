@@ -68,7 +68,10 @@ const buildWhereFields = (
     .map(({ name, targetModel, field }) => ({
       name,
       type: `${targetModel.name}Where`,
-      nonNull: name === exemptedFieldName ? false : isMandatoryFilterable(field),
+      // SubWhere is boolean composition: the mandatory cascade is enforced once at the outer
+      // XWhere; repeating the same filter in every OR/AND branch would be pure noise. Mirrors
+      // the scalar/enum SubWhere behavior on line above.
+      nonNull: isSubWhere || name === exemptedFieldName ? false : isMandatoryFilterable(field),
     })),
   ...model.reverseRelations
     .filter(({ field: { reverseFilterable } }) => reverseFilterable)
