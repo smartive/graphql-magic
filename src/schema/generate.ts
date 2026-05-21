@@ -1,5 +1,6 @@
 import { DefinitionNode, DocumentNode, GraphQLSchema, buildASTSchema, print } from 'graphql';
-import { Models } from '../models/models';
+import upperFirst from 'lodash/upperFirst';
+import { EntityField, EntityModel, Models } from '../models/models';
 import {
   and,
   getAggregateFieldDefinitions,
@@ -11,6 +12,85 @@ import {
   typeToField,
 } from '../models/utils';
 import { Field, document, enm, iface, input, object, scalar, union } from './utils';
+
+const isMandatoryFilterable = (field: Pick<EntityField, 'filterable'>): boolean =>
+  typeof field.filterable === 'object' && field.filterable !== null && field.filterable.nonNull === true;
+
+const mandatoryFilterableRelationFields = (model: EntityModel) =>
+  model.relations.filter(({ field }) => isMandatoryFilterable(field));
+
+const hasAnyMandatoryFilterableField = (model: EntityModel, exemptedFieldName?: string) =>
+  model.fields.some((field) => field.name !== exemptedFieldName && isMandatoryFilterable(field));
+
+const variantWhereName = (model: EntityModel, exemptedFieldName: string) =>
+  `From${upperFirst(exemptedFieldName)}${model.name}Where`;
+
+const pickWhereVariant = (targetModel: EntityModel, exemptedFieldName?: string): { typeName: string; nonNull: boolean } => {
+  if (exemptedFieldName) {
+    const exempted = targetModel.fieldsByName[exemptedFieldName];
+    if (exempted && isMandatoryFilterable(exempted)) {
+      return {
+        typeName: variantWhereName(targetModel, exemptedFieldName),
+        nonNull: hasAnyMandatoryFilterableField(targetModel, exemptedFieldName),
+      };
+    }
+  }
+
+  return {
+    typeName: `${targetModel.name}Where`,
+    nonNull: hasAnyMandatoryFilterableField(targetModel),
+  };
+};
+
+const buildWhereFields = (
+  model: EntityModel,
+  { isSubWhere = false, exemptedFieldName }: { isSubWhere?: boolean; exemptedFieldName?: string } = {},
+): Field[] => [
+  ...model.fields
+    .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
+    .map((field) => ({
+      name: field.name,
+      type: field.type,
+      list: true,
+      default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
+      nonNull: isSubWhere ? false : isMandatoryFilterable(field),
+    })),
+  ...model.fields
+    .filter(({ comparable }) => comparable)
+    .flatMap((field) => [
+      { name: `${field.name}_GT`, type: field.type },
+      { name: `${field.name}_GTE`, type: field.type },
+      { name: `${field.name}_LT`, type: field.type },
+      { name: `${field.name}_LTE`, type: field.type },
+    ]),
+  ...model.relations
+    .filter(({ field: { filterable } }) => filterable)
+    .map(({ name, targetModel, field }) => ({
+      name,
+      type: `${targetModel.name}Where`,
+      // SubWhere is boolean composition: the mandatory cascade is enforced once at the outer
+      // XWhere; repeating the same filter in every OR/AND branch would be pure noise. Mirrors
+      // the scalar/enum SubWhere behavior on line above.
+      nonNull: isSubWhere || name === exemptedFieldName ? false : isMandatoryFilterable(field),
+    })),
+  ...model.reverseRelations
+    .filter(({ field: { reverseFilterable } }) => reverseFilterable)
+    .flatMap((relation) => {
+      // _SOME / _NONE implies each matched target satisfies target.<backref> = (some parent),
+      // so the backref field on the target is implicitly constrained — use the relaxed variant.
+      // Position semantics are identical whether reached through XWhere directly or via
+      // AND/OR/NOT through XSubWhere, so the exemption applies in both.
+      const { typeName } = pickWhereVariant(relation.targetModel, relation.field.name);
+
+      return [
+        { name: `${relation.name}_SOME`, type: typeName },
+        { name: `${relation.name}_NONE`, type: typeName },
+      ];
+    }),
+  { name: 'NOT', type: `${model.name}SubWhere` },
+  { name: 'AND', type: `${model.name}SubWhere`, list: true },
+  { name: 'OR', type: `${model.name}SubWhere`, list: true },
+];
 
 export const generateDefinitions = ({
   scalars,
@@ -53,83 +133,39 @@ export const generateDefinitions = ({
               args: [...(field.args || [])],
               directives: field.directives,
             })),
-            ...model.reverseRelations.map(({ name, field, targetModel }) => ({
-              name,
-              type: targetModel.name,
-              list: !field.toOne,
-              nonNull: !field.toOne,
-              args: [
-                {
-                  name: 'where',
-                  type: `${targetModel.name}Where`,
-                  nonNull: targetModel.fields.some(
-                    ({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true,
-                  ),
-                },
-                ...(targetModel.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
-                ...(targetModel.fields.some(({ orderable }) => orderable)
-                  ? [{ name: 'orderBy', type: `${targetModel.name}OrderBy`, list: true }]
-                  : []),
-                { name: 'limit', type: 'Int' },
-                { name: 'offset', type: 'Int' },
-              ],
-            })),
+            ...model.reverseRelations.map(({ name, field, targetModel }) => {
+              const variant = pickWhereVariant(targetModel, field.name);
+
+              return {
+                name,
+                type: targetModel.name,
+                list: !field.toOne,
+                nonNull: !field.toOne,
+                args: [
+                  {
+                    name: 'where',
+                    type: variant.typeName,
+                    nonNull: variant.nonNull,
+                  },
+                  ...(targetModel.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
+                  ...(targetModel.fields.some(({ orderable }) => orderable)
+                    ? [{ name: 'orderBy', type: `${targetModel.name}OrderBy`, list: true }]
+                    : []),
+                  { name: 'limit', type: 'Int' },
+                  { name: 'offset', type: 'Int' },
+                ],
+              };
+            }),
           ],
           [...(model.parent ? [model.parent] : []), ...(model.interfaces || [])],
         ),
-        ...[false, true].map((isSubWhere) =>
-          input(`${model.name}${isSubWhere ? 'Sub' : ''}Where`, [
-            ...model.fields
-              .filter(({ kind, unique, filterable }) => (unique || filterable) && kind !== 'relation')
-              .map((field) => ({
-                name: field.name,
-                type: field.type,
-                list: true,
-                default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
-                nonNull: isSubWhere ? false : typeof field.filterable === 'object' && field.filterable.nonNull === true,
-              })),
-            ...model.fields
-              .filter(({ comparable }) => comparable)
-              .flatMap((field) => [
-                { name: `${field.name}_GT`, type: field.type },
-                { name: `${field.name}_GTE`, type: field.type },
-                { name: `${field.name}_LT`, type: field.type },
-                { name: `${field.name}_LTE`, type: field.type },
-              ]),
-            ...model.relations
-              .filter(({ field: { filterable } }) => filterable)
-              .map(({ name, targetModel, field }) => ({
-                name,
-                type: `${targetModel.name}Where`,
-                nonNull: typeof field.filterable === 'object' && field.filterable.nonNull === true,
-              })),
-            ...model.reverseRelations
-              .filter(({ field: { reverseFilterable } }) => reverseFilterable)
-              .flatMap((relation) => [
-                {
-                  name: `${relation.name}_SOME`,
-                  type: `${relation.targetModel.name}Where`,
-                },
-                {
-                  name: `${relation.name}_NONE`,
-                  type: `${relation.targetModel.name}Where`,
-                },
-              ]),
-            {
-              name: 'NOT',
-              type: `${model.name}SubWhere`,
-            },
-            {
-              name: 'AND',
-              type: `${model.name}SubWhere`,
-              list: true,
-            },
-            {
-              name: 'OR',
-              type: `${model.name}SubWhere`,
-              list: true,
-            },
-          ]),
+        input(`${model.name}Where`, buildWhereFields(model)),
+        input(`${model.name}SubWhere`, buildWhereFields(model, { isSubWhere: true })),
+        // Relaxed variants: one per forward-relation field on `model` with `filterable.nonNull === true`.
+        // Used at nested positions (reverse-relation arg, _SOME / _NONE) where stepping through a
+        // specific edge implicitly constrains that one forward-relation field on the target.
+        ...mandatoryFilterableRelationFields(model).map(({ field }) =>
+          input(variantWhereName(model, field.name), buildWhereFields(model, { exemptedFieldName: field.name })),
         ),
         input(
           `${model.name}WhereUnique`,
@@ -144,9 +180,7 @@ export const generateDefinitions = ({
         input(`${model.name}WhereLookup`, [
           ...model.fields.filter(({ unique }) => unique).map((field) => ({ name: field.name, type: field.type })),
           ...model.fields
-            .filter(
-              ({ kind, filterable }) => typeof filterable === 'object' && filterable.nonNull === true && kind !== 'relation',
-            )
+            .filter(({ kind, filterable }) => isMandatoryFilterable({ filterable }) && kind !== 'relation')
             .map((field) => ({
               name: field.name,
               type: field.type,
@@ -155,7 +189,7 @@ export const generateDefinitions = ({
               nonNull: true,
             })),
           ...model.relations
-            .filter(({ field: { filterable } }) => typeof filterable === 'object' && filterable.nonNull === true)
+            .filter(({ field }) => isMandatoryFilterable(field))
             .map(({ name, targetModel }) => ({
               name,
               type: `${targetModel.name}Where`,
@@ -255,7 +289,7 @@ export const generateDefinitions = ({
             {
               name: 'where',
               type: `${model.name}Where`,
-              nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
+              nonNull: hasAnyMandatoryFilterableField(model),
             },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             ...(model.fields.some(({ orderable }) => orderable)
@@ -276,7 +310,7 @@ export const generateDefinitions = ({
             {
               name: 'where',
               type: `${model.name}Where`,
-              nonNull: model.fields.some(({ filterable }) => typeof filterable === 'object' && filterable.nonNull === true),
+              nonNull: hasAnyMandatoryFilterableField(model),
             },
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
           ],
