@@ -346,6 +346,23 @@ describe('MigrationGenerator exclude constraints', () => {
   });
 });
 
+describe('MigrationGenerator constraint name length', () => {
+  it('throws when generated constraint name exceeds PostgreSQL identifier limit', async () => {
+    const models = createProductModels([
+      {
+        kind: 'check',
+        name: 'a'.repeat(50),
+        expression: '"score" >= 0',
+      },
+    ]);
+    const generator = createGenerator([], models);
+
+    await expect(generator.generate()).rejects.toThrow(
+      /Generated constraint name "Product_.*_check_0" \(6\d characters\) exceeds PostgreSQL's maximum identifier length of 63 characters/,
+    );
+  });
+});
+
 describe('MigrationGenerator constraint_trigger validation', () => {
   const triggerModels = new Models([
     {
