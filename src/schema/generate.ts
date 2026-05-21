@@ -78,14 +78,13 @@ const buildWhereFields = (
     .flatMap((relation) => {
       // _SOME / _NONE implies each matched target satisfies target.<backref> = (some parent),
       // so the backref field on the target is implicitly constrained — use the relaxed variant.
-      // SubWhere stays as-is (spec: XSubWhere is orthogonal to the new logic).
-      const type = isSubWhere
-        ? `${relation.targetModel.name}Where`
-        : pickWhereVariant(relation.targetModel, relation.field.name).typeName;
+      // Position semantics are identical whether reached through XWhere directly or via
+      // AND/OR/NOT through XSubWhere, so the exemption applies in both.
+      const { typeName } = pickWhereVariant(relation.targetModel, relation.field.name);
 
       return [
-        { name: `${relation.name}_SOME`, type },
-        { name: `${relation.name}_NONE`, type },
+        { name: `${relation.name}_SOME`, type: typeName },
+        { name: `${relation.name}_NONE`, type: typeName },
       ];
     }),
   { name: 'NOT', type: `${model.name}SubWhere` },

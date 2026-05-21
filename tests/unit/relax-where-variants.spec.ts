@@ -64,6 +64,13 @@ describe('relaxed Where variants (From<F><X>Where)', () => {
       expect(bWhere).toContain('as_NONE: FromParentAWhere');
     });
 
+    it('BSubWhere._SOME and _NONE also reference FromParentAWhere (symmetric implicit constraint)', () => {
+      const schema = buildSchema(definitions);
+      const bSubWhere = blockOf(schema, 'input BSubWhere');
+      expect(bSubWhere).toContain('as_SOME: FromParentAWhere');
+      expect(bSubWhere).toContain('as_NONE: FromParentAWhere');
+    });
+
     it('base AWhere keeps parent as nonNull', () => {
       const schema = buildSchema(definitions);
       const aWhere = blockOf(schema, 'input AWhere');
