@@ -873,8 +873,17 @@ export class MigrationGenerator {
     this.writer.writeLine(`table.renameColumn('${from}', '${to}');`);
   }
 
+  private static readonly POSTGRES_MAX_IDENTIFIER_LENGTH = 63;
+
   private getConstraintName(model: EntityModel, entry: { kind: string; name: string }, index: number): string {
-    return `${model.name}_${entry.name}_${entry.kind}_${index}`;
+    const name = `${model.name}_${entry.name}_${entry.kind}_${index}`;
+    if (name.length > MigrationGenerator.POSTGRES_MAX_IDENTIFIER_LENGTH) {
+      throw new Error(
+        `Generated constraint name "${name}" (${name.length} characters) exceeds PostgreSQL's maximum identifier length of ${MigrationGenerator.POSTGRES_MAX_IDENTIFIER_LENGTH} characters. Shorten the constraint name "${entry.name}" on model "${model.name}" (pattern: {table}_{constraintName}_{kind}_{index}).`,
+      );
+    }
+
+    return name;
   }
 
   private static readonly SQL_KEYWORDS = new Set([
