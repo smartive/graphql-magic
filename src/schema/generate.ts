@@ -42,6 +42,9 @@ const pickWhereVariant = (targetModel: EntityModel, exemptedFieldName?: string):
   };
 };
 
+const deletedArg = (model: EntityModel): Field[] =>
+  model.deletable ? [{ name: 'deleted', type: 'Boolean', defaultValue: false }] : [];
+
 const buildWhereFields = (
   model: EntityModel,
   { isSubWhere = false, exemptedFieldName }: { isSubWhere?: boolean; exemptedFieldName?: string } = {},
@@ -147,6 +150,7 @@ export const generateDefinitions = ({
                     type: variant.typeName,
                     nonNull: variant.nonNull,
                   },
+                  ...deletedArg(targetModel),
                   ...(targetModel.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
                   ...(targetModel.fields.some(({ orderable }) => orderable)
                     ? [{ name: 'orderBy', type: `${targetModel.name}OrderBy`, list: true }]
@@ -266,16 +270,17 @@ export const generateDefinitions = ({
       },
       ...entities
         .filter(({ queriable }) => queriable)
-        .map(({ name }) => ({
-          name: typeToField(name),
-          type: name,
+        .map((model) => ({
+          name: typeToField(model.name),
+          type: model.name,
           nonNull: true,
           args: [
             {
               name: 'where',
-              type: `${name}WhereLookup`,
+              type: `${model.name}WhereLookup`,
               nonNull: true,
             },
+            ...deletedArg(model),
           ],
         })),
       ...entities
@@ -291,6 +296,7 @@ export const generateDefinitions = ({
               type: `${model.name}Where`,
               nonNull: hasAnyMandatoryFilterableField(model),
             },
+            ...deletedArg(model),
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
             ...(model.fields.some(({ orderable }) => orderable)
               ? [{ name: 'orderBy', type: `${model.name}OrderBy`, list: true }]
@@ -312,6 +318,7 @@ export const generateDefinitions = ({
               type: `${model.name}Where`,
               nonNull: hasAnyMandatoryFilterableField(model),
             },
+            ...deletedArg(model),
             ...(model.fields.some(({ searchable }) => searchable) ? [{ name: 'search', type: 'String' }] : []),
           ],
         })),

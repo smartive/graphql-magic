@@ -38,6 +38,7 @@ export const applyPermissions = (
   query: Knex.QueryBuilder,
   action: PermissionAction,
   verifiedPermissionStack?: PermissionStack,
+  includesDeletedRows?: boolean,
 ): boolean | PermissionStack => {
   const permissionStack = getPermissionStack(ctx, type, action);
 
@@ -79,7 +80,7 @@ export const applyPermissions = (
               subQuery,
               links,
               ctx.knex.raw(`"${tableAlias}".id`),
-              ['READ', 'RESTORE'].includes(action) ? tableAlias : undefined,
+              ['READ', 'RESTORE'].includes(action) && includesDeletedRows ? tableAlias : undefined,
             ),
           ),
     ),

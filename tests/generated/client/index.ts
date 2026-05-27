@@ -33,6 +33,7 @@ export type AnotherObject = {
 
 
 export type AnotherObjectmanyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -42,6 +43,7 @@ export type AnotherObjectmanyObjectsArgs = {
 
 
 export type AnotherObjectselfArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -57,7 +59,6 @@ export type AnotherObjectSubWhere = {
   AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
   NOT?: InputMaybe<AnotherObjectSubWhere>;
   OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
   manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
@@ -67,10 +68,13 @@ export type AnotherObjectWhere = {
   AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
   NOT?: InputMaybe<AnotherObjectSubWhere>;
   OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
   manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
+};
+
+export type AnotherObjectWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AnotherObjectWhereUnique = {
@@ -99,6 +103,7 @@ export type Answer = Reaction & {
 
 
 export type AnswerchildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -107,6 +112,7 @@ export type AnswerchildAnswersArgs = {
 
 
 export type AnswerchildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -115,6 +121,7 @@ export type AnswerchildQuestionsArgs = {
 
 
 export type AnswerchildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -123,6 +130,7 @@ export type AnswerchildReactionsArgs = {
 
 
 export type AnswerchildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -139,7 +147,6 @@ export type AnswerSubWhere = {
   AND?: InputMaybe<Array<AnswerSubWhere>>;
   NOT?: InputMaybe<AnswerSubWhere>;
   OR?: InputMaybe<Array<AnswerSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -147,8 +154,11 @@ export type AnswerWhere = {
   AND?: InputMaybe<Array<AnswerSubWhere>>;
   NOT?: InputMaybe<AnswerSubWhere>;
   OR?: InputMaybe<Array<AnswerSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type AnswerWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AnswerWhereUnique = {
@@ -326,6 +336,7 @@ export type Query = {
 
 
 export type QueryanotherObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -334,11 +345,13 @@ export type QueryanotherObjectsArgs = {
 
 
 export type QueryanswerArgs = {
-  where: AnswerWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: AnswerWhereLookup;
 };
 
 
 export type QueryanswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -347,6 +360,7 @@ export type QueryanswersArgs = {
 
 
 export type QuerymanyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -356,11 +370,13 @@ export type QuerymanyObjectsArgs = {
 
 
 export type QueryquestionArgs = {
-  where: QuestionWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: QuestionWhereLookup;
 };
 
 
 export type QueryquestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -369,11 +385,13 @@ export type QueryquestionsArgs = {
 
 
 export type QueryreactionArgs = {
-  where: ReactionWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: ReactionWhereLookup;
 };
 
 
 export type QueryreactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -382,11 +400,13 @@ export type QueryreactionsArgs = {
 
 
 export type QueryreviewArgs = {
-  where: ReviewWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: ReviewWhereLookup;
 };
 
 
 export type QueryreviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -395,7 +415,8 @@ export type QueryreviewsArgs = {
 
 
 export type QuerysomeObjectArgs = {
-  where: SomeObjectWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: SomeObjectWhereLookup;
 };
 
 export type Question = Reaction & {
@@ -420,6 +441,7 @@ export type Question = Reaction & {
 
 
 export type QuestionchildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -428,6 +450,7 @@ export type QuestionchildAnswersArgs = {
 
 
 export type QuestionchildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -436,6 +459,7 @@ export type QuestionchildQuestionsArgs = {
 
 
 export type QuestionchildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -444,6 +468,7 @@ export type QuestionchildReactionsArgs = {
 
 
 export type QuestionchildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -460,7 +485,6 @@ export type QuestionSubWhere = {
   AND?: InputMaybe<Array<QuestionSubWhere>>;
   NOT?: InputMaybe<QuestionSubWhere>;
   OR?: InputMaybe<Array<QuestionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -468,8 +492,11 @@ export type QuestionWhere = {
   AND?: InputMaybe<Array<QuestionSubWhere>>;
   NOT?: InputMaybe<QuestionSubWhere>;
   OR?: InputMaybe<Array<QuestionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type QuestionWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type QuestionWhereUnique = {
@@ -498,6 +525,7 @@ export type Reaction = {
 
 
 export type ReactionchildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -506,6 +534,7 @@ export type ReactionchildAnswersArgs = {
 
 
 export type ReactionchildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -514,6 +543,7 @@ export type ReactionchildQuestionsArgs = {
 
 
 export type ReactionchildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -522,6 +552,7 @@ export type ReactionchildReactionsArgs = {
 
 
 export type ReactionchildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -538,7 +569,6 @@ export type ReactionSubWhere = {
   AND?: InputMaybe<Array<ReactionSubWhere>>;
   NOT?: InputMaybe<ReactionSubWhere>;
   OR?: InputMaybe<Array<ReactionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -552,8 +582,11 @@ export type ReactionWhere = {
   AND?: InputMaybe<Array<ReactionSubWhere>>;
   NOT?: InputMaybe<ReactionSubWhere>;
   OR?: InputMaybe<Array<ReactionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type ReactionWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ReactionWhereUnique = {
@@ -583,6 +616,7 @@ export type Review = Reaction & {
 
 
 export type ReviewchildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -591,6 +625,7 @@ export type ReviewchildAnswersArgs = {
 
 
 export type ReviewchildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -599,6 +634,7 @@ export type ReviewchildQuestionsArgs = {
 
 
 export type ReviewchildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -607,6 +643,7 @@ export type ReviewchildReactionsArgs = {
 
 
 export type ReviewchildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -623,7 +660,6 @@ export type ReviewSubWhere = {
   AND?: InputMaybe<Array<ReviewSubWhere>>;
   NOT?: InputMaybe<ReviewSubWhere>;
   OR?: InputMaybe<Array<ReviewSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
   rating_GTE?: InputMaybe<Scalars['Float']['input']>;
@@ -635,12 +671,15 @@ export type ReviewWhere = {
   AND?: InputMaybe<Array<ReviewSubWhere>>;
   NOT?: InputMaybe<ReviewSubWhere>;
   OR?: InputMaybe<Array<ReviewSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
   rating_GTE?: InputMaybe<Scalars['Float']['input']>;
   rating_LT?: InputMaybe<Scalars['Float']['input']>;
   rating_LTE?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type ReviewWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ReviewWhereUnique = {
@@ -694,7 +733,6 @@ export type SomeObjectSubWhere = {
   NOT?: InputMaybe<SomeObjectSubWhere>;
   OR?: InputMaybe<Array<SomeObjectSubWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -706,11 +744,14 @@ export type SomeObjectWhere = {
   NOT?: InputMaybe<SomeObjectSubWhere>;
   OR?: InputMaybe<Array<SomeObjectSubWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+export type SomeObjectWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SomeObjectWhereUnique = {
@@ -764,6 +805,7 @@ export type User = {
 
 
 export type UsercreatedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -772,6 +814,7 @@ export type UsercreatedAnswersArgs = {
 
 
 export type UsercreatedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -781,6 +824,7 @@ export type UsercreatedManyObjectsArgs = {
 
 
 export type UsercreatedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -789,6 +833,7 @@ export type UsercreatedQuestionsArgs = {
 
 
 export type UsercreatedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -797,6 +842,7 @@ export type UsercreatedReactionsArgs = {
 
 
 export type UsercreatedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -805,6 +851,7 @@ export type UsercreatedReviewsArgs = {
 
 
 export type UserdeletedAnotherObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -813,6 +860,7 @@ export type UserdeletedAnotherObjectsArgs = {
 
 
 export type UserdeletedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -821,6 +869,7 @@ export type UserdeletedAnswersArgs = {
 
 
 export type UserdeletedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -830,6 +879,7 @@ export type UserdeletedManyObjectsArgs = {
 
 
 export type UserdeletedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -838,6 +888,7 @@ export type UserdeletedQuestionsArgs = {
 
 
 export type UserdeletedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -846,6 +897,7 @@ export type UserdeletedReactionsArgs = {
 
 
 export type UserdeletedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -854,6 +906,7 @@ export type UserdeletedReviewsArgs = {
 
 
 export type UserupdatedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -862,6 +915,7 @@ export type UserupdatedAnswersArgs = {
 
 
 export type UserupdatedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -871,6 +925,7 @@ export type UserupdatedManyObjectsArgs = {
 
 
 export type UserupdatedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -879,6 +934,7 @@ export type UserupdatedQuestionsArgs = {
 
 
 export type UserupdatedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -887,6 +943,7 @@ export type UserupdatedReactionsArgs = {
 
 
 export type UserupdatedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -905,6 +962,10 @@ export type UserWhere = {
   NOT?: InputMaybe<UserSubWhere>;
   OR?: InputMaybe<Array<UserSubWhere>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type UserWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserWhereUnique = {

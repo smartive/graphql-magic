@@ -145,7 +145,7 @@ This exposes:
 
 ```graphql
 query {
-  invoices_AGGREGATE(where: { deleted: [false] }) {
+  invoices_AGGREGATE(deleted: false) {
     COUNT
     amount_SUM
   }

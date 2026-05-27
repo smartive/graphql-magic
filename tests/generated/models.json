@@ -83,9 +83,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true
       },
       {
@@ -222,9 +219,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true
       },
       {
@@ -328,9 +322,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true
       },
       {
@@ -437,9 +428,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true,
         "inherited": true
       },
@@ -563,9 +551,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true,
         "inherited": true
       },
@@ -682,9 +667,6 @@
         "type": "Boolean",
         "nonNull": true,
         "defaultValue": false,
-        "filterable": {
-          "default": false
-        },
         "generated": true,
         "inherited": true
       },

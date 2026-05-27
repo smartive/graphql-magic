@@ -7,8 +7,8 @@ type AnotherObject {
   deletedBy: User
   deleteRootType: String
   deleteRootId: ID
-  self(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): AnotherObject
-  manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  self(where: AnotherObjectWhere, deleted: Boolean = false, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): AnotherObject
+  manyObjects(where: SomeObjectWhere, deleted: Boolean = false, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
 }
 
 input AnotherObjectOrderBy {
@@ -18,7 +18,6 @@ input AnotherObjectOrderBy {
 
 input AnotherObjectSubWhere {
   id: [ID!]
-  deleted: [Boolean!]
   manyObjects_SOME: SomeObjectWhere
   manyObjects_NONE: SomeObjectWhere
   NOT: AnotherObjectSubWhere
@@ -28,12 +27,15 @@ input AnotherObjectSubWhere {
 
 input AnotherObjectWhere {
   id: [ID!]
-  deleted: [Boolean!]
   manyObjects_SOME: SomeObjectWhere
   manyObjects_NONE: SomeObjectWhere
   NOT: AnotherObjectSubWhere
   AND: [AnotherObjectSubWhere!]
   OR: [AnotherObjectSubWhere!]
+}
+
+input AnotherObjectWhereLookup {
+  id: ID
 }
 
 input AnotherObjectWhereUnique {
@@ -54,10 +56,10 @@ type Answer implements Reaction {
   deletedBy: User
   deleteRootType: String
   deleteRootId: ID
-  childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  childReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  childReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  childQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  childAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
 input AnswerOrderBy {
@@ -68,7 +70,6 @@ input AnswerOrderBy {
 
 input AnswerSubWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: AnswerSubWhere
   AND: [AnswerSubWhere!]
   OR: [AnswerSubWhere!]
@@ -76,10 +77,13 @@ input AnswerSubWhere {
 
 input AnswerWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: AnswerSubWhere
   AND: [AnswerSubWhere!]
   OR: [AnswerSubWhere!]
+}
+
+input AnswerWhereLookup {
+  id: ID
 }
 
 input AnswerWhereUnique {
@@ -144,17 +148,17 @@ enum Order {
 
 type Query {
   me: User
-  someObject(where: SomeObjectWhereUnique!): SomeObject!
-  reaction(where: ReactionWhereUnique!): Reaction!
-  review(where: ReviewWhereUnique!): Review!
-  question(where: QuestionWhereUnique!): Question!
-  answer(where: AnswerWhereUnique!): Answer!
-  anotherObjects(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
-  manyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
-  reactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  reviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  questions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  answers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  someObject(where: SomeObjectWhereLookup!, deleted: Boolean = false): SomeObject!
+  reaction(where: ReactionWhereLookup!, deleted: Boolean = false): Reaction!
+  review(where: ReviewWhereLookup!, deleted: Boolean = false): Review!
+  question(where: QuestionWhereLookup!, deleted: Boolean = false): Question!
+  answer(where: AnswerWhereLookup!, deleted: Boolean = false): Answer!
+  anotherObjects(where: AnotherObjectWhere, deleted: Boolean = false, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
+  manyObjects(where: SomeObjectWhere, deleted: Boolean = false, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  reactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  reviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  questions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  answers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
   birds: [Bird!]!
 }
 
@@ -172,10 +176,10 @@ type Question implements Reaction {
   deletedBy: User
   deleteRootType: String
   deleteRootId: ID
-  childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  childReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  childReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  childQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  childAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
 input QuestionOrderBy {
@@ -186,7 +190,6 @@ input QuestionOrderBy {
 
 input QuestionSubWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: QuestionSubWhere
   AND: [QuestionSubWhere!]
   OR: [QuestionSubWhere!]
@@ -194,10 +197,13 @@ input QuestionSubWhere {
 
 input QuestionWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: QuestionSubWhere
   AND: [QuestionSubWhere!]
   OR: [QuestionSubWhere!]
+}
+
+input QuestionWhereLookup {
+  id: ID
 }
 
 input QuestionWhereUnique {
@@ -218,10 +224,10 @@ interface Reaction {
   deletedBy: User
   deleteRootType: String
   deleteRootId: ID
-  childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  childReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  childReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  childQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  childAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
 input ReactionOrderBy {
@@ -232,7 +238,6 @@ input ReactionOrderBy {
 
 input ReactionSubWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: ReactionSubWhere
   AND: [ReactionSubWhere!]
   OR: [ReactionSubWhere!]
@@ -246,10 +251,13 @@ enum ReactionType {
 
 input ReactionWhere {
   id: [ID!]
-  deleted: [Boolean!]
   NOT: ReactionSubWhere
   AND: [ReactionSubWhere!]
   OR: [ReactionSubWhere!]
+}
+
+input ReactionWhereLookup {
+  id: ID
 }
 
 input ReactionWhereUnique {
@@ -271,10 +279,10 @@ type Review implements Reaction {
   deleteRootType: String
   deleteRootId: ID
   rating: Float
-  childReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  childReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  childQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  childAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  childReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  childReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  childQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  childAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
 input ReviewOrderBy {
@@ -285,7 +293,6 @@ input ReviewOrderBy {
 
 input ReviewSubWhere {
   id: [ID!]
-  deleted: [Boolean!]
   rating_GT: Float
   rating_GTE: Float
   rating_LT: Float
@@ -297,7 +304,6 @@ input ReviewSubWhere {
 
 input ReviewWhere {
   id: [ID!]
-  deleted: [Boolean!]
   rating_GT: Float
   rating_GTE: Float
   rating_LT: Float
@@ -305,6 +311,10 @@ input ReviewWhere {
   NOT: ReviewSubWhere
   AND: [ReviewSubWhere!]
   OR: [ReviewSubWhere!]
+}
+
+input ReviewWhereLookup {
+  id: ID
 }
 
 input ReviewWhereUnique {
@@ -353,7 +363,6 @@ input SomeObjectSubWhere {
   field: [String!]
   float: [Float!]
   xyz: [Int!]
-  deleted: [Boolean!]
   another: AnotherObjectWhere
   NOT: SomeObjectSubWhere
   AND: [SomeObjectSubWhere!]
@@ -365,11 +374,14 @@ input SomeObjectWhere {
   field: [String!]
   float: [Float!]
   xyz: [Int!]
-  deleted: [Boolean!]
   another: AnotherObjectWhere
   NOT: SomeObjectSubWhere
   AND: [SomeObjectSubWhere!]
   OR: [SomeObjectSubWhere!]
+}
+
+input SomeObjectWhereLookup {
+  id: ID
 }
 
 input SomeObjectWhereUnique {
@@ -407,22 +419,22 @@ type User {
   id: ID!
   username: String
   role: Role!
-  deletedAnotherObjects(where: AnotherObjectWhere, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
-  createdManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
-  updatedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
-  deletedManyObjects(where: SomeObjectWhere, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
-  createdReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  updatedReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  deletedReactions(where: ReactionWhere, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
-  createdReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  updatedReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  deletedReviews(where: ReviewWhere, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
-  createdQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  updatedQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  deletedQuestions(where: QuestionWhere, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
-  createdAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
-  updatedAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
-  deletedAnswers(where: AnswerWhere, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  deletedAnotherObjects(where: AnotherObjectWhere, deleted: Boolean = false, orderBy: [AnotherObjectOrderBy!], limit: Int, offset: Int): [AnotherObject!]!
+  createdManyObjects(where: SomeObjectWhere, deleted: Boolean = false, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  updatedManyObjects(where: SomeObjectWhere, deleted: Boolean = false, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  deletedManyObjects(where: SomeObjectWhere, deleted: Boolean = false, search: String, orderBy: [SomeObjectOrderBy!], limit: Int, offset: Int): [SomeObject!]!
+  createdReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  updatedReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  deletedReactions(where: ReactionWhere, deleted: Boolean = false, orderBy: [ReactionOrderBy!], limit: Int, offset: Int): [Reaction!]!
+  createdReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  updatedReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  deletedReviews(where: ReviewWhere, deleted: Boolean = false, orderBy: [ReviewOrderBy!], limit: Int, offset: Int): [Review!]!
+  createdQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  updatedQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  deletedQuestions(where: QuestionWhere, deleted: Boolean = false, orderBy: [QuestionOrderBy!], limit: Int, offset: Int): [Question!]!
+  createdAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  updatedAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
+  deletedAnswers(where: AnswerWhere, deleted: Boolean = false, orderBy: [AnswerOrderBy!], limit: Int, offset: Int): [Answer!]!
 }
 
 input UserSubWhere {
@@ -437,6 +449,10 @@ input UserWhere {
   NOT: UserSubWhere
   AND: [UserSubWhere!]
   OR: [UserSubWhere!]
+}
+
+input UserWhereLookup {
+  id: ID
 }
 
 input UserWhereUnique {
