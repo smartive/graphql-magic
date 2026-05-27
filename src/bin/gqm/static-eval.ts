@@ -358,6 +358,16 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       [SyntaxKind.EqualsEqualsToken]: (left: unknown, right: () => unknown) => left == right(),
       [SyntaxKind.ExclamationEqualsToken]: (left: unknown, right: () => unknown) => left != right(),
       [SyntaxKind.QuestionQuestionToken]: (left: unknown, right: () => unknown) => left ?? right(),
+      [SyntaxKind.PlusToken]: (left: unknown, right: () => unknown) => (left as number) + (right() as number),
+      [SyntaxKind.MinusToken]: (left: unknown, right: () => unknown) => (left as number) - (right() as number),
+      [SyntaxKind.AsteriskToken]: (left: unknown, right: () => unknown) => (left as number) * (right() as number),
+      [SyntaxKind.SlashToken]: (left: unknown, right: () => unknown) => (left as number) / (right() as number),
+      [SyntaxKind.PercentToken]: (left: unknown, right: () => unknown) => (left as number) % (right() as number),
+      [SyntaxKind.AsteriskAsteriskToken]: (left: unknown, right: () => unknown) => (left as number) ** (right() as number),
+      [SyntaxKind.LessThanToken]: (left: unknown, right: () => unknown) => (left as number) < (right() as number),
+      [SyntaxKind.LessThanEqualsToken]: (left: unknown, right: () => unknown) => (left as number) <= (right() as number),
+      [SyntaxKind.GreaterThanToken]: (left: unknown, right: () => unknown) => (left as number) > (right() as number),
+      [SyntaxKind.GreaterThanEqualsToken]: (left: unknown, right: () => unknown) => (left as number) >= (right() as number),
     };
     if (node.getOperatorToken().getKind() in mapping) {
       return mapping[node.getOperatorToken().getKind()](staticEval(node.getLeft(), context), () =>
