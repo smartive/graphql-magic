@@ -21,6 +21,9 @@ export type FilterNode = {
   tableAlias: string;
 };
 
+/** True when the query may return soft-deleted rows (`deleted: true` or `deleted: null`). */
+export const includesDeletedRows = (deleted: boolean | null | undefined) => deleted === true || deleted === null;
+
 export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   const normalizedArguments = normalizeArguments(node);
   // No need for default order by in aggregates
@@ -33,7 +36,7 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
       }
     }
   }
-  const { limit, offset, orderBy, where, search } = normalizedArguments;
+  const { limit, offset, orderBy, where, search, deleted } = normalizedArguments;
 
   await node.ctx.queryHook?.({ model: node.model, query, args: normalizedArguments, ctx: node.ctx });
 
@@ -58,6 +61,7 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
   }
 
   const ops: QueryBuilderOps = [];
+  applyDeletedFilter(node, deleted, ops);
   applyWhere(node, where, ops, joins);
   void apply(query, ops);
 
@@ -65,23 +69,36 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
     void applySearch(node, search, query);
   }
 
-  return { paginated: normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined };
+  return {
+    paginated: normalizedArguments.limit !== undefined || normalizedArguments.offset !== undefined,
+    includesDeletedRows: includesDeletedRows(deleted),
+  };
+};
+
+const applyDeletedFilter = (node: FilterNode, deleted: boolean | null | undefined, ops: QueryBuilderOps) => {
+  if (!node.model.deletable) {
+    return;
+  }
+  const effective = deleted === undefined ? false : deleted;
+  if (effective !== false && !getPermissionStack(node.ctx, node.model.name, 'DELETE')) {
+    throw new ForbiddenError('You cannot access deleted entries.');
+  }
+  if (effective === null) {
+    return;
+  }
+  const column = getColumn(node, 'deleted');
+  ops.push((query) => query.where({ [column]: effective }));
+};
+
+const applyNestedDeletedDefault = (node: FilterNode, ops: QueryBuilderOps) => {
+  if (!node.model.deletable) {
+    return;
+  }
+  const column = getColumn(node, 'deleted');
+  ops.push((query) => query.where({ [column]: false }));
 };
 
 const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilderOps, joins: Joins) => {
-  if (node.model.deletable) {
-    if (!where) {
-      where = {};
-    }
-    if (where.deleted && (!Array.isArray(where.deleted) || where.deleted.some((v) => v))) {
-      if (!getPermissionStack(node.ctx, node.model.name, 'DELETE')) {
-        throw new ForbiddenError('You cannot access deleted entries.');
-      }
-    } else {
-      where.deleted = false;
-    }
-  }
-
   if (!where) {
     return;
   }
@@ -139,6 +156,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         };
         const subOps: QueryBuilderOps = [];
         const subJoins: Joins = [];
+        applyNestedDeletedDefault(subWhereNode, subOps);
         applyWhere(subWhereNode, value as Where, subOps, subJoins);
 
         // TODO: make this work with subtypes
@@ -200,6 +218,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         tableAlias,
       };
       addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
+      applyNestedDeletedDefault(subNode, ops);
       applyWhere(subNode, value as Where, ops, joins);
       continue;
     }

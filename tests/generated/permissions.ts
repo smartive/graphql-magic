@@ -12,7 +12,7 @@ export type PermissionsBlock = true | {
 export type UserWhere = {
 }
 export type UserPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -39,10 +39,9 @@ export type UserPermissions = {
   }
 }
 export type AnotherObjectWhere = {
-  deleted?: boolean | boolean[],
 }
 export type AnotherObjectPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -57,14 +56,13 @@ export type AnotherObjectPermissions = {
   }
 }
 export type SomeObjectWhere = {
-  field?: string | string[],
+  field?: string | readonly string[],
   another?: AnotherObjectWhere,
-  float?: number | number[],
-  xyz?: number | number[],
-  deleted?: boolean | boolean[],
+  float?: number | readonly number[],
+  xyz?: number | readonly number[],
 }
 export type SomeObjectPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -79,10 +77,9 @@ export type SomeObjectPermissions = {
   }
 }
 export type ReactionWhere = {
-  deleted?: boolean | boolean[],
 }
 export type ReactionPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -101,10 +98,9 @@ export type ReactionPermissions = {
   }
 }
 export type ReviewWhere = {
-  deleted?: boolean | boolean[],
 }
 export type ReviewPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -123,10 +119,9 @@ export type ReviewPermissions = {
   }
 }
 export type QuestionWhere = {
-  deleted?: boolean | boolean[],
 }
 export type QuestionPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,
@@ -145,10 +140,9 @@ export type QuestionPermissions = {
   }
 }
 export type AnswerWhere = {
-  deleted?: boolean | boolean[],
 }
 export type AnswerPermissions = {
-  READ?: true,
+  READ?: boolean,
   CREATE?: true,
   UPDATE?: true,
   DELETE?: true,

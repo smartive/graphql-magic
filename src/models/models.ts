@@ -174,7 +174,6 @@ export class Models {
                 type: 'Boolean',
                 nonNull: true,
                 defaultValue: false,
-                filterable: { default: false },
                 generated: true,
                 ...(typeof entity.deletable === 'object' && entity.deletable.deleted),
               } satisfies BooleanFieldDefinition,

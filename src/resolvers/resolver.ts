@@ -83,7 +83,7 @@ const buildQuery = async (
 ): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks; paginated: boolean }> => {
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
   const joins: Joins = [];
-  const { paginated } = await applyFilters(node, query, joins);
+  const { paginated, includesDeletedRows } = await applyFilters(node, query, joins);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 
@@ -101,6 +101,7 @@ const buildQuery = async (
       query,
       'READ',
       parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
+      includesDeletedRows,
     );
 
     if (typeof verifiedPermissionStack !== 'boolean') {
