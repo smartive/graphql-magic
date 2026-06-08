@@ -38,6 +38,7 @@ export type AnotherObject = {
 
 
 export type AnotherObjectManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -47,6 +48,7 @@ export type AnotherObjectManyObjectsArgs = {
 
 
 export type AnotherObjectSelfArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -62,7 +64,6 @@ export type AnotherObjectSubWhere = {
   AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
   NOT?: InputMaybe<AnotherObjectSubWhere>;
   OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
   manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
@@ -72,10 +73,13 @@ export type AnotherObjectWhere = {
   AND?: InputMaybe<Array<AnotherObjectSubWhere>>;
   NOT?: InputMaybe<AnotherObjectSubWhere>;
   OR?: InputMaybe<Array<AnotherObjectSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   manyObjects_NONE?: InputMaybe<SomeObjectWhere>;
   manyObjects_SOME?: InputMaybe<SomeObjectWhere>;
+};
+
+export type AnotherObjectWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AnotherObjectWhereUnique = {
@@ -105,6 +109,7 @@ export type Answer = Reaction & {
 
 
 export type AnswerChildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -113,6 +118,7 @@ export type AnswerChildAnswersArgs = {
 
 
 export type AnswerChildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -121,6 +127,7 @@ export type AnswerChildQuestionsArgs = {
 
 
 export type AnswerChildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -129,6 +136,7 @@ export type AnswerChildReactionsArgs = {
 
 
 export type AnswerChildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -145,7 +153,6 @@ export type AnswerSubWhere = {
   AND?: InputMaybe<Array<AnswerSubWhere>>;
   NOT?: InputMaybe<AnswerSubWhere>;
   OR?: InputMaybe<Array<AnswerSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -153,8 +160,11 @@ export type AnswerWhere = {
   AND?: InputMaybe<Array<AnswerSubWhere>>;
   NOT?: InputMaybe<AnswerSubWhere>;
   OR?: InputMaybe<Array<AnswerSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type AnswerWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type AnswerWhereUnique = {
@@ -336,6 +346,7 @@ export type Query = {
 
 
 export type QueryAnotherObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -344,11 +355,13 @@ export type QueryAnotherObjectsArgs = {
 
 
 export type QueryAnswerArgs = {
-  where: AnswerWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: AnswerWhereLookup;
 };
 
 
 export type QueryAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -357,6 +370,7 @@ export type QueryAnswersArgs = {
 
 
 export type QueryManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -366,11 +380,13 @@ export type QueryManyObjectsArgs = {
 
 
 export type QueryQuestionArgs = {
-  where: QuestionWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: QuestionWhereLookup;
 };
 
 
 export type QueryQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -379,11 +395,13 @@ export type QueryQuestionsArgs = {
 
 
 export type QueryReactionArgs = {
-  where: ReactionWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: ReactionWhereLookup;
 };
 
 
 export type QueryReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -392,11 +410,13 @@ export type QueryReactionsArgs = {
 
 
 export type QueryReviewArgs = {
-  where: ReviewWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: ReviewWhereLookup;
 };
 
 
 export type QueryReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -405,7 +425,8 @@ export type QueryReviewsArgs = {
 
 
 export type QuerySomeObjectArgs = {
-  where: SomeObjectWhereUnique;
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  where: SomeObjectWhereLookup;
 };
 
 export type Question = Reaction & {
@@ -431,6 +452,7 @@ export type Question = Reaction & {
 
 
 export type QuestionChildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -439,6 +461,7 @@ export type QuestionChildAnswersArgs = {
 
 
 export type QuestionChildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -447,6 +470,7 @@ export type QuestionChildQuestionsArgs = {
 
 
 export type QuestionChildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -455,6 +479,7 @@ export type QuestionChildReactionsArgs = {
 
 
 export type QuestionChildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -471,7 +496,6 @@ export type QuestionSubWhere = {
   AND?: InputMaybe<Array<QuestionSubWhere>>;
   NOT?: InputMaybe<QuestionSubWhere>;
   OR?: InputMaybe<Array<QuestionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -479,8 +503,11 @@ export type QuestionWhere = {
   AND?: InputMaybe<Array<QuestionSubWhere>>;
   NOT?: InputMaybe<QuestionSubWhere>;
   OR?: InputMaybe<Array<QuestionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type QuestionWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type QuestionWhereUnique = {
@@ -509,6 +536,7 @@ export type Reaction = {
 
 
 export type ReactionChildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -517,6 +545,7 @@ export type ReactionChildAnswersArgs = {
 
 
 export type ReactionChildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -525,6 +554,7 @@ export type ReactionChildQuestionsArgs = {
 
 
 export type ReactionChildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -533,6 +563,7 @@ export type ReactionChildReactionsArgs = {
 
 
 export type ReactionChildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -549,7 +580,6 @@ export type ReactionSubWhere = {
   AND?: InputMaybe<Array<ReactionSubWhere>>;
   NOT?: InputMaybe<ReactionSubWhere>;
   OR?: InputMaybe<Array<ReactionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -563,8 +593,11 @@ export type ReactionWhere = {
   AND?: InputMaybe<Array<ReactionSubWhere>>;
   NOT?: InputMaybe<ReactionSubWhere>;
   OR?: InputMaybe<Array<ReactionSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type ReactionWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ReactionWhereUnique = {
@@ -595,6 +628,7 @@ export type Review = Reaction & {
 
 
 export type ReviewChildAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -603,6 +637,7 @@ export type ReviewChildAnswersArgs = {
 
 
 export type ReviewChildQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -611,6 +646,7 @@ export type ReviewChildQuestionsArgs = {
 
 
 export type ReviewChildReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -619,6 +655,7 @@ export type ReviewChildReactionsArgs = {
 
 
 export type ReviewChildReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -635,7 +672,6 @@ export type ReviewSubWhere = {
   AND?: InputMaybe<Array<ReviewSubWhere>>;
   NOT?: InputMaybe<ReviewSubWhere>;
   OR?: InputMaybe<Array<ReviewSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
   rating_GTE?: InputMaybe<Scalars['Float']['input']>;
@@ -647,12 +683,15 @@ export type ReviewWhere = {
   AND?: InputMaybe<Array<ReviewSubWhere>>;
   NOT?: InputMaybe<ReviewSubWhere>;
   OR?: InputMaybe<Array<ReviewSubWhere>>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   rating_GT?: InputMaybe<Scalars['Float']['input']>;
   rating_GTE?: InputMaybe<Scalars['Float']['input']>;
   rating_LT?: InputMaybe<Scalars['Float']['input']>;
   rating_LTE?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type ReviewWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ReviewWhereUnique = {
@@ -707,7 +746,6 @@ export type SomeObjectSubWhere = {
   NOT?: InputMaybe<SomeObjectSubWhere>;
   OR?: InputMaybe<Array<SomeObjectSubWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -719,11 +757,14 @@ export type SomeObjectWhere = {
   NOT?: InputMaybe<SomeObjectSubWhere>;
   OR?: InputMaybe<Array<SomeObjectSubWhere>>;
   another?: InputMaybe<AnotherObjectWhere>;
-  deleted?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   field?: InputMaybe<Array<Scalars['String']['input']>>;
   float?: InputMaybe<Array<Scalars['Float']['input']>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
   xyz?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+export type SomeObjectWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SomeObjectWhereUnique = {
@@ -779,6 +820,7 @@ export type User = {
 
 
 export type UserCreatedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -787,6 +829,7 @@ export type UserCreatedAnswersArgs = {
 
 
 export type UserCreatedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -796,6 +839,7 @@ export type UserCreatedManyObjectsArgs = {
 
 
 export type UserCreatedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -804,6 +848,7 @@ export type UserCreatedQuestionsArgs = {
 
 
 export type UserCreatedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -812,6 +857,7 @@ export type UserCreatedReactionsArgs = {
 
 
 export type UserCreatedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -820,6 +866,7 @@ export type UserCreatedReviewsArgs = {
 
 
 export type UserDeletedAnotherObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnotherObjectOrderBy>>;
@@ -828,6 +875,7 @@ export type UserDeletedAnotherObjectsArgs = {
 
 
 export type UserDeletedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -836,6 +884,7 @@ export type UserDeletedAnswersArgs = {
 
 
 export type UserDeletedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -845,6 +894,7 @@ export type UserDeletedManyObjectsArgs = {
 
 
 export type UserDeletedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -853,6 +903,7 @@ export type UserDeletedQuestionsArgs = {
 
 
 export type UserDeletedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -861,6 +912,7 @@ export type UserDeletedReactionsArgs = {
 
 
 export type UserDeletedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -869,6 +921,7 @@ export type UserDeletedReviewsArgs = {
 
 
 export type UserUpdatedAnswersArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
@@ -877,6 +930,7 @@ export type UserUpdatedAnswersArgs = {
 
 
 export type UserUpdatedManyObjectsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<SomeObjectOrderBy>>;
@@ -886,6 +940,7 @@ export type UserUpdatedManyObjectsArgs = {
 
 
 export type UserUpdatedQuestionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
@@ -894,6 +949,7 @@ export type UserUpdatedQuestionsArgs = {
 
 
 export type UserUpdatedReactionsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
@@ -902,6 +958,7 @@ export type UserUpdatedReactionsArgs = {
 
 
 export type UserUpdatedReviewsArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
@@ -920,6 +977,10 @@ export type UserWhere = {
   NOT?: InputMaybe<UserSubWhere>;
   OR?: InputMaybe<Array<UserSubWhere>>;
   id?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type UserWhereLookup = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserWhereUnique = {
@@ -1018,11 +1079,13 @@ export type ResolversTypes = {
   AnotherObjectOrderBy: AnotherObjectOrderBy;
   AnotherObjectSubWhere: AnotherObjectSubWhere;
   AnotherObjectWhere: AnotherObjectWhere;
+  AnotherObjectWhereLookup: AnotherObjectWhereLookup;
   AnotherObjectWhereUnique: AnotherObjectWhereUnique;
   Answer: ResolverTypeWrapper<Omit<Answer, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversTypes['Answer']>, childQuestions: Array<ResolversTypes['Question']>, childReactions: Array<ResolversTypes['Reaction']>, childReviews: Array<ResolversTypes['Review']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, parent?: Maybe<ResolversTypes['Reaction']>, updatedBy: ResolversTypes['User'] }>;
   AnswerOrderBy: AnswerOrderBy;
   AnswerSubWhere: AnswerSubWhere;
   AnswerWhere: AnswerWhere;
+  AnswerWhereLookup: AnswerWhereLookup;
   AnswerWhereUnique: AnswerWhereUnique;
   Bird: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['Bird']>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
@@ -1043,17 +1106,20 @@ export type ResolversTypes = {
   QuestionOrderBy: QuestionOrderBy;
   QuestionSubWhere: QuestionSubWhere;
   QuestionWhere: QuestionWhere;
+  QuestionWhereLookup: QuestionWhereLookup;
   QuestionWhereUnique: QuestionWhereUnique;
   Reaction: ResolverTypeWrapper<ResolversInterfaceTypes<ResolversTypes>['Reaction']>;
   ReactionOrderBy: ReactionOrderBy;
   ReactionSubWhere: ReactionSubWhere;
   ReactionType: ReactionType;
   ReactionWhere: ReactionWhere;
+  ReactionWhereLookup: ReactionWhereLookup;
   ReactionWhereUnique: ReactionWhereUnique;
   Review: ResolverTypeWrapper<Omit<Review, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversTypes['Answer']>, childQuestions: Array<ResolversTypes['Question']>, childReactions: Array<ResolversTypes['Reaction']>, childReviews: Array<ResolversTypes['Review']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, parent?: Maybe<ResolversTypes['Reaction']>, updatedBy: ResolversTypes['User'] }>;
   ReviewOrderBy: ReviewOrderBy;
   ReviewSubWhere: ReviewSubWhere;
   ReviewWhere: ReviewWhere;
+  ReviewWhereLookup: ReviewWhereLookup;
   ReviewWhereUnique: ReviewWhereUnique;
   Role: Role;
   SomeEnum: SomeEnum;
@@ -1061,6 +1127,7 @@ export type ResolversTypes = {
   SomeObjectOrderBy: SomeObjectOrderBy;
   SomeObjectSubWhere: SomeObjectSubWhere;
   SomeObjectWhere: SomeObjectWhere;
+  SomeObjectWhereLookup: SomeObjectWhereLookup;
   SomeObjectWhereUnique: SomeObjectWhereUnique;
   SomeRawObject: ResolverTypeWrapper<SomeRawObject>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -1073,6 +1140,7 @@ export type ResolversTypes = {
   User: ResolverTypeWrapper<Omit<User, 'createdAnswers' | 'createdManyObjects' | 'createdQuestions' | 'createdReactions' | 'createdReviews' | 'deletedAnotherObjects' | 'deletedAnswers' | 'deletedManyObjects' | 'deletedQuestions' | 'deletedReactions' | 'deletedReviews' | 'updatedAnswers' | 'updatedManyObjects' | 'updatedQuestions' | 'updatedReactions' | 'updatedReviews'> & { createdAnswers: Array<ResolversTypes['Answer']>, createdManyObjects: Array<ResolversTypes['SomeObject']>, createdQuestions: Array<ResolversTypes['Question']>, createdReactions: Array<ResolversTypes['Reaction']>, createdReviews: Array<ResolversTypes['Review']>, deletedAnotherObjects: Array<ResolversTypes['AnotherObject']>, deletedAnswers: Array<ResolversTypes['Answer']>, deletedManyObjects: Array<ResolversTypes['SomeObject']>, deletedQuestions: Array<ResolversTypes['Question']>, deletedReactions: Array<ResolversTypes['Reaction']>, deletedReviews: Array<ResolversTypes['Review']>, updatedAnswers: Array<ResolversTypes['Answer']>, updatedManyObjects: Array<ResolversTypes['SomeObject']>, updatedQuestions: Array<ResolversTypes['Question']>, updatedReactions: Array<ResolversTypes['Reaction']>, updatedReviews: Array<ResolversTypes['Review']> }>;
   UserSubWhere: UserSubWhere;
   UserWhere: UserWhere;
+  UserWhereLookup: UserWhereLookup;
   UserWhereUnique: UserWhereUnique;
 };
 
@@ -1082,11 +1150,13 @@ export type ResolversParentTypes = {
   AnotherObjectOrderBy: AnotherObjectOrderBy;
   AnotherObjectSubWhere: AnotherObjectSubWhere;
   AnotherObjectWhere: AnotherObjectWhere;
+  AnotherObjectWhereLookup: AnotherObjectWhereLookup;
   AnotherObjectWhereUnique: AnotherObjectWhereUnique;
   Answer: Omit<Answer, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversParentTypes['Answer']>, childQuestions: Array<ResolversParentTypes['Question']>, childReactions: Array<ResolversParentTypes['Reaction']>, childReviews: Array<ResolversParentTypes['Review']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, parent?: Maybe<ResolversParentTypes['Reaction']>, updatedBy: ResolversParentTypes['User'] };
   AnswerOrderBy: AnswerOrderBy;
   AnswerSubWhere: AnswerSubWhere;
   AnswerWhere: AnswerWhere;
+  AnswerWhereLookup: AnswerWhereLookup;
   AnswerWhereUnique: AnswerWhereUnique;
   Bird: ResolversUnionTypes<ResolversParentTypes>['Bird'];
   Boolean: Scalars['Boolean']['output'];
@@ -1106,21 +1176,25 @@ export type ResolversParentTypes = {
   QuestionOrderBy: QuestionOrderBy;
   QuestionSubWhere: QuestionSubWhere;
   QuestionWhere: QuestionWhere;
+  QuestionWhereLookup: QuestionWhereLookup;
   QuestionWhereUnique: QuestionWhereUnique;
   Reaction: ResolversInterfaceTypes<ResolversParentTypes>['Reaction'];
   ReactionOrderBy: ReactionOrderBy;
   ReactionSubWhere: ReactionSubWhere;
   ReactionWhere: ReactionWhere;
+  ReactionWhereLookup: ReactionWhereLookup;
   ReactionWhereUnique: ReactionWhereUnique;
   Review: Omit<Review, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversParentTypes['Answer']>, childQuestions: Array<ResolversParentTypes['Question']>, childReactions: Array<ResolversParentTypes['Reaction']>, childReviews: Array<ResolversParentTypes['Review']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, parent?: Maybe<ResolversParentTypes['Reaction']>, updatedBy: ResolversParentTypes['User'] };
   ReviewOrderBy: ReviewOrderBy;
   ReviewSubWhere: ReviewSubWhere;
   ReviewWhere: ReviewWhere;
+  ReviewWhereLookup: ReviewWhereLookup;
   ReviewWhereUnique: ReviewWhereUnique;
   SomeObject: Omit<SomeObject, 'another' | 'createdBy' | 'deletedBy' | 'updatedBy'> & { another?: Maybe<ResolversParentTypes['AnotherObject']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, updatedBy: ResolversParentTypes['User'] };
   SomeObjectOrderBy: SomeObjectOrderBy;
   SomeObjectSubWhere: SomeObjectSubWhere;
   SomeObjectWhere: SomeObjectWhere;
+  SomeObjectWhereLookup: SomeObjectWhereLookup;
   SomeObjectWhereUnique: SomeObjectWhereUnique;
   SomeRawObject: SomeRawObject;
   String: Scalars['String']['output'];
@@ -1133,6 +1207,7 @@ export type ResolversParentTypes = {
   User: Omit<User, 'createdAnswers' | 'createdManyObjects' | 'createdQuestions' | 'createdReactions' | 'createdReviews' | 'deletedAnotherObjects' | 'deletedAnswers' | 'deletedManyObjects' | 'deletedQuestions' | 'deletedReactions' | 'deletedReviews' | 'updatedAnswers' | 'updatedManyObjects' | 'updatedQuestions' | 'updatedReactions' | 'updatedReviews'> & { createdAnswers: Array<ResolversParentTypes['Answer']>, createdManyObjects: Array<ResolversParentTypes['SomeObject']>, createdQuestions: Array<ResolversParentTypes['Question']>, createdReactions: Array<ResolversParentTypes['Reaction']>, createdReviews: Array<ResolversParentTypes['Review']>, deletedAnotherObjects: Array<ResolversParentTypes['AnotherObject']>, deletedAnswers: Array<ResolversParentTypes['Answer']>, deletedManyObjects: Array<ResolversParentTypes['SomeObject']>, deletedQuestions: Array<ResolversParentTypes['Question']>, deletedReactions: Array<ResolversParentTypes['Reaction']>, deletedReviews: Array<ResolversParentTypes['Review']>, updatedAnswers: Array<ResolversParentTypes['Answer']>, updatedManyObjects: Array<ResolversParentTypes['SomeObject']>, updatedQuestions: Array<ResolversParentTypes['Question']>, updatedReactions: Array<ResolversParentTypes['Reaction']>, updatedReviews: Array<ResolversParentTypes['Review']> };
   UserSubWhere: UserSubWhere;
   UserWhere: UserWhere;
+  UserWhereLookup: UserWhereLookup;
   UserWhereUnique: UserWhereUnique;
 };
 
@@ -1143,17 +1218,17 @@ export type AnotherObjectResolvers<ContextType = any, ParentType extends Resolve
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<AnotherObjectManyObjectsArgs>>;
+  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<AnotherObjectManyObjectsArgs, 'deleted'>>;
   myself?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  self?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<AnotherObjectSelfArgs>>;
+  self?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<AnotherObjectSelfArgs, 'deleted'>>;
 };
 
 export type AnswerResolvers<ContextType = any, ParentType extends ResolversParentTypes['Answer'] = ResolversParentTypes['Answer']> = {
-  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<AnswerChildAnswersArgs>>;
-  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<AnswerChildQuestionsArgs>>;
-  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<AnswerChildReactionsArgs>>;
-  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<AnswerChildReviewsArgs>>;
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<AnswerChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<AnswerChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<AnswerChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<AnswerChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1210,26 +1285,26 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  anotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<QueryAnotherObjectsArgs>>;
-  answer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<QueryAnswerArgs, 'where'>>;
-  answers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<QueryAnswersArgs>>;
+  anotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<QueryAnotherObjectsArgs, 'deleted'>>;
+  answer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<QueryAnswerArgs, 'deleted' | 'where'>>;
+  answers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<QueryAnswersArgs, 'deleted'>>;
   birds?: Resolver<Array<ResolversTypes['Bird']>, ParentType, ContextType>;
-  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<QueryManyObjectsArgs>>;
+  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<QueryManyObjectsArgs, 'deleted'>>;
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<QueryQuestionArgs, 'where'>>;
-  questions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<QueryQuestionsArgs>>;
-  reaction?: Resolver<ResolversTypes['Reaction'], ParentType, ContextType, RequireFields<QueryReactionArgs, 'where'>>;
-  reactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<QueryReactionsArgs>>;
-  review?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<QueryReviewArgs, 'where'>>;
-  reviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<QueryReviewsArgs>>;
-  someObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<QuerySomeObjectArgs, 'where'>>;
+  question?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<QueryQuestionArgs, 'deleted' | 'where'>>;
+  questions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<QueryQuestionsArgs, 'deleted'>>;
+  reaction?: Resolver<ResolversTypes['Reaction'], ParentType, ContextType, RequireFields<QueryReactionArgs, 'deleted' | 'where'>>;
+  reactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<QueryReactionsArgs, 'deleted'>>;
+  review?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<QueryReviewArgs, 'deleted' | 'where'>>;
+  reviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<QueryReviewsArgs, 'deleted'>>;
+  someObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<QuerySomeObjectArgs, 'deleted' | 'where'>>;
 };
 
 export type QuestionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Question'] = ResolversParentTypes['Question']> = {
-  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<QuestionChildAnswersArgs>>;
-  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<QuestionChildQuestionsArgs>>;
-  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<QuestionChildReactionsArgs>>;
-  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<QuestionChildReviewsArgs>>;
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<QuestionChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<QuestionChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<QuestionChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<QuestionChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1251,10 +1326,10 @@ export type ReactionResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type ReviewResolvers<ContextType = any, ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review']> = {
-  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<ReviewChildAnswersArgs>>;
-  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<ReviewChildQuestionsArgs>>;
-  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<ReviewChildReactionsArgs>>;
-  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<ReviewChildReviewsArgs>>;
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<ReviewChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<ReviewChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<ReviewChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<ReviewChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1304,24 +1379,24 @@ export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTyp
 }
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
-  createdAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserCreatedAnswersArgs>>;
-  createdManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserCreatedManyObjectsArgs>>;
-  createdQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserCreatedQuestionsArgs>>;
-  createdReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserCreatedReactionsArgs>>;
-  createdReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserCreatedReviewsArgs>>;
-  deletedAnotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, Partial<UserDeletedAnotherObjectsArgs>>;
-  deletedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserDeletedAnswersArgs>>;
-  deletedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserDeletedManyObjectsArgs>>;
-  deletedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserDeletedQuestionsArgs>>;
-  deletedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserDeletedReactionsArgs>>;
-  deletedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserDeletedReviewsArgs>>;
+  createdAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserCreatedAnswersArgs, 'deleted'>>;
+  createdManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserCreatedManyObjectsArgs, 'deleted'>>;
+  createdQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserCreatedQuestionsArgs, 'deleted'>>;
+  createdReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserCreatedReactionsArgs, 'deleted'>>;
+  createdReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserCreatedReviewsArgs, 'deleted'>>;
+  deletedAnotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<UserDeletedAnotherObjectsArgs, 'deleted'>>;
+  deletedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserDeletedAnswersArgs, 'deleted'>>;
+  deletedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserDeletedManyObjectsArgs, 'deleted'>>;
+  deletedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserDeletedQuestionsArgs, 'deleted'>>;
+  deletedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserDeletedReactionsArgs, 'deleted'>>;
+  deletedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserDeletedReviewsArgs, 'deleted'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
-  updatedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, Partial<UserUpdatedAnswersArgs>>;
-  updatedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, Partial<UserUpdatedManyObjectsArgs>>;
-  updatedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, Partial<UserUpdatedQuestionsArgs>>;
-  updatedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, Partial<UserUpdatedReactionsArgs>>;
-  updatedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, Partial<UserUpdatedReviewsArgs>>;
+  updatedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserUpdatedAnswersArgs, 'deleted'>>;
+  updatedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserUpdatedManyObjectsArgs, 'deleted'>>;
+  updatedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserUpdatedQuestionsArgs, 'deleted'>>;
+  updatedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserUpdatedReactionsArgs, 'deleted'>>;
+  updatedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserUpdatedReviewsArgs, 'deleted'>>;
   username?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 

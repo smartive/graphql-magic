@@ -16,7 +16,7 @@ describe('delete', () => {
       expect(
         await request(gql`
           query GetAnotherObject {
-            anotherObjects(where: { id: "${ANOTHER_ID}", deleted: true }) {
+            anotherObjects(where: { id: "${ANOTHER_ID}" }, deleted: true) {
               id
               deleted
             }

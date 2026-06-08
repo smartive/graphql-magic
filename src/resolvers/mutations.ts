@@ -547,7 +547,7 @@ export const restoreEntity = async (
           query.where({ deletedAt: currentEntity.deletedAt });
         }
         const descendantsToRestore = await query;
-        applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'RESTORE');
+        applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'RESTORE', undefined, true);
         const restorableDescendants = await query;
         const notRestorableDescendants = descendantsToRestore.filter(
           (descendant) => !restorableDescendants.some((d) => d.id === descendant.id),

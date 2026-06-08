@@ -1,5 +1,32 @@
 # Migration Guides
 
+## Upgrading to the next major version
+
+### `deleted` is a top-level argument, not a `where` filter
+
+The `deleted` field is no longer part of the auto-generated `Where` input. Instead, queries that operate on deletable entities expose a top-level `deleted: Boolean = false` argument. This applies to plural list queries, aggregate queries, singular `entity(where: …)` queries and reverse-relation list fields.
+
+Semantics of the new argument:
+
+- omitted or `deleted: false` (default): only non-deleted entries.
+- `deleted: true`: only deleted entries (requires `DELETE` permission).
+- `deleted: null`: both deleted and non-deleted entries (requires `DELETE` permission).
+
+Update affected queries:
+
+```diff
+- posts(where: { author: { id: "..." }, deleted: [true] }) { id }
++ posts(where: { author: { id: "..." } }, deleted: true) { id }
+
+- invoices_AGGREGATE(where: { deleted: [false] }) { COUNT }
++ invoices_AGGREGATE(deleted: false) { COUNT }
+
+- posts(where: { deleted: [true, false] }) { id }
++ posts(where: {}, deleted: null) { id }
+```
+
+Permission `WHERE` rules can no longer filter on `deleted` via the generated permission `Where` types. The hard-coded `deleted = false` join used by permission chains is unchanged.
+
 ## Upgrading to v19.0.0
 
 ### Configuration changes

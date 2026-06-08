@@ -65,10 +65,7 @@ export type Entry = {
   [field: string]: null | string | number | Entry | Entry[];
 };
 
-export function hydrate<T extends Entry>(
-  node: FieldResolverNode,
-  raw: Record<string, undefined | null | string | Date | number>[],
-): T[] {
+export function hydrate<T extends Entry>(node: FieldResolverNode, raw: Record<string, Knex.Value>[]): T[] {
   const resultAlias = node.resultAlias;
   const res = raw.map((entry) => {
     const res: any = {};

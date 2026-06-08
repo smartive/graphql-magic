@@ -67,7 +67,7 @@
   },
   "devDependencies": {
     "@smartive/eslint-config": "7.0.1",
-    "eslint-import-resolver-typescript": "4.4.4",
+    "eslint-import-resolver-typescript": "4.4.5",
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
@@ -81,7 +81,7 @@
     "jest": "30.4.2",
     "mock-knex": "0.4.13",
     "prettier": "3.8.3",
-    "ts-jest": "29.4.9",
+    "ts-jest": "29.4.11",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
   }

@@ -10,10 +10,14 @@
     [
       "@semantic-release/commit-analyzer",
       {
-        "preset": "angular",
+        "preset": "conventionalcommits",
         "releaseRules": [
           {
             "type": "break",
+            "release": "major"
+          },
+          {
+            "breaking": true,
             "release": "major"
           }
         ]

@@ -81,11 +81,10 @@ type VerifiedPermissionStacks = Record<string, PermissionStack>;
 const buildQuery = async (
   node: FieldResolverNode,
   parentVerifiedPermissionStacks?: VerifiedPermissionStacks,
-): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks }> => {
+): Promise<{ query: Knex.QueryBuilder; verifiedPermissionStacks: VerifiedPermissionStacks; paginated: boolean }> => {
   const query = node.ctx.knex.fromRaw(`"${node.rootModel.name}" as "${node.ctx.aliases.getShort(node.resultAlias)}"`);
-
   const joins: Joins = [];
-  await applyFilters(node, query, joins);
+  const { paginated, includesDeletedRows } = await applyFilters(node, query, joins);
   applySelects(node, query, joins);
   applyJoins(node.ctx.aliases, query, joins);
 
@@ -145,6 +144,7 @@ const buildQuery = async (
       query,
       'READ',
       parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
+      includesDeletedRows,
     );
 
     if (typeof verifiedPermissionStack !== 'boolean') {
@@ -152,7 +152,7 @@ const buildQuery = async (
     }
   }
 
-  return { query, verifiedPermissionStacks };
+  return { query, verifiedPermissionStacks, paginated };
 };
 
 const applySubQueries = async (
@@ -183,19 +183,26 @@ const applySubQueries = async (
     const isList = isListType(subNode.fieldDefinition.type);
     entries.forEach((entry) => (entry[fieldName] = isList ? [] : null));
     const foreignKey = subNode.foreignKey;
-    const { query, verifiedPermissionStacks } = await buildQuery(subNode, parentVerifiedPermissionStacks);
+    const { query, verifiedPermissionStacks, paginated } = await buildQuery(subNode, parentVerifiedPermissionStacks);
     const shortTableAlias = subNode.ctx.aliases.getShort(subNode.tableAlias);
     const shortResultAlias = subNode.ctx.aliases.getShort(subNode.resultAlias);
-    const queries = ids.map((id) =>
-      query
-        .clone()
-        .select(`${shortTableAlias}.${foreignKey} as ${shortResultAlias}__${foreignKey}`)
-        .where({ [`${shortTableAlias}.${foreignKey}`]: id }),
-    );
+    const foreignKeyColumn = `${shortTableAlias}.${foreignKey}`;
 
-    // TODO: make unionAll faster then promise.all...
-    // const rawChildren = await node.ctx.knex.queryBuilder().unionAll(queries, true);
-    const rawChildren = (await Promise.all(queries)).flat();
+    let rawChildren: Record<string, Knex.Value>[];
+    if (!paginated) {
+      rawChildren = await query
+        .select(`${foreignKeyColumn} as ${shortResultAlias}__${foreignKey}`)
+        .whereIn(foreignKeyColumn, ids);
+    } else {
+      rawChildren = [];
+      for (const id of ids) {
+        const rows = await query
+          .clone()
+          .select(`${foreignKeyColumn} as ${shortResultAlias}__${foreignKey}`)
+          .where({ [foreignKeyColumn]: id });
+        rawChildren.push(...rows);
+      }
+    }
     const children = hydrate(subNode, rawChildren);
 
     for (const child of children) {

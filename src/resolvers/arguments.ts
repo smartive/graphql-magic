@@ -25,6 +25,7 @@ export type NormalizedArguments = {
   orderBy?: OrderBy[];
   where?: Where;
   search?: string;
+  deleted?: boolean | null;
   mine?: boolean;
   language?: string;
 };
