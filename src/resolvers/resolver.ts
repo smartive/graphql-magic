@@ -5,10 +5,9 @@ import flatMap from 'lodash/flatMap';
 import { Context, FullContext } from '../context';
 import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
-import { applyPermissions, collectCoveredLeafPaths, getPermissionStack } from '../permissions/check';
+import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
-import { normalizeArguments } from './arguments';
-import { applyFilters, collectUserLeavesByAlias } from './filters';
+import { applyFilters } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
 import {
@@ -93,50 +92,8 @@ const buildQuery = async (
     ...joins.map(({ table2Name, table2Alias }) => [table2Name, table2Alias] satisfies [string, string]),
   ];
 
-  // Filter-join coverage: when the user's WHERE traverses a relation only
-  // through field paths that are *already* constrained by the root entity's
-  // own permission WHERE, the joined entity's own `Entity.WHERE` permission
-  // adds nothing — every row it would filter out is one the root scope had
-  // already excluded, and every row that survives the root scope is one the
-  // user could have learned about by reading the root entity anyway. In that
-  // case we skip the joined-entity permission check on the filter join.
-  //
-  // The check is deliberately narrow: it fires only for filter-joined aliases
-  // (those produced by `applyWhere` — recognisable by the `__W__` / `__WS__`
-  // marker), and only when *every* leaf the user supplied at or below that
-  // join is in the root permission's covered leaf-path set. Any unrecognised
-  // leaf — including filtering by a different field on the same relation —
-  // falls back to the strict per-table permission application.
-  //
-  // Direct top-level `<entity>(where: …)` queries do not exercise this
-  // codepath: they hit `applyPermissions` on the root alias, never on a
-  // `__W__` alias, so an `Entity.WHERE` on the queried entity itself is
-  // applied exactly as before.
-  const rootPermissionStack = getPermissionStack(node.ctx, node.rootModel.name, 'READ');
-  const coveredPaths =
-    typeof rootPermissionStack === 'boolean' ? null : collectCoveredLeafPaths(rootPermissionStack);
-  const userLeavesByAlias =
-    coveredPaths === null || coveredPaths.size === 0
-      ? null
-      : collectUserLeavesByAlias(node.model, normalizeArguments(node).where);
-
   const verifiedPermissionStacks: VerifiedPermissionStacks = {};
   for (const [table, alias] of tables) {
-    if (
-      coveredPaths !== null &&
-      userLeavesByAlias !== null &&
-      alias !== node.rootTableAlias &&
-      (alias.includes('__W__') || alias.includes('__WS__'))
-    ) {
-      const userLeaves = userLeavesByAlias.get(alias);
-      if (userLeaves && userLeaves.size > 0 && [...userLeaves].every((p) => coveredPaths.has(p))) {
-        // Every leaf the user supplied at or below this filter join is
-        // already constrained by the root permission's WHERE — skip the
-        // joined-entity permission check for this alias.
-        continue;
-      }
-    }
-
     const verifiedPermissionStack = applyPermissions(
       node.ctx,
       table,
