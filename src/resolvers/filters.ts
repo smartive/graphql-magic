@@ -338,7 +338,19 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
         tableAlias,
       };
       addJoin(joins, node.tableAlias, subNode.model.name, subNode.tableAlias, relation.field.foreignKey, 'id');
-      applyNestedDeletedDefault(subNode, ops);
+      // Same rationale as `collectMandatoryFilterAliases`: a
+      // `filterable: { nonNull: true }` relation is a schema contract
+      // that EVERY client must traverse, and the cascade contents are
+      // forced too. Applying `deleted = false` on that joined table
+      // would silently drop rows the client had no opt-out from
+      // filtering through — e.g. a deleted goal whose relation is
+      // also deleted disappears from `/admin/goals?deleted=true`,
+      // even though the user explicitly asked for deleted ones. Same
+      // alignment: the schema-mandated path doesn't get extra hidden
+      // restrictions.
+      if (!isMandatoryFilterField(relation.field.filterable) || !isMinimalFilterShape(targetModel, value as Where)) {
+        applyNestedDeletedDefault(subNode, ops);
+      }
       applyWhere(subNode, value as Where, ops, joins);
       continue;
     }
