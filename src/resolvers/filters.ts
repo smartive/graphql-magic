@@ -53,25 +53,36 @@ const isMinimalFilterShape = (model: EntityModel, where: Where | undefined): boo
   for (const [key, value] of Object.entries(where)) {
     if (key === 'AND' || key === 'OR') {
       if (Array.isArray(value)) {
-        if (!value.every((sub) => isMinimalFilterShape(model, sub as Where))) return false;
+        if (!value.every((sub) => isMinimalFilterShape(model, sub as Where))) {
+          return false;
+        }
       }
       continue;
     }
     if (key === 'NOT') {
-      if (!isMinimalFilterShape(model, value as Where)) return false;
+      if (!isMinimalFilterShape(model, value as Where)) {
+        return false;
+      }
       continue;
     }
     // `status_IN`, `count_GTE`, `relations_SOME`, … — all opt-in suffixes.
-    if (/_[A-Z]+$/.test(key)) return false;
+    if (/_[A-Z]+$/.test(key)) {
+      return false;
+    }
 
     const field = model.fieldsByName?.[key];
-    if (!field || !isMandatoryFilterField(field.filterable)) return false;
+    if (!field || !isMandatoryFilterField(field.filterable)) {
+      return false;
+    }
 
     const relation = model.relationsByName?.[key];
     if (relation && value && typeof value === 'object' && !Array.isArray(value)) {
-      if (!isMinimalFilterShape(relation.targetModel, value as Where)) return false;
+      if (!isMinimalFilterShape(relation.targetModel, value as Where)) {
+        return false;
+      }
     }
   }
+
   return true;
 };
 
@@ -97,16 +108,19 @@ const isMinimalFilterShape = (model: EntityModel, where: Where | undefined): boo
  * "must provide" implies the runtime-level "may provide without an
  * additional READ check on the joined alias".
  */
-export const collectMandatoryFilterAliases = (
-  model: EntityModel,
-  where: Where | undefined,
-): Set<string> => {
+export const collectMandatoryFilterAliases = (model: EntityModel, where: Where | undefined): Set<string> => {
   const out = new Set<string>();
   const walk = (m: EntityModel, w: Where | undefined, inMandatoryChain: boolean) => {
-    if (!w || typeof w !== 'object' || Array.isArray(w)) return;
+    if (!w || typeof w !== 'object' || Array.isArray(w)) {
+      return;
+    }
     for (const [key, value] of Object.entries(w)) {
       if (key === 'AND' || key === 'OR') {
-        if (Array.isArray(value)) for (const sub of value) walk(m, sub as Where, inMandatoryChain);
+        if (Array.isArray(value)) {
+          for (const sub of value) {
+            walk(m, sub as Where, inMandatoryChain);
+          }
+        }
         continue;
       }
       if (key === 'NOT') {
@@ -118,10 +132,7 @@ export const collectMandatoryFilterAliases = (
         const nextInMandatoryChain = inMandatoryChain && isMandatoryFilterField(relation.field.filterable);
         if (nextInMandatoryChain && isMinimalFilterShape(relation.targetModel, value as Where)) {
           const targetModel = relation.targetModel;
-          const joinAlias =
-            targetModel === targetModel.rootModel
-              ? `${m.name}__W__${key}`
-              : `${m.name}__WS__${key}`;
+          const joinAlias = targetModel === targetModel.rootModel ? `${m.name}__W__${key}` : `${m.name}__WS__${key}`;
           out.add(joinAlias);
         }
         walk(relation.targetModel, value as Where, nextInMandatoryChain);
@@ -129,6 +140,7 @@ export const collectMandatoryFilterAliases = (
     }
   };
   walk(model, where, true);
+
   return out;
 };
 
