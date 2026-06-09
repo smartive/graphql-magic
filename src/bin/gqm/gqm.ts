@@ -53,11 +53,14 @@ const readCurrentBranch = (): string | undefined => {
     if (statSync(gitDir).isFile()) {
       const pointer = readFileSync(gitDir, 'utf8').trim();
       const match = /^gitdir:\s*(.+)$/.exec(pointer);
-      if (!match) return undefined;
+      if (!match) {
+        return undefined;
+      }
       gitDir = match[1];
     }
     const head = readFileSync(join(gitDir, 'HEAD'), 'utf8').trim();
     const match = /^ref:\s*refs\/heads\/(.+)$/.exec(head);
+
     return match ? match[1] : undefined;
   } catch {
     return undefined;
@@ -200,6 +203,7 @@ const main = async (): Promise<void> => {
 
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
     printHelp();
+
     return;
   }
 
@@ -219,6 +223,7 @@ const main = async (): Promise<void> => {
 
   if (values.help) {
     printCommandHelp(command);
+
     return;
   }
 

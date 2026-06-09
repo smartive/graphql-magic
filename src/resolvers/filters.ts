@@ -24,6 +24,126 @@ export type FilterNode = {
 /** True when the query may return soft-deleted rows (`deleted: true` or `deleted: null`). */
 export const includesDeletedRows = (deleted: boolean | null | undefined) => deleted === true || deleted === null;
 
+/**
+ * True when the field is `filterable: { nonNull: true }` — i.e. the
+ * schema forces every client to provide a value for it on the matching
+ * Where / WhereLookup input. Plain `filterable: true` (boolean) is
+ * opt-in and does NOT qualify.
+ */
+const isMandatoryFilterField = (filterable: unknown): boolean =>
+  typeof filterable === 'object' && filterable !== null && (filterable as { nonNull?: boolean }).nonNull === true;
+
+/**
+ * True when every key the user supplied at this WHERE position is a
+ * `filterable: { nonNull: true }` field on `model`, recursing into
+ * relation traversals (which must themselves be nonNull-filterable to
+ * count as schema-mandated).
+ *
+ * A `filterable: true` field — even sitting next to mandatory ones —
+ * drops the whole position out of "minimal", since the user opted in
+ * to filtering by it. AND/OR/NOT distribute over their children.
+ * `_<OP>` and `_SOME` / `_NONE` suffixes are treated as opt-in: the
+ * base field's nonNull constraint says nothing about which operators
+ * the schema *forces* on the client.
+ */
+const isMinimalFilterShape = (model: EntityModel, where: Where | undefined): boolean => {
+  if (!where || typeof where !== 'object' || Array.isArray(where)) {
+    return true;
+  }
+  for (const [key, value] of Object.entries(where)) {
+    if (key === 'AND' || key === 'OR') {
+      if (Array.isArray(value)) {
+        if (!value.every((sub) => isMinimalFilterShape(model, sub as Where))) {
+          return false;
+        }
+      }
+      continue;
+    }
+    if (key === 'NOT') {
+      if (!isMinimalFilterShape(model, value as Where)) {
+        return false;
+      }
+      continue;
+    }
+    // `status_IN`, `count_GTE`, `relations_SOME`, … — all opt-in suffixes.
+    if (/_[A-Z]+$/.test(key)) {
+      return false;
+    }
+
+    const field = model.fieldsByName?.[key];
+    if (!field || !isMandatoryFilterField(field.filterable)) {
+      return false;
+    }
+
+    const relation = model.relationsByName?.[key];
+    if (relation && value && typeof value === 'object' && !Array.isArray(value)) {
+      if (!isMinimalFilterShape(relation.targetModel, value as Where)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
+/**
+ * Filter-join aliases on which `applyPermissions` for the joined
+ * entity may be skipped, because the schema forces the client to
+ * provide the filter shape that produced them. The rule:
+ *
+ *   - The relation field carrying the join is `filterable: { nonNull: true }`
+ *     (the client has no opt-out from traversing it), AND
+ *   - the user's WHERE contents at that position are minimal — every
+ *     leaf below is itself schema-mandatory (see `isMinimalFilterShape`).
+ *
+ * If either is false the alias falls through to the strict per-table
+ * `Entity.READ` permission stack. Optional filter capabilities are
+ * always permission-gated; only schema-mandated ones bypass.
+ *
+ * Why this is safe (and why it matters): `filterable: { nonNull: true }`
+ * is a contract that the API REQUIRES the client to filter by this
+ * field. Requiring read permission on the joined entity at the same
+ * time would make the API unusable for any role that lacks that
+ * permission — they could not satisfy the schema. So the schema-level
+ * "must provide" implies the runtime-level "may provide without an
+ * additional READ check on the joined alias".
+ */
+export const collectMandatoryFilterAliases = (model: EntityModel, where: Where | undefined): Set<string> => {
+  const out = new Set<string>();
+  const walk = (m: EntityModel, w: Where | undefined, inMandatoryChain: boolean) => {
+    if (!w || typeof w !== 'object' || Array.isArray(w)) {
+      return;
+    }
+    for (const [key, value] of Object.entries(w)) {
+      if (key === 'AND' || key === 'OR') {
+        if (Array.isArray(value)) {
+          for (const sub of value) {
+            walk(m, sub as Where, inMandatoryChain);
+          }
+        }
+        continue;
+      }
+      if (key === 'NOT') {
+        walk(m, value as Where, inMandatoryChain);
+        continue;
+      }
+      const relation = m.relationsByName?.[key];
+      if (relation && value && typeof value === 'object' && !Array.isArray(value)) {
+        const nextInMandatoryChain = inMandatoryChain && isMandatoryFilterField(relation.field.filterable);
+        if (nextInMandatoryChain && isMinimalFilterShape(relation.targetModel, value as Where)) {
+          const targetModel = relation.targetModel;
+          const joinAlias = targetModel === targetModel.rootModel ? `${m.name}__W__${key}` : `${m.name}__WS__${key}`;
+          out.add(joinAlias);
+        }
+        walk(relation.targetModel, value as Where, nextInMandatoryChain);
+      }
+    }
+  };
+  walk(model, where, true);
+
+  return out;
+};
+
 export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBuilder, joins: Joins) => {
   const normalizedArguments = normalizeArguments(node);
   // No need for default order by in aggregates

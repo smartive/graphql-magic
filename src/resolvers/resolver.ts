@@ -7,7 +7,8 @@ import { NotFoundError } from '../errors';
 import { get, summonByKey } from '../models/utils';
 import { applyPermissions } from '../permissions/check';
 import { PermissionStack } from '../permissions/generate';
-import { applyFilters } from './filters';
+import { normalizeArguments } from './arguments';
+import { applyFilters, collectMandatoryFilterAliases } from './filters';
 import { FieldResolverNode, ResolverNode, getFragmentSpreads, getInlineFragments, getJoins, getRootFieldNode } from './node';
 import { applySelects } from './selects';
 import {
@@ -92,8 +93,22 @@ const buildQuery = async (
     ...joins.map(({ table2Name, table2Alias }) => [table2Name, table2Alias] satisfies [string, string]),
   ];
 
+  // A `filterable: { nonNull: true }` field is a schema-level contract
+  // that every client MUST filter by it. The runtime cannot then also
+  // require READ permission on the joined entity through that filter —
+  // a role lacking that permission would have no way to satisfy the
+  // schema. So on filter-join aliases produced by a mandatory cascade
+  // we skip `applyPermissions` for the joined table; everything else
+  // (top-level entity reads, optional `filterable: true` joins, root
+  // alias) goes through the strict path. See
+  // `collectMandatoryFilterAliases` for the precise rule.
+  const mandatoryFilterAliases = collectMandatoryFilterAliases(node.model, normalizeArguments(node).where);
+
   const verifiedPermissionStacks: VerifiedPermissionStacks = {};
   for (const [table, alias] of tables) {
+    if (alias !== node.rootTableAlias && mandatoryFilterAliases.has(alias)) {
+      continue;
+    }
     const verifiedPermissionStack = applyPermissions(
       node.ctx,
       table,
