@@ -45,6 +45,8 @@ export class MigrationGenerator {
   private existingExcludeConstraints: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   /** table name -> constraint name -> { normalized, raw } */
   private existingConstraintTriggers: Record<string, Map<string, { normalized: string; raw: string }>> = {};
+  /** table name -> trigger name -> { normalized, raw } (regular, non-constraint triggers) */
+  private existingTriggers: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -135,6 +137,30 @@ export class MigrationGenerator {
         this.existingConstraintTriggers[tableName] = new Map();
       }
       this.existingConstraintTriggers[tableName].set(row.constraint_name, {
+        normalized: this.normalizeTriggerDef(row.trigger_def),
+        raw: row.trigger_def,
+      });
+    }
+
+    // Regular (non-constraint) triggers: those not backed by a pg_constraint row and not
+    // internally generated (e.g. FK enforcement triggers have tgisinternal = true).
+    const plainTriggerResult = await schema.knex.raw(
+      `SELECT c.relname as table_name, t.tgname as trigger_name, pg_get_triggerdef(t.oid) as trigger_def
+       FROM pg_trigger t
+       JOIN pg_class c ON t.tgrelid = c.oid
+       JOIN pg_namespace n ON c.relnamespace = n.oid
+       WHERE n.nspname = 'public' AND NOT t.tgisinternal AND t.tgconstraint = 0`,
+    );
+    const plainTriggerRows: { table_name: string; trigger_name: string; trigger_def: string }[] =
+      'rows' in plainTriggerResult && Array.isArray((plainTriggerResult as { rows: unknown }).rows)
+        ? (plainTriggerResult as { rows: { table_name: string; trigger_name: string; trigger_def: string }[] }).rows
+        : [];
+    for (const row of plainTriggerRows) {
+      const tableName = row.table_name.split('.').pop()?.replace(/^"|"$/g, '') ?? row.table_name;
+      if (!this.existingTriggers[tableName]) {
+        this.existingTriggers[tableName] = new Map();
+      }
+      this.existingTriggers[tableName].set(row.trigger_name, {
         normalized: this.normalizeTriggerDef(row.trigger_def),
         raw: row.trigger_def,
       });
@@ -267,6 +293,13 @@ export class MigrationGenerator {
                 up.push(() => {
                   this.addConstraintTrigger(table, constraintName, entry);
                 });
+              } else if (entry.kind === 'trigger') {
+                this.validateTriggerFunction(model, entry);
+                const table = model.name;
+                const triggerName = this.getConstraintName(model, entry, i);
+                up.push(() => {
+                  this.addTrigger(table, triggerName, entry);
+                });
               }
             }
           }
@@ -323,6 +356,7 @@ export class MigrationGenerator {
           if (model.constraints?.length) {
             const existingExcludeMap = this.existingExcludeConstraints[model.name];
             const existingTriggerMap = this.existingConstraintTriggers[model.name];
+            const existingPlainTriggerMap = this.existingTriggers[model.name];
             for (let i = 0; i < model.constraints.length; i++) {
               const entry = model.constraints[i];
               const table = model.name;
@@ -404,6 +438,29 @@ export class MigrationGenerator {
                   });
                   down.push(() => {
                     this.dropConstraintTrigger(table, constraintName);
+                    const escaped = existing.raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+                    this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
+                    this.writer.blankLine();
+                  });
+                }
+              } else if (entry.kind === 'trigger') {
+                this.validateTriggerFunction(model, entry);
+                const newDef = this.normalizeTriggerDef(this.buildTriggerDef(table, constraintName, entry));
+                const existing = existingPlainTriggerMap?.get(constraintName);
+                if (existing === undefined) {
+                  up.push(() => {
+                    this.addTrigger(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropTrigger(table, constraintName);
+                  });
+                } else if (existing.normalized !== newDef) {
+                  up.push(() => {
+                    this.dropTrigger(table, constraintName);
+                    this.addTrigger(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropTrigger(table, constraintName);
                     const escaped = existing.raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
                     this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
                     this.writer.blankLine();
@@ -1317,10 +1374,31 @@ export class MigrationGenerator {
       function: { name: string; args?: readonly string[] };
     },
   ): void {
+    this.validateTriggerFunctionWithLabel(model, entry, 'Constraint trigger');
+  }
+
+  private validateTriggerFunction(
+    model: EntityModel,
+    entry: {
+      name: string;
+      function: { name: string; args?: readonly string[] };
+    },
+  ): void {
+    this.validateTriggerFunctionWithLabel(model, entry, 'Trigger');
+  }
+
+  private validateTriggerFunctionWithLabel(
+    model: EntityModel,
+    entry: {
+      name: string;
+      function: { name: string; args?: readonly string[] };
+    },
+    label: 'Constraint trigger' | 'Trigger',
+  ): void {
     const fnName = entry.function.name;
     if (!this.parsedFunctions || this.parsedFunctions.length === 0) {
       throw new Error(
-        `Constraint trigger "${entry.name}" on model ${model.name} references function "${fnName}" which must be defined in functions.ts. Ensure functions.ts exists and defines the function.`,
+        `${label} "${entry.name}" on model ${model.name} references function "${fnName}" which must be defined in functions.ts. Ensure functions.ts exists and defines the function.`,
       );
     }
     const defined = this.parsedFunctions.find((pf) => pf.name === fnName);
@@ -1330,7 +1408,7 @@ export class MigrationGenerator {
         .sort()
         .join(', ');
       throw new Error(
-        `Constraint trigger "${entry.name}" on model ${model.name} references function "${fnName}" which is not defined in functions.ts. Defined functions: ${validList || '(none)'}.`,
+        `${label} "${entry.name}" on model ${model.name} references function "${fnName}" which is not defined in functions.ts. Defined functions: ${validList || '(none)'}.`,
       );
     }
   }
@@ -1360,6 +1438,49 @@ export class MigrationGenerator {
 
   private dropConstraintTrigger(table: string, constraintName: string) {
     this.writer.writeLine(`await knex.raw('DROP TRIGGER IF EXISTS "${constraintName}" ON "${table}"');`);
+    this.writer.blankLine();
+  }
+
+  private triggerExecuteClause(fn: { name: string; args?: readonly string[] }): string {
+    const argsStr = fn.args?.length ? fn.args.map((a) => `"${a}"`).join(', ') : '';
+
+    return argsStr ? `EXECUTE FUNCTION ${fn.name}(${argsStr})` : `EXECUTE FUNCTION ${fn.name}()`;
+  }
+
+  private buildTriggerDef(
+    table: string,
+    triggerName: string,
+    entry: {
+      when: 'AFTER' | 'BEFORE';
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
+      forEach: 'ROW' | 'STATEMENT';
+      function: { name: string; args?: readonly string[] };
+    },
+  ): string {
+    const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');
+
+    return `CREATE TRIGGER "${triggerName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach} ${this.triggerExecuteClause(entry.function)}`;
+  }
+
+  private addTrigger(
+    table: string,
+    triggerName: string,
+    entry: {
+      when: 'AFTER' | 'BEFORE';
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
+      forEach: 'ROW' | 'STATEMENT';
+      function: { name: string; args?: readonly string[] };
+    },
+  ) {
+    const eventsStr = this.sortTriggerEvents(entry.events).join(' OR ');
+    this.writer.writeLine(
+      `await knex.raw(\`CREATE TRIGGER "${triggerName}" ${entry.when} ${eventsStr} ON "${table}" FOR EACH ${entry.forEach} ${this.triggerExecuteClause(entry.function)}\`);`,
+    );
+    this.writer.blankLine();
+  }
+
+  private dropTrigger(table: string, triggerName: string) {
+    this.writer.writeLine(`await knex.raw('DROP TRIGGER IF EXISTS "${triggerName}" ON "${table}"');`);
     this.writer.blankLine();
   }
 
