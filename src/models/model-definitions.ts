@@ -238,12 +238,33 @@ export type ConstraintDefinition =
       events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
       forEach: 'ROW' | 'STATEMENT';
       function: { name: string; args?: readonly string[] };
+    }
+  | {
+      /**
+       * A multi-column (composite) unique constraint, emitted as a partial-capable
+       * `CREATE UNIQUE INDEX`. Use this for natural keys spanning more than one column
+       * (e.g. join-table FK pairs, or `(parentId, name)` combinations). For a
+       * single-column unique, prefer the field-level `unique: true` flag instead.
+       */
+      kind: 'unique';
+      name: string;
+      /**
+       * The columns the uniqueness spans, in index order. These are DB column names
+       * (same as `exclude` elements): a relation field `foo` maps to its FK column `fooId`.
+       */
+      fields: readonly string[];
+      /**
+       * Optional partial-index predicate. For soft-deletable entities this is typically
+       * `'"deleted" = false'`, so a soft-deleted row no longer blocks re-using the key.
+       */
+      where?: string;
     };
 
 export type CheckConstraintDefinition = Extract<ConstraintDefinition, { kind: 'check' }>;
 export type ExcludeConstraintDefinition = Extract<ConstraintDefinition, { kind: 'exclude' }>;
 export type ConstraintTriggerConstraintDefinition = Extract<ConstraintDefinition, { kind: 'constraint_trigger' }>;
 export type TriggerConstraintDefinition = Extract<ConstraintDefinition, { kind: 'trigger' }>;
+export type UniqueConstraintDefinition = Extract<ConstraintDefinition, { kind: 'unique' }>;
 
 export type ScalarModelDefinition = Extract<ModelDefinition, { kind: 'scalar' }>;
 export type EnumModelDefinition = Extract<ModelDefinition, { kind: 'enum' }>;

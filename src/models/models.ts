@@ -42,6 +42,7 @@ import {
   typeToField,
   validateCheckConstraint,
   validateExcludeConstraint,
+  validateUniqueConstraint,
 } from './utils';
 
 // These might one day become classes
@@ -414,6 +415,8 @@ export class EntityModel extends Model {
           validateCheckConstraint(this, constraint);
         } else if (constraint.kind === 'exclude') {
           validateExcludeConstraint(this, constraint);
+        } else if (constraint.kind === 'unique') {
+          validateUniqueConstraint(this, constraint);
         }
       }
     }

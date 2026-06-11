@@ -166,7 +166,7 @@ An array of fields. See [fields](./fields)
 
 ### `constraints`
 
-Optional array of database constraints for this entity. Supported kinds: `check`, `exclude`, `constraint_trigger`.
+Optional array of database constraints for this entity. Supported kinds: `check`, `exclude`, `constraint_trigger`, `unique`.
 
 #### Check constraints (`kind: 'check'`)
 
@@ -187,6 +187,36 @@ Enforce non-overlapping values per group (e.g. no overlapping date ranges per po
 Deferrable triggers for validation (e.g. contiguous periods). The function must be defined in `functions.ts`.
 
 - **`name`**, **`when`** (`'AFTER'` or `'BEFORE'`), **`events`** (`['INSERT', 'UPDATE', 'DELETE']`; any combination), **`forEach`** (`'ROW'` or `'STATEMENT'`), **`deferrable`** (optional), **`function`** (`{ name: string; args?: string[] }`).
+
+#### Unique constraints (`kind: 'unique'`)
+
+Multi-column (composite) uniqueness, e.g. join-table FK pairs or `(parentId, name)` combinations. Emitted as a `CREATE UNIQUE INDEX` rather than a `UNIQUE` constraint, so it can be **partial** via `where` — essential for soft-deletable entities, where a soft-deleted row should no longer block re-using the natural key.
+
+For a **single column**, prefer the field-level [`unique: true`](./3-fields.md) flag instead; this kind is for two or more columns.
+
+- **`name`**: A short name for the constraint (used in the index name).
+- **`fields`**: The DB column names the uniqueness spans, in index order. As with `exclude` elements these are column names, so a relation field `foo` maps to its FK column `fooId`.
+- **`where`** (optional): A partial-index predicate. For soft-deletable entities use `'"deleted" = false'`.
+
+```ts
+{
+    kind: 'entity',
+    name: 'CustomerRelation', // a join table
+    fields: [
+        { kind: 'relation', name: 'customer', type: 'Customer' },
+        { kind: 'relation', name: 'relation', type: 'Relation' },
+        // ...
+    ],
+    constraints: [
+        {
+            kind: 'unique',
+            name: 'customer_relation',
+            fields: ['customerId', 'relationId'],
+            where: '"deleted" = false',
+        },
+    ],
+}
+```
 
 Example: ensure a numeric field is non-negative and a status is one of the allowed values:
 
