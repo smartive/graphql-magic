@@ -434,6 +434,184 @@ describe('MigrationGenerator constraint_trigger validation', () => {
   });
 });
 
+describe('MigrationGenerator trigger (regular, non-constraint)', () => {
+  // A realistic function definition so handleFunctions() considers it already present and unchanged,
+  // isolating these tests to the trigger wiring (otherwise a CREATE FUNCTION would flip needsMigration).
+  const FN_DEFINITION =
+    'CREATE FUNCTION mirror_user_status() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$';
+  const FN_BODY = 'BEGIN RETURN NEW; END;';
+  const parsedFunctions = [
+    {
+      name: 'mirror_user_status',
+      signature: 'mirror_user_status()',
+      body: FN_BODY,
+      fullDefinition: FN_DEFINITION,
+      isAggregate: false,
+    },
+  ];
+  // Row shape returned by getDatabaseFunctions' regular-function query (pg_get_functiondef ...).
+  const dbFunctionRow = {
+    name: 'mirror_user_status',
+    arguments: '',
+    definition: FN_DEFINITION,
+    is_aggregate: false,
+  };
+
+  const createTriggerModels = (
+    overrides: {
+      when?: 'AFTER' | 'BEFORE';
+      events?: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
+      forEach?: 'ROW' | 'STATEMENT';
+      args?: readonly string[];
+    } = {},
+  ) =>
+    new Models([
+      {
+        kind: 'entity',
+        name: 'Customer',
+        updatable: false,
+        fields: [
+          { name: 'userId', type: 'UUID' },
+          { name: 'status', type: 'String' },
+        ],
+        constraints: [
+          {
+            kind: 'trigger' as const,
+            name: 'mirror_status',
+            when: overrides.when ?? ('AFTER' as const),
+            events: overrides.events ?? (['INSERT', 'UPDATE'] as const),
+            forEach: overrides.forEach ?? ('ROW' as const),
+            function: { name: 'mirror_user_status', args: overrides.args },
+          },
+        ],
+      },
+    ]);
+
+  // Routes the setup queries in generate() by inspecting the SQL so order is irrelevant.
+  // `plainTriggerRows` is returned for the regular-trigger query (the one that joins pg_trigger
+  // directly and filters tgconstraint = 0).
+  const createTriggerGenerator = (
+    models: Models,
+    plainTriggerRows: { table_name: string; trigger_name: string; trigger_def: string }[],
+    tablesExist: boolean,
+  ) => {
+    const raw = jest.fn((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('tgconstraint = 0')) {
+        return Promise.resolve({ rows: plainTriggerRows });
+      }
+      // getDatabaseFunctions' regular-function query: report mirror_user_status as already present
+      // and unchanged so handleFunctions() does not emit a CREATE FUNCTION.
+      if (typeof sql === 'string' && sql.includes('pg_get_functiondef')) {
+        return Promise.resolve({ rows: [dbFunctionRow] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+    const knexLike = Object.assign(
+      jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue([]) }),
+      }),
+      { raw },
+    );
+    const schema = {
+      knex: knexLike,
+      tables: jest.fn().mockResolvedValue(tablesExist ? ['Customer'] : []),
+      columnInfo: jest.fn(async () =>
+        tablesExist
+          ? [
+              { name: 'id', data_type: 'uuid', is_nullable: false },
+              { name: 'userId', data_type: 'uuid', is_nullable: true },
+              { name: 'status', data_type: 'text', is_nullable: true },
+            ]
+          : [],
+      ),
+    };
+    const generator = new MigrationGenerator(knexLike as never, models, parsedFunctions);
+    (generator as unknown as { schema: unknown }).schema = schema;
+    return generator;
+  };
+
+  // pg_get_triggerdef output for the trigger defined by createTriggerModels (default options).
+  const dbTriggerDef =
+    'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON public."Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()';
+
+  it('creates a CREATE TRIGGER when none exists (existing table)', async () => {
+    const generator = createTriggerGenerator(createTriggerModels(), [], true);
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain(
+      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+    );
+    expect(migration).not.toContain('CREATE CONSTRAINT TRIGGER');
+    expect(migration).not.toContain('DEFERRABLE');
+    // down drops it
+    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger_0" ON "Customer"');
+  });
+
+  it('does not detect changes when the trigger already matches (idempotent)', async () => {
+    const generator = createTriggerGenerator(
+      createTriggerModels(),
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      true,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(false);
+  });
+
+  it('is idempotent regardless of event ordering in the existing def', async () => {
+    const generator = createTriggerGenerator(
+      createTriggerModels({ events: ['UPDATE', 'INSERT'] }),
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      true,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(false);
+  });
+
+  it('detects a change to the trigger definition (drops + recreates)', async () => {
+    const generator = createTriggerGenerator(
+      // Model now also fires on DELETE -> differs from the stored def.
+      createTriggerModels({ events: ['INSERT', 'UPDATE', 'DELETE'] }),
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      true,
+    );
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger_0" ON "Customer"');
+    expect(migration).toContain(
+      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE OR DELETE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+    );
+  });
+
+  it('emits the trigger when the table itself is being created', async () => {
+    const generator = createTriggerGenerator(createTriggerModels(), [], false);
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain(
+      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+    );
+  });
+
+  it('throws when the referenced function is not defined', async () => {
+    const generator = createTriggerGenerator(createTriggerModels(), [], true);
+    (generator as unknown as { parsedFunctions: unknown }).parsedFunctions = [
+      { name: 'other_fn', signature: '', body: '', fullDefinition: '', isAggregate: false },
+    ];
+
+    await expect(generator.generate()).rejects.toThrow(
+      /Trigger "mirror_status" on model Customer references function "mirror_user_status" which is not defined in functions.ts/,
+    );
+  });
+});
+
 describe('MigrationGenerator canonicalizeCheckExpressionWithPostgres', () => {
   afterEach(() => {
     jest.restoreAllMocks();
