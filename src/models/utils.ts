@@ -313,3 +313,21 @@ export const validateExcludeConstraint = (
     }
   }
 };
+
+export const validateUniqueConstraint = (
+  model: EntityModel,
+  constraint: { name: string; fields: readonly string[] },
+): void => {
+  if (constraint.fields.length === 0) {
+    throw new Error(`Unique constraint "${constraint.name}" on model ${model.name} must reference at least one column.`);
+  }
+  const validColumnNames = new Set(model.fields.map((f) => getColumnName(f)));
+  for (const field of constraint.fields) {
+    if (!validColumnNames.has(field)) {
+      const validList = [...validColumnNames].sort().join(', ');
+      throw new Error(
+        `Unique constraint "${constraint.name}" references column "${field}" which does not exist on model ${model.name}. Valid columns: ${validList}`,
+      );
+    }
+  }
+};

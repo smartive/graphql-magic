@@ -434,6 +434,158 @@ describe('MigrationGenerator constraint_trigger validation', () => {
   });
 });
 
+describe('MigrationGenerator unique constraints', () => {
+  type UniqueIndexRow = { table_name: string; index_name: string; index_def: string };
+
+  const createUniqueModels = (
+    constraints: { kind: 'unique'; name: string; fields: readonly string[]; where?: string }[],
+  ) =>
+    new Models([
+      {
+        kind: 'entity',
+        name: 'Product',
+        fields: [
+          { name: 'deleted', type: 'Boolean' },
+          { name: 'startDate', type: 'DateTime' },
+          { name: 'endDate', type: 'DateTime' },
+        ],
+        constraints,
+      },
+    ]);
+
+  // The unique-index reflection query is the 4th `knex.raw` call (after check, exclude,
+  // trigger), so the existing-index rows go in the 4th slot.
+  const createUniqueGenerator = (uniqueRows: UniqueIndexRow[], models: Models) => {
+    const raw = jest
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: uniqueRows })
+      .mockResolvedValue({ rows: [] });
+    const knexLike = Object.assign(
+      jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue([]) }),
+      }),
+      { raw },
+    );
+    const generator = new MigrationGenerator({} as never, models);
+    (generator as unknown as { schema: unknown }).schema = {
+      knex: knexLike,
+      tables: jest.fn().mockResolvedValue(['Product']),
+      columnInfo: jest.fn(async (table: string) => baseColumnsByTable[table] ?? []),
+    };
+
+    return generator;
+  };
+
+  it('emits a partial CREATE UNIQUE INDEX when the index is missing', async () => {
+    const models = createUniqueModels([
+      { kind: 'unique', name: 'start_end', fields: ['startDate', 'endDate'], where: '"deleted" = false' },
+    ]);
+    const generator = createUniqueGenerator([], models);
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
+    );
+    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique_0"');
+  });
+
+  it('emits a non-partial unique index when no where is given', async () => {
+    const models = createUniqueModels([{ kind: 'unique', name: 'start_end', fields: ['startDate', 'endDate'] }]);
+    const generator = createUniqueGenerator([], models);
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate")',
+    );
+    expect(migration).not.toContain('Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE');
+  });
+
+  it('detects no change when the existing partial index matches (pg_get_indexdef shape)', async () => {
+    const models = createUniqueModels([
+      { kind: 'unique', name: 'start_end', fields: ['startDate', 'endDate'], where: '"deleted" = false' },
+    ]);
+    const generator = createUniqueGenerator(
+      [
+        {
+          table_name: 'Product',
+          index_name: 'Product_start_end_unique_0',
+          index_def:
+            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate", "endDate") WHERE (deleted = false)',
+        },
+      ],
+      models,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(false);
+  });
+
+  it('detects a change when the column set differs', async () => {
+    const models = createUniqueModels([
+      { kind: 'unique', name: 'start_end', fields: ['startDate', 'endDate'], where: '"deleted" = false' },
+    ]);
+    const generator = createUniqueGenerator(
+      [
+        {
+          table_name: 'Product',
+          index_name: 'Product_start_end_unique_0',
+          index_def:
+            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate") WHERE (deleted = false)',
+        },
+      ],
+      models,
+    );
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique_0"');
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
+    );
+  });
+
+  it('detects a change when only the partial predicate differs', async () => {
+    const models = createUniqueModels([
+      { kind: 'unique', name: 'start_end', fields: ['startDate', 'endDate'], where: '"deleted" = false' },
+    ]);
+    const generator = createUniqueGenerator(
+      [
+        {
+          table_name: 'Product',
+          index_name: 'Product_start_end_unique_0',
+          index_def:
+            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate", "endDate")',
+        },
+      ],
+      models,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+  });
+
+  it('throws when a unique constraint references a non-existent column', () => {
+    expect(() =>
+      createUniqueModels([{ kind: 'unique', name: 'bad', fields: ['startDate', 'nope'] }]),
+    ).toThrow(/Unique constraint "bad" references column "nope" which does not exist on model Product/);
+  });
+
+  it('throws when a unique constraint references no columns', () => {
+    expect(() => createUniqueModels([{ kind: 'unique', name: 'empty', fields: [] }])).toThrow(
+      /Unique constraint "empty" on model Product must reference at least one column/,
+    );
+  });
+});
+
 describe('MigrationGenerator canonicalizeCheckExpressionWithPostgres', () => {
   afterEach(() => {
     jest.restoreAllMocks();

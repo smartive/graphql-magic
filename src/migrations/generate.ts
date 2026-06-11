@@ -19,6 +19,7 @@ import {
   typeToField,
   validateCheckConstraint,
   validateExcludeConstraint,
+  validateUniqueConstraint,
 } from '../models/utils';
 import { Value } from '../values';
 import { ParsedFunction } from './types';
@@ -45,6 +46,8 @@ export class MigrationGenerator {
   private existingExcludeConstraints: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   /** table name -> constraint name -> { normalized, raw } */
   private existingConstraintTriggers: Record<string, Map<string, { normalized: string; raw: string }>> = {};
+  /** table name -> index name -> raw `CREATE UNIQUE INDEX …` definition (gm-managed composite uniques only) */
+  private existingUniqueIndexes: Record<string, Map<string, string>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -138,6 +141,32 @@ export class MigrationGenerator {
         normalized: this.normalizeTriggerDef(row.trigger_def),
         raw: row.trigger_def,
       });
+    }
+
+    // Composite unique indexes are surfaced as plain unique *indexes* (not unique
+    // *constraints*) because only an index can be partial (`WHERE …`). We deliberately
+    // exclude any index that backs a constraint (primary key, or a field-level
+    // `unique: true` which knex emits as ADD CONSTRAINT … UNIQUE) so those stay managed
+    // by their own code paths and are never touched here.
+    const uniqueIndexResult = await schema.knex.raw(
+      `SELECT t.relname as table_name, i.relname as index_name, pg_get_indexdef(ix.indexrelid) as index_def
+       FROM pg_index ix
+       JOIN pg_class i ON i.oid = ix.indexrelid
+       JOIN pg_class t ON t.oid = ix.indrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       WHERE n.nspname = 'public' AND ix.indisunique AND NOT ix.indisprimary
+         AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = ix.indexrelid)`,
+    );
+    const uniqueIndexRows: { table_name: string; index_name: string; index_def: string }[] =
+      'rows' in uniqueIndexResult && Array.isArray((uniqueIndexResult as { rows: unknown }).rows)
+        ? (uniqueIndexResult as { rows: { table_name: string; index_name: string; index_def: string }[] }).rows
+        : [];
+    for (const row of uniqueIndexRows) {
+      const tableName = row.table_name;
+      if (!this.existingUniqueIndexes[tableName]) {
+        this.existingUniqueIndexes[tableName] = new Map();
+      }
+      this.existingUniqueIndexes[tableName].set(row.index_name, row.index_def);
     }
 
     const up: Callbacks = [];
@@ -266,6 +295,13 @@ export class MigrationGenerator {
                 const constraintName = this.getConstraintName(model, entry, i);
                 up.push(() => {
                   this.addConstraintTrigger(table, constraintName, entry);
+                });
+              } else if (entry.kind === 'unique') {
+                validateUniqueConstraint(model, entry);
+                const table = model.name;
+                const constraintName = this.getConstraintName(model, entry, i);
+                up.push(() => {
+                  this.addUniqueIndex(table, constraintName, entry);
                 });
               }
             }
@@ -405,6 +441,28 @@ export class MigrationGenerator {
                   down.push(() => {
                     this.dropConstraintTrigger(table, constraintName);
                     const escaped = existing.raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+                    this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
+                    this.writer.blankLine();
+                  });
+                }
+              } else if (entry.kind === 'unique') {
+                validateUniqueConstraint(model, entry);
+                const existing = this.existingUniqueIndexes[table]?.get(constraintName);
+                if (existing === undefined) {
+                  up.push(() => {
+                    this.addUniqueIndex(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropUniqueIndex(constraintName);
+                  });
+                } else if (!this.uniqueIndexEquals(existing, entry)) {
+                  up.push(() => {
+                    this.dropUniqueIndex(constraintName);
+                    this.addUniqueIndex(table, constraintName, entry);
+                  });
+                  down.push(() => {
+                    this.dropUniqueIndex(constraintName);
+                    const escaped = this.escapeExpressionForRaw(existing);
                     this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
                     this.writer.blankLine();
                   });
@@ -1281,6 +1339,49 @@ export class MigrationGenerator {
   private dropExcludeConstraint(table: string, constraintName: string) {
     this.writer.writeLine(`await knex.raw('ALTER TABLE "${table}" DROP CONSTRAINT "${constraintName}"');`);
     this.writer.blankLine();
+  }
+
+  private addUniqueIndex(table: string, constraintName: string, entry: { fields: readonly string[]; where?: string }) {
+    const cols = entry.fields.map((f) => `"${f}"`).join(', ');
+    const whereClause = entry.where ? ` WHERE ${entry.where}` : '';
+    const escaped = this.escapeExpressionForRaw(
+      `CREATE UNIQUE INDEX "${constraintName}" ON "${table}" (${cols})${whereClause}`,
+    );
+    this.writer.writeLine(`await knex.raw(\`${escaped}\`);`);
+    this.writer.blankLine();
+  }
+
+  private dropUniqueIndex(constraintName: string) {
+    this.writer.writeLine(`await knex.raw('DROP INDEX IF EXISTS "${constraintName}"');`);
+    this.writer.blankLine();
+  }
+
+  /**
+   * Extracts the ordered column list and the partial predicate from a unique-index
+   * definition. Works on both our generated SQL and Postgres' `pg_get_indexdef` output
+   * (which adds `USING btree`, schema-qualifies the table, and wraps the predicate in
+   * parentheses). Columns are simple identifiers for this constraint kind, so the first
+   * parenthesised group is always the column list.
+   */
+  private parseUniqueIndex(def: string): { columns: string[]; where: string | null } {
+    const colsMatch = def.match(/\(([^()]*)\)/);
+    const columns = colsMatch ? colsMatch[1].split(',').map((c) => c.trim().replace(/"/g, '').toLowerCase()) : [];
+    const whereMatch = def.match(/\bWHERE\b\s*(.+)$/i);
+    const where = whereMatch ? this.normalizeUniqueWhere(whereMatch[1]) : null;
+
+    return { columns, where };
+  }
+
+  private normalizeUniqueWhere(where: string): string {
+    return where.replace(/\s+/g, ' ').replace(/[()"]/g, '').toLowerCase().trim();
+  }
+
+  private uniqueIndexEquals(existingDef: string, entry: { fields: readonly string[]; where?: string }): boolean {
+    const existing = this.parseUniqueIndex(existingDef);
+    const wantColumns = entry.fields.map((f) => f.toLowerCase());
+    const wantWhere = entry.where ? this.normalizeUniqueWhere(entry.where) : null;
+
+    return existing.columns.join(',') === wantColumns.join(',') && existing.where === wantWhere;
   }
 
   private sortTriggerEvents(events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[]): ('INSERT' | 'UPDATE' | 'DELETE')[] {
