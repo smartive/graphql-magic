@@ -223,6 +223,24 @@ export type ConstraintDefinition =
     }
   | {
       /**
+       * A regular (non-constraint) Postgres trigger: `CREATE TRIGGER ... EXECUTE FUNCTION ...`.
+       *
+       * Unlike `constraint_trigger` (which models a validation-only `CREATE CONSTRAINT TRIGGER`
+       * whose function `RAISE`s on violation), a `trigger` is meant to *mutate/write* data — e.g.
+       * to mirror a column from a related table into a stored column on this table.
+       *
+       * The trigger function body is the consumer's responsibility (defined via `functions`),
+       * exactly like `constraint_trigger`; graphql-magic only models the wiring.
+       */
+      kind: 'trigger';
+      name: string;
+      when: 'AFTER' | 'BEFORE';
+      events: readonly ('INSERT' | 'UPDATE' | 'DELETE')[];
+      forEach: 'ROW' | 'STATEMENT';
+      function: { name: string; args?: readonly string[] };
+    }
+  | {
+      /**
        * A multi-column (composite) unique constraint, emitted as a partial-capable
        * `CREATE UNIQUE INDEX`. Use this for natural keys spanning more than one column
        * (e.g. join-table FK pairs, or `(parentId, name)` combinations). For a
@@ -245,6 +263,7 @@ export type ConstraintDefinition =
 export type CheckConstraintDefinition = Extract<ConstraintDefinition, { kind: 'check' }>;
 export type ExcludeConstraintDefinition = Extract<ConstraintDefinition, { kind: 'exclude' }>;
 export type ConstraintTriggerConstraintDefinition = Extract<ConstraintDefinition, { kind: 'constraint_trigger' }>;
+export type TriggerConstraintDefinition = Extract<ConstraintDefinition, { kind: 'trigger' }>;
 export type UniqueConstraintDefinition = Extract<ConstraintDefinition, { kind: 'unique' }>;
 
 export type ScalarModelDefinition = Extract<ModelDefinition, { kind: 'scalar' }>;
