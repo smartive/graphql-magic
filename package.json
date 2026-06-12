@@ -80,7 +80,7 @@
     "eslint": "9.39.4",
     "jest": "30.4.2",
     "mock-knex": "0.4.13",
-    "prettier": "3.8.3",
+    "prettier": "3.8.4",
     "ts-jest": "29.4.11",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
