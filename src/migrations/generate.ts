@@ -1,4 +1,4 @@
-import CodeBlockWriter from 'code-block-writer';
+import CodeBlockWriterImport from 'code-block-writer';
 import { Knex } from 'knex';
 import { SchemaInspector } from 'knex-schema-inspector';
 import { Column } from 'knex-schema-inspector/dist/types/column';
@@ -30,11 +30,13 @@ import {
   normalizeFunctionBody,
 } from './update-functions';
 
+const imported = CodeBlockWriterImport as typeof CodeBlockWriterImport | { default: typeof CodeBlockWriterImport };
+const CodeBlockWriter = typeof imported === 'function' ? imported : imported.default;
+
 type Callbacks = (() => void)[];
 
 export class MigrationGenerator {
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  private writer: CodeBlockWriter = new CodeBlockWriter['default']({
+  private writer = new CodeBlockWriter({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });

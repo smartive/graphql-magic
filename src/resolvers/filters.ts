@@ -356,7 +356,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
     }
 
     if (Array.isArray(value)) {
-      if (field && field.list) {
+      if (field?.list) {
         if (isExpressionField) {
           ops.push((query) =>
             ors(

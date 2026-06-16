@@ -87,8 +87,8 @@ export const createEntity = async (
     });
 
     if (model.parent) {
-      const rootInput = {};
-      const childInput = { id };
+      const rootInput: Entity = {};
+      const childInput: Entity = { id };
       for (const field of model.fields.filter(not(isDynamicField))) {
         const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
         if (columnName in normalizedInput) {
@@ -583,7 +583,7 @@ export const createRevision = async (model: EntityModel, data: Entity, ctx: Muta
     if (model.deletable) {
       rootRevisionData.deleted = data.deleted || false;
     }
-    const childRevisionData = { id: revisionId };
+    const childRevisionData: Entity = { id: revisionId };
 
     for (const field of model.fields.filter(and(isUpdatableField, not(isDynamicField)))) {
       const col = field.kind === 'relation' ? `${field.name}Id` : field.name;
@@ -659,8 +659,8 @@ const doUpdate = async (model: EntityModel, currentEntity: Entity, update: Entit
     }
   }
   if (model.parent) {
-    const rootInput = {};
-    const childInput = {};
+    const rootInput: Entity = {};
+    const childInput: Entity = {};
     for (const field of model.fields.filter(not(isDynamicField))) {
       const columnName = field.kind === 'relation' ? `${field.name}Id` : field.name;
       if (columnName in update) {

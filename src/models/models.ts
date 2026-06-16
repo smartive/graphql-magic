@@ -266,9 +266,9 @@ export class Models {
 }
 
 export abstract class Model {
-  name: string;
-  plural: string;
-  description: string;
+  name!: string;
+  plural!: string;
+  description!: string;
 
   constructor(
     public models: Models,
@@ -280,12 +280,12 @@ export abstract class Model {
 }
 
 export class ScalarModel extends Model {
-  kind: 'scalar';
+  kind = 'scalar' as const;
 }
 
 export class UnionModel extends Model {
-  kind: 'union';
-  types: string[];
+  kind = 'union' as const;
+  types!: string[];
 
   constructor(models: Models, definition: UnionModelDefinition) {
     super(models, definition);
@@ -293,8 +293,8 @@ export class UnionModel extends Model {
   }
 }
 export class EnumModel extends Model {
-  kind: 'enum';
-  values: string[];
+  kind = 'enum' as const;
+  values!: string[];
   deleted?: true;
 
   constructor(models: Models, definition: EnumModelDefinition) {
@@ -304,8 +304,8 @@ export class EnumModel extends Model {
 }
 
 export class RawEnumModel extends Model {
-  kind: 'raw-enum';
-  values: string[];
+  kind = 'raw-enum' as const;
+  values!: string[];
 
   constructor(models: Models, definition: RawEnumModelDefinition) {
     super(models, definition);
@@ -314,8 +314,8 @@ export class RawEnumModel extends Model {
 }
 
 export class InterfaceModel extends Model {
-  kind: 'interface';
-  fields: EntityField[];
+  kind = 'interface' as const;
+  fields!: EntityField[];
 
   constructor(models: Models, definition: InterfaceModelDefinition) {
     super(models, definition);
@@ -324,8 +324,8 @@ export class InterfaceModel extends Model {
 }
 
 export class InputModel extends Model {
-  kind: 'model';
-  fields: ObjectField[];
+  kind = 'model' as const;
+  fields!: ObjectField[];
 
   constructor(models: Models, definition: InputModelDefinition) {
     super(models, definition);
@@ -334,8 +334,8 @@ export class InputModel extends Model {
 }
 
 export class ObjectModel extends Model {
-  kind: 'object';
-  fields: ObjectField[];
+  kind = 'object' as const;
+  fields!: ObjectField[];
 
   constructor(models: Models, definition: ObjectModelDefinition) {
     super(models, definition);
@@ -344,7 +344,7 @@ export class ObjectModel extends Model {
 }
 
 export class EntityModel extends Model {
-  kind: 'entity';
+  kind = 'entity' as const;
   root?: boolean;
   parent?: string;
   interfaces?: string[];
@@ -376,7 +376,7 @@ export class EntityModel extends Model {
   aggregatable?: boolean;
   displayField?: string;
   defaultOrderBy?: OrderBy[];
-  fields: EntityField[];
+  fields!: EntityField[];
 
   constraints?: EntityModelDefinition['constraints'];
 
@@ -386,18 +386,18 @@ export class EntityModel extends Model {
 
   fieldsByName: Record<string, EntityField> = {};
   fieldsByColumnName: Record<string, EntityField> = {};
-  private _relations: NormalRelation[];
-  private _relationsByName: Record<string, NormalRelation>;
-  private _reverseRelations: ReverseRelation[];
-  private _reverseRelationsByName: Record<string, ReverseRelation>;
-  private _manyToManyRelations: ManyToManyRelation[];
-  private _manyToManyRelationsByName: Record<string, ManyToManyRelation>;
-  private _manyToManyRelation: ManyToManyRelation;
-  public pluralField: string;
-  public slug: string;
-  public labelPlural: string;
-  public label: string;
-  private _parentModel: EntityModel;
+  private _relations!: NormalRelation[];
+  private _relationsByName!: Record<string, NormalRelation>;
+  private _reverseRelations!: ReverseRelation[];
+  private _reverseRelationsByName!: Record<string, ReverseRelation>;
+  private _manyToManyRelations!: ManyToManyRelation[];
+  private _manyToManyRelationsByName!: Record<string, ManyToManyRelation>;
+  private _manyToManyRelation!: ManyToManyRelation;
+  public pluralField!: string;
+  public slug!: string;
+  public labelPlural!: string;
+  public label!: string;
+  private _parentModel!: EntityModel;
 
   constructor(models: Models, definition: EntityModelDefinition) {
     super(models, definition);
