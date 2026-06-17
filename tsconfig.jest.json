@@ -6,7 +6,7 @@
     "rootDir": "./",
     "types": ["jest"],
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "allowJs": true
   }

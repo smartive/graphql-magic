@@ -1,7 +1,10 @@
-import CodeBlockWriter from 'code-block-writer';
+import CodeBlockWriterImport from 'code-block-writer';
 import { and, EntityField, get, getColumnName, isDynamicField, isInTable, isRootModel, isStoredInDatabase, not } from '..';
 import { Models } from '../models/models';
 import { DATE_CLASS, DATE_CLASS_IMPORT, DateLibrary } from '../utils/dates';
+
+const imported = CodeBlockWriterImport as typeof CodeBlockWriterImport | { default: typeof CodeBlockWriterImport };
+const CodeBlockWriter = typeof imported === 'function' ? imported : imported.default;
 
 export const PRIMITIVE_TYPES = {
   ID: 'string',
@@ -15,8 +18,7 @@ export const PRIMITIVE_TYPES = {
 const OPTIONAL_SEED_FIELDS = ['createdAt', 'createdById', 'updatedAt', 'updatedById', 'deletedAt', 'deletedById'];
 
 export const generateDBModels = (models: Models, dateLibrary: DateLibrary) => {
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  const writer: CodeBlockWriter = new CodeBlockWriter['default']({
+  const writer = new CodeBlockWriter({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });
@@ -168,8 +170,7 @@ const getFieldType = (field: EntityField, dateLibrary: DateLibrary, input?: bool
 };
 
 export const generateKnexTables = (models: Models) => {
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  const writer: CodeBlockWriter = new CodeBlockWriter['default']({
+  const writer = new CodeBlockWriter({
     useSingleQuote: true,
     indentNumberOfSpaces: 2,
   });

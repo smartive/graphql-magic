@@ -30,8 +30,10 @@ export const getTypeName = (t: TypeNode): string => {
       return getTypeName(t.type);
     case 'NamedType':
       return t.name.value;
-    default:
-      throw new Error(`Unknown type node kind: ${t.kind}`);
+    default: {
+      const exhaustiveCheck: never = t;
+      throw new Error(`Unknown type node kind: ${exhaustiveCheck}`);
+    }
   }
 };
 

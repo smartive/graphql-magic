@@ -55,19 +55,17 @@
     "dotenv": "^17.2.3",
     "graphql": "^16.12.0",
     "inflection": "^3.0.2",
-    "knex": "^3.1.0",
+    "knex": "^3.0.1",
     "knex-schema-inspector": "^3.1.0",
     "lodash": "^4.17.21",
     "luxon": "^3.7.2",
-    "pg": "^8.17.1",
-    "ts-morph": "^27.0.2"
+    "pg": "^8.17.1"
   },
   "peerDependencies": {
     "knex": "^3.0.1"
   },
   "devDependencies": {
     "@smartive/eslint-config": "7.0.1",
-    "eslint-import-resolver-typescript": "4.4.5",
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
@@ -78,11 +76,13 @@
     "del-cli": "7.0.0",
     "esbuild": "0.28.1",
     "eslint": "9.39.4",
+    "eslint-import-resolver-typescript": "4.4.5",
     "jest": "30.4.2",
     "mock-knex": "0.4.13",
     "prettier": "3.8.4",
     "ts-jest": "29.4.11",
+    "ts-morph": "^28.0.0",
     "ts-node": "10.9.2",
-    "typescript": "5.9.3"
+    "typescript": "^6.0.3"
   }
 }

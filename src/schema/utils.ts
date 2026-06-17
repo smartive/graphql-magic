@@ -244,7 +244,7 @@ export const value = (val: Value = null): ConstValueNode =>
                           (nme): ConstObjectFieldNode => ({
                             kind: Kind.OBJECT_FIELD,
                             name: name(nme),
-                            value: value(val[nme]),
+                            value: value((val as Record<string, Value>)[nme]),
                           }),
                         ),
                       }

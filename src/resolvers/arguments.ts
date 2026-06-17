@@ -79,7 +79,7 @@ export const normalizeArguments = (node: FieldResolverNode) => {
       if (normalizedValue === undefined) {
         continue;
       }
-      normalizedArguments[argument.name.value] = normalizedValue as any;
+      (normalizedArguments as Record<string, Value>)[argument.name.value] = normalizedValue;
     }
   }
 

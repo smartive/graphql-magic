@@ -63,7 +63,7 @@ export const getResolvers = (models: Models) => {
 
   for (const model of models.entities.filter(isRootModel)) {
     resolvers[model.name] = {
-      __resolveType: ({ TYPE }) => TYPE,
+      __resolveType: ({ TYPE }: { TYPE: string }) => TYPE,
     };
   }
 
