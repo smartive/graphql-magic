@@ -46,16 +46,12 @@ export const generateGraphqlClientTypes = async () => {
       // `importSchemaTypesFrom` is the upstream-recommended fix, see
       // dotansimha/graphql-code-generator#10782.
       [`${generatedFolderPath}/client/schema.ts`]: {
-        plugins: ['typescript', { add: { content: `import type { Time } from '@smartive/graphql-magic';` } }],
+        plugins: ['typescript'],
       },
       // `export * from './schema'` keeps the public surface unchanged: consumers can still import
       // both the schema types and the operation types from the single `client` entrypoint.
       [`${generatedFolderPath}/client/index.ts`]: {
-        plugins: [
-          'typescript-operations',
-          { add: { content: `export * from './schema';` } },
-          { add: { content: `import type { Time } from '@smartive/graphql-magic';` } },
-        ],
+        plugins: ['typescript-operations', { add: { content: `export * from './schema';` } }],
         config: {
           importSchemaTypesFrom: `${generatedFolderPath}/client/schema`,
         },
@@ -71,8 +67,12 @@ export const generateGraphqlClientTypes = async () => {
       },
       scalars: {
         DateTime: 'string',
-        Time: 'Time',
+        // Reference the `Time` type via its module so codegen imports it only in the files that
+        // actually use it. A hard-coded `add` import would land in the operations file too and trip
+        // `noUnusedLocals` for consumers whose operations never select a `Time` field.
+        Time: '@smartive/graphql-magic#Time',
       },
+      useTypeImports: true, // Emit `import type` for the scalar (and any other type) imports
       ignoreNoDocuments: true,
     },
   });
