@@ -35,12 +35,26 @@ export const generateGraphqlClientTypes = async () => {
     schema: `${generatedFolderPath}/schema.graphql`,
     documents: [graphqlQueriesPath, `${generatedFolderPath}/client/mutations.ts`],
     generates: {
+      // The schema types and the operation types are emitted into two separate files on purpose.
+      // Since `@graphql-codegen/typescript-operations` v6 the operations plugin re-emits every enum
+      // and input-object type that an operation uses directly into its own output, unless
+      // `importSchemaTypesFrom` is set. Running it together with the `typescript` plugin in a single
+      // file therefore declares every used `*Where`/`Create*`/`Update*` input and every used enum
+      // twice (`TS2300: Duplicate identifier`), and `ReactionType`-style enums additionally clash as
+      // an `enum` (typescript) vs a string-literal `type` alias (typescript-operations) (`TS2567`).
+      // Splitting schema types into their own file and pointing the operations plugin at them via
+      // `importSchemaTypesFrom` is the upstream-recommended fix, see
+      // dotansimha/graphql-code-generator#10782.
+      [`${generatedFolderPath}/client/schema.ts`]: {
+        plugins: ['typescript'],
+      },
+      // `export * from './schema'` keeps the public surface unchanged: consumers can still import
+      // both the schema types and the operation types from the single `client` entrypoint.
       [`${generatedFolderPath}/client/index.ts`]: {
-        plugins: [
-          'typescript',
-          'typescript-operations',
-          { add: { content: `import type { Time } from '@smartive/graphql-magic';` } },
-        ],
+        plugins: ['typescript-operations', { add: { content: `export * from './schema';` } }],
+        config: {
+          importSchemaTypesFrom: `${generatedFolderPath}/client/schema`,
+        },
       },
     },
     config: {
@@ -53,8 +67,12 @@ export const generateGraphqlClientTypes = async () => {
       },
       scalars: {
         DateTime: 'string',
-        Time: 'Time',
+        // Reference the `Time` type via its module so codegen imports it only in the files that
+        // actually use it. A hard-coded `add` import would land in the operations file too and trip
+        // `noUnusedLocals` for consumers whose operations never select a `Time` field.
+        Time: '@smartive/graphql-magic#Time',
       },
+      useTypeImports: true, // Emit `import type` for the scalar (and any other type) imports
       ignoreNoDocuments: true,
     },
   });
