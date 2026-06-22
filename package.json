@@ -70,7 +70,7 @@
     "@smartive/prettier-config": "3.1.2",
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
-    "@types/luxon": "3.7.1",
+    "@types/luxon": "3.7.2",
     "@types/pg": "8.20.0",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "create-ts-index": "1.14.0",
