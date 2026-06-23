@@ -15,10 +15,16 @@ const withTransaction = async <T extends MutationContext>(ctx: T, fn: (ctx: T) =
 
 export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) =>
   withTransaction({ ...partialCtx, info, aliases: new AliasGenerator() }, async (ctx) => {
+    // Fresh per top-level mutation field. Shared by reference through every
+    // nested `withTransaction` (cascades, reentrant mutations) so hooks can
+    // accumulate deferred work and `afterMutations` can flush it once, below.
+    ctx.mutationState = {};
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     switch (mutation) {
       case 'create': {
         const id = await createEntity(modelName, args.data, ctx, { trigger: 'mutation', args });
+
+        await ctx.afterMutations?.(ctx);
 
         return await resolve(ctx, id);
       }
@@ -26,6 +32,8 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
         const id = args.where.id;
 
         await updateEntity(modelName, id, args.data, ctx, { trigger: 'mutation', args });
+
+        await ctx.afterMutations?.(ctx);
 
         return await resolve(ctx, id);
       }
@@ -38,12 +46,20 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
           args,
         });
 
+        // A dry-run delete only probes the cascade and is rolled back, so there
+        // is nothing to recalculate.
+        if (!args.dryRun) {
+          await ctx.afterMutations?.(ctx);
+        }
+
         return id;
       }
       case 'restore': {
         const id = args.where.id;
 
         await restoreEntity(modelName, id, ctx, { trigger: 'mutation', args });
+
+        await ctx.afterMutations?.(ctx);
 
         return id;
       }
