@@ -11,19 +11,37 @@ import { resolve } from './resolver';
 import { AliasGenerator, fetchDisplay, getTechnicalDisplay } from './utils';
 
 const withTransaction = async <T extends MutationContext>(ctx: T, fn: (ctx: T) => Promise<any>) =>
-  await ctx.knex.transaction(async (knex) => fn({ ...ctx, knex }));
+  await ctx.knex.transaction(async (knex) => {
+    const innerCtx = { ...ctx, knex };
+    // The outermost mutation scope owns `mutationState`: it initializes the bag
+    // and flushes `afterMutations` once on the way out. Nested scopes (cascades,
+    // reentrant mutations) and callers that pre-set `mutationState` to batch
+    // (e.g. a request wrapper) inherit the existing bag and skip this flush — so
+    // every mutation path (graphql mutations, custom resolvers, scripts, tests,
+    // a bare createEntity) runs the deferred work exactly once. On error the
+    // transaction rolls back before reaching the flush.
+    const isOutermostMutation = innerCtx.mutationState === undefined;
+    if (isOutermostMutation) {
+      innerCtx.mutationState = {};
+    }
+    const result = await fn(innerCtx);
+    if (isOutermostMutation) {
+      await innerCtx.afterMutations?.(innerCtx);
+    }
+
+    return result;
+  });
 
 export const mutationResolver = async (_parent: any, args: any, partialCtx: Context, info: GraphQLResolveInfo) =>
   withTransaction({ ...partialCtx, info, aliases: new AliasGenerator() }, async (ctx) => {
-    // Fresh per top-level mutation field. Shared by reference through every
-    // nested `withTransaction` (cascades, reentrant mutations) so hooks can
-    // accumulate deferred work and `afterMutations` can flush it once, below.
-    ctx.mutationState = {};
     const [, mutation, modelName] = it(info.fieldName.match(/^(create|update|delete|restore)(.+)$/));
     switch (mutation) {
       case 'create': {
         const id = await createEntity(modelName, args.data, ctx, { trigger: 'mutation', args });
 
+        // Flush before reading the result back so the response reflects fresh
+        // calculated values (the outermost withTransaction would otherwise only
+        // flush after resolve). A no-op if a wrapping scope already flushed.
         await ctx.afterMutations?.(ctx);
 
         return await resolve(ctx, id);
@@ -40,17 +58,14 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
       case 'delete': {
         const id = args.where.id;
 
+        // No read-back, so no explicit flush: the outermost withTransaction
+        // flushes on the way out. (A dry-run delete throws and rolls back before
+        // the flush, so nothing is recalculated.)
         await deleteEntity(modelName, id, ctx, {
           dryRun: args.dryRun,
           trigger: 'mutation',
           args,
         });
-
-        // A dry-run delete only probes the cascade and is rolled back, so there
-        // is nothing to recalculate.
-        if (!args.dryRun) {
-          await ctx.afterMutations?.(ctx);
-        }
 
         return id;
       }
@@ -58,8 +73,6 @@ export const mutationResolver = async (_parent: any, args: any, partialCtx: Cont
         const id = args.where.id;
 
         await restoreEntity(modelName, id, ctx, { trigger: 'mutation', args });
-
-        await ctx.afterMutations?.(ctx);
 
         return id;
       }
