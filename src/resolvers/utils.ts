@@ -5,6 +5,7 @@ import type {
   FragmentDefinitionNode,
   FragmentSpreadNode,
   GraphQLObjectType,
+  GraphQLResolveInfo,
   GraphQLSchema,
   InlineFragmentNode,
   TypeNode,
@@ -22,6 +23,18 @@ export const ID_ALIAS = 'ID';
 export const TYPE_ALIAS = 'TYPE';
 
 export type VariableValues = Record<string, Value>;
+
+// graphql v16 exposes `info.variableValues` as a plain `{ [name]: value }` record,
+// whereas graphql v17 wraps it as `{ sources, coerced }` with the runtime values under
+// `coerced`. Read both shapes so resolvers work against either major version.
+export const getVariableValues = (info: GraphQLResolveInfo): VariableValues => {
+  const variableValues = info.variableValues as unknown;
+  if (variableValues && typeof variableValues === 'object' && 'coerced' in variableValues && 'sources' in variableValues) {
+    return (variableValues as { coerced: VariableValues }).coerced;
+  }
+
+  return variableValues as VariableValues;
+};
 
 export const getTypeName = (t: TypeNode): string => {
   switch (t.kind) {

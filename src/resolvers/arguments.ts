@@ -3,7 +3,7 @@ import { Kind } from 'graphql';
 import { summonByKey } from '../models/utils';
 import { Value } from '../values';
 import { FieldResolverNode } from './node';
-import { Maybe, VariableValues } from './utils';
+import { getVariableValues, Maybe, VariableValues } from './utils';
 
 export type Where = Record<string, Value>;
 
@@ -70,7 +70,7 @@ export const normalizeArguments = (node: FieldResolverNode) => {
   const normalizedArguments: NormalizedArguments = {};
   if (node.field.arguments) {
     for (const argument of node.field.arguments) {
-      const rawValue = getRawValue(argument.value, node.ctx.info.variableValues);
+      const rawValue = getRawValue(argument.value, getVariableValues(node.ctx.info));
       const normalizedValue = normalizeValue(
         rawValue,
         summonByKey(node.fieldDefinition.arguments || [], 'name.value', argument.name.value).type,
