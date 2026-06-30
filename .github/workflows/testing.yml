@@ -60,8 +60,7 @@ jobs:
         run: |
           node -v
           npm -v
-          psql --version
-          node -p "require('graphql/package.json').version"
+          npm ls graphql knex
       - name: Lint
         run: npm run lint
       - name: Run tests
