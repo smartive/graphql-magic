@@ -56,11 +56,6 @@ jobs:
         # --legacy-peer-deps: @graphql-codegen/* still caps its graphql peer at
         # ^16, so installing graphql 17 otherwise trips ERESOLVE (see PR #503).
         run: npm install graphql@${{ matrix.graphql.spec }} --legacy-peer-deps
-      - name: Show installed versions
-        run: |
-          node -v
-          npm -v
-          npm ls graphql knex
       - name: Lint
         run: npm run lint
       - name: Run tests
