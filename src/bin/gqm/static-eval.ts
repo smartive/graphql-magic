@@ -201,12 +201,20 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   [SyntaxKind.NumericLiteral]: (node) => node.getLiteralValue(),
   [SyntaxKind.BigIntLiteral]: (node) => node.getLiteralValue(),
   [SyntaxKind.CallExpression]: (node, context) => {
-    const method = staticEval(node.getExpression(), context) as (...args: unknown[]) => unknown;
+    const method = staticEval(node.getExpression(), context) as ((...args: unknown[]) => unknown) | null | undefined;
+    // Optional call: `fn?.()` short-circuits to `undefined` when `fn` is null/undefined.
+    if (node.hasQuestionDotToken() && method == null) {
+      return undefined;
+    }
     const args = node.getArguments().map((arg) => staticEval(arg, context));
-    return method(...args);
+    return (method as (...args: unknown[]) => unknown)(...args);
   },
   [SyntaxKind.PropertyAccessExpression]: (node, context) => {
     const target = staticEval(node.getExpression(), context);
+    // Optional chaining: `a?.b` short-circuits to `undefined` when `a` is null/undefined.
+    if (node.hasQuestionDotToken() && target == null) {
+      return undefined;
+    }
     const property = target[node.getName()];
     if (typeof property === 'function') {
       if (Array.isArray(target)) {
@@ -368,6 +376,17 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
       [SyntaxKind.LessThanEqualsToken]: (left: unknown, right: () => unknown) => (left as number) <= (right() as number),
       [SyntaxKind.GreaterThanToken]: (left: unknown, right: () => unknown) => (left as number) > (right() as number),
       [SyntaxKind.GreaterThanEqualsToken]: (left: unknown, right: () => unknown) => (left as number) >= (right() as number),
+      [SyntaxKind.InKeyword]: (left: unknown, right: () => unknown) => (left as PropertyKey) in (right() as object),
+      [SyntaxKind.InstanceOfKeyword]: (left: unknown, right: () => unknown) =>
+        left instanceof (right() as new (...args: unknown[]) => unknown),
+      [SyntaxKind.AmpersandToken]: (left: unknown, right: () => unknown) => (left as number) & (right() as number),
+      [SyntaxKind.BarToken]: (left: unknown, right: () => unknown) => (left as number) | (right() as number),
+      [SyntaxKind.CaretToken]: (left: unknown, right: () => unknown) => (left as number) ^ (right() as number),
+      [SyntaxKind.LessThanLessThanToken]: (left: unknown, right: () => unknown) => (left as number) << (right() as number),
+      [SyntaxKind.GreaterThanGreaterThanToken]: (left: unknown, right: () => unknown) =>
+        (left as number) >> (right() as number),
+      [SyntaxKind.GreaterThanGreaterThanGreaterThanToken]: (left: unknown, right: () => unknown) =>
+        (left as number) >>> (right() as number),
     };
     if (node.getOperatorToken().getKind() in mapping) {
       return mapping[node.getOperatorToken().getKind()](staticEval(node.getLeft(), context), () =>
@@ -403,6 +422,10 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
   },
   [SyntaxKind.ElementAccessExpression]: (node: ElementAccessExpression, context) => {
     const target = staticEval(node.getExpression(), context);
+    // Optional chaining: `a?.[b]` short-circuits to `undefined` when `a` is null/undefined.
+    if (node.hasQuestionDotToken() && target == null) {
+      return undefined;
+    }
     const argument = staticEval(node.getArgumentExpression(), context) as string;
     return target[argument];
   },
