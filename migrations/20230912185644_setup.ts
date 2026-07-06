@@ -10,11 +10,13 @@ export const up = async (knex: Knex) => {
   await knex.schema.createTable('User', (table) => {
     table.uuid('id').notNullable().primary();
     table.string('username', undefined).nullable();
-    table.enum('role', null, {
-      useNative: true,
-      existingType: true,
-      enumName: 'role',
-    }).notNullable();
+    table
+      .enum('role', null, {
+        useNative: true,
+        existingType: true,
+        enumName: 'role',
+      })
+      .notNullable();
   });
 
   await knex.schema.createTable('AnotherObject', (table) => {
@@ -74,11 +76,13 @@ export const up = async (knex: Knex) => {
 
   await knex.schema.createTable('Reaction', (table) => {
     table.uuid('id').notNullable().primary();
-    table.enum('type', null, {
-      useNative: true,
-      existingType: true,
-      enumName: 'reactionType',
-    }).notNullable();
+    table
+      .enum('type', null, {
+        useNative: true,
+        existingType: true,
+        enumName: 'reactionType',
+      })
+      .notNullable();
     table.uuid('parentId').nullable();
     table.index('parentId');
     table.foreign('parentId').references('id').inTable('Reaction').onDelete('CASCADE');
@@ -122,7 +126,6 @@ export const up = async (knex: Knex) => {
     table.uuid('id').notNullable().primary();
     table.decimal('rating', undefined, undefined);
   });
-
 };
 
 export const down = async (knex: Knex) => {
@@ -146,4 +149,3 @@ export const down = async (knex: Knex) => {
   await knex.raw('DROP TYPE "role"');
   await knex.raw('DROP TYPE "someEnum"');
 };
-

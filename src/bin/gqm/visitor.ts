@@ -31,7 +31,7 @@ export const visit = <T, C>(node: Node | undefined, context: C, visitor: Visitor
   throw new Error(
     `Cannot handle kind ${get(
       Object.entries(SyntaxKind).find(([, val]) => val === kind),
-      0
-    )}`
+      0,
+    )}`,
   );
 };

@@ -1,9 +1,6 @@
 import { Kind } from 'graphql';
 import { generateDBModels } from '../../src/db/generate';
-import {
-  isDynamicField,
-  isStoredInDatabase,
-} from '../../src/models/utils';
+import { isDynamicField, isStoredInDatabase } from '../../src/models/utils';
 import { ModelDefinitions, Models } from '../../src/models';
 import type { EntityField } from '../../src/models/models';
 import { generateDefinitions } from '../../src/schema/generate';

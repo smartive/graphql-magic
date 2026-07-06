@@ -39,13 +39,7 @@ export type Field = {
 };
 
 export type DirectiveLocation =
-  | 'ARGUMENT_DEFINITION'
-  | 'INPUT_FIELD_DEFINITION'
-  | 'FIELD'
-  | 'FIELD_DEFINITION'
-  | 'OBJECT'
-  | 'INTERFACE'
-  | 'INPUT_OBJECT';
+  'ARGUMENT_DEFINITION' | 'INPUT_FIELD_DEFINITION' | 'FIELD' | 'FIELD_DEFINITION' | 'OBJECT' | 'INTERFACE' | 'INPUT_OBJECT';
 
 export const document = (definitions: DefinitionNode[]): DocumentNode => ({
   kind: Kind.DOCUMENT,
@@ -95,31 +89,27 @@ export const iface = (nme: string, fds: Field[], interfaces?: string[], dvs?: Di
 });
 
 export const inputValues = (fields: Field[]): InputValueDefinitionNode[] =>
-  fields.map(
-    (field): InputValueDefinitionNode => ({
-      kind: Kind.INPUT_VALUE_DEFINITION,
-      name: name(field.name),
-      type: fieldType(field),
-      defaultValue: field.defaultValue === undefined ? undefined : value(field.defaultValue),
-      directives: directives(field.directives),
-    }),
-  );
+  fields.map((field): InputValueDefinitionNode => ({
+    kind: Kind.INPUT_VALUE_DEFINITION,
+    name: name(field.name),
+    type: fieldType(field),
+    defaultValue: field.defaultValue === undefined ? undefined : value(field.defaultValue),
+    directives: directives(field.directives),
+  }));
 
 export const fields = (fields: Field[]): FieldDefinitionNode[] =>
-  fields.map(
-    (field): FieldDefinitionNode => ({
-      kind: Kind.FIELD_DEFINITION,
-      name: name(field.name),
-      type: fieldType(field),
-      arguments: field.args?.map((arg) => ({
-        kind: Kind.INPUT_VALUE_DEFINITION,
-        name: name(arg.name),
-        type: fieldType(arg),
-        defaultValue: arg.defaultValue === undefined ? undefined : value(arg.defaultValue),
-      })),
-      directives: directives(field.directives),
-    }),
-  );
+  fields.map((field): FieldDefinitionNode => ({
+    kind: Kind.FIELD_DEFINITION,
+    name: name(field.name),
+    type: fieldType(field),
+    arguments: field.args?.map((arg) => ({
+      kind: Kind.INPUT_VALUE_DEFINITION,
+      name: name(arg.name),
+      type: fieldType(arg),
+      defaultValue: arg.defaultValue === undefined ? undefined : value(arg.defaultValue),
+    })),
+    directives: directives(field.directives),
+  }));
 
 export const inputValue = (
   nme: string,
@@ -137,32 +127,26 @@ export const inputValue = (
 });
 
 export const directives = (directives?: Directive[]): ConstDirectiveNode[] | undefined =>
-  directives?.map(
-    (directive): ConstDirectiveNode => ({
-      kind: Kind.DIRECTIVE,
-      name: name(directive.name),
-      arguments: args(directive.values),
-    }),
-  );
+  directives?.map((directive): ConstDirectiveNode => ({
+    kind: Kind.DIRECTIVE,
+    name: name(directive.name),
+    arguments: args(directive.values),
+  }));
 
 export const args = (ags: Values | undefined): readonly ConstArgumentNode[] | undefined =>
-  ags?.map(
-    (argument): ConstArgumentNode => ({
-      kind: Kind.ARGUMENT,
-      name: name(argument.name),
-      value: value(argument.values),
-    }),
-  );
+  ags?.map((argument): ConstArgumentNode => ({
+    kind: Kind.ARGUMENT,
+    name: name(argument.name),
+    value: value(argument.values),
+  }));
 
 export const enm = (nme: string, values: string[]): EnumTypeDefinitionNode => ({
   name: name(nme),
   kind: Kind.ENUM_TYPE_DEFINITION,
-  values: values.map(
-    (v): EnumValueDefinitionNode => ({
-      kind: Kind.ENUM_VALUE_DEFINITION,
-      name: name(v),
-    }),
-  ),
+  values: values.map((v): EnumValueDefinitionNode => ({
+    kind: Kind.ENUM_VALUE_DEFINITION,
+    name: name(v),
+  })),
 });
 
 export const nonNull = (type: NamedTypeNode | ListTypeNode): NonNullTypeNode => ({
@@ -240,13 +224,11 @@ export const value = (val: Value = null): ConstValueNode =>
                   : typeof val === 'object'
                     ? {
                         kind: Kind.OBJECT,
-                        fields: Object.keys(val).map(
-                          (nme): ConstObjectFieldNode => ({
-                            kind: Kind.OBJECT_FIELD,
-                            name: name(nme),
-                            value: value((val as Record<string, Value>)[nme]),
-                          }),
-                        ),
+                        fields: Object.keys(val).map((nme): ConstObjectFieldNode => ({
+                          kind: Kind.OBJECT_FIELD,
+                          name: name(nme),
+                          value: value((val as Record<string, Value>)[nme]),
+                        })),
                       }
                     : doThrow(`Unsupported value ${val}`);
 

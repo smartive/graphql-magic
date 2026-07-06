@@ -11,9 +11,7 @@ const modelDefinitions: ModelDefinitions = [
   {
     kind: 'entity',
     name: 'Expert',
-    fields: [
-      { name: 'user', kind: 'relation', type: 'User', toOne: true, reverse: 'experts' },
-    ],
+    fields: [{ name: 'user', kind: 'relation', type: 'User', toOne: true, reverse: 'experts' }],
   },
 ];
 
@@ -37,18 +35,8 @@ describe('generatePermissions — implicit READ', () => {
 
     const role = getRole(generatePermissions(models, config), 'WOP_ADMIN');
 
-    expect(role.User?.READ).toEqual([
-      [
-        { type: 'Expert' },
-        { type: 'User', foreignKey: 'userId', reverse: true },
-      ],
-    ]);
-    expect(role.User?.UPDATE).toEqual([
-      [
-        { type: 'Expert' },
-        { type: 'User', foreignKey: 'userId', reverse: true },
-      ],
-    ]);
+    expect(role.User?.READ).toEqual([[{ type: 'Expert' }, { type: 'User', foreignKey: 'userId', reverse: true }]]);
+    expect(role.User?.UPDATE).toEqual([[{ type: 'Expert' }, { type: 'User', foreignKey: 'userId', reverse: true }]]);
   });
 
   it('skips the implicit READ chain when READ: false is set on a sub-block', () => {
@@ -61,12 +49,7 @@ describe('generatePermissions — implicit READ', () => {
     const role = getRole(generatePermissions(models, config), 'WOP_ADMIN');
 
     expect(role.User?.READ).toBeUndefined();
-    expect(role.User?.UPDATE).toEqual([
-      [
-        { type: 'Expert' },
-        { type: 'User', foreignKey: 'userId', reverse: true },
-      ],
-    ]);
+    expect(role.User?.UPDATE).toEqual([[{ type: 'Expert' }, { type: 'User', foreignKey: 'userId', reverse: true }]]);
   });
 
   it('skips the unconditional READ grant when READ: false is set on a top-level block', () => {
@@ -103,14 +86,7 @@ describe('generatePermissions — implicit READ', () => {
 
     const role = getRole(generatePermissions(models, config), 'WOP_ADMIN');
 
-    expect(role.User?.READ).toEqual([
-      [{ type: 'User', where: { role: 'EXPERT' } }],
-    ]);
-    expect(role.User?.UPDATE).toEqual([
-      [
-        { type: 'Expert' },
-        { type: 'User', foreignKey: 'userId', reverse: true },
-      ],
-    ]);
+    expect(role.User?.READ).toEqual([[{ type: 'User', where: { role: 'EXPERT' } }]]);
+    expect(role.User?.UPDATE).toEqual([[{ type: 'Expert' }, { type: 'User', foreignKey: 'userId', reverse: true }]]);
   });
 });

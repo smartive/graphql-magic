@@ -110,12 +110,12 @@ export const setupSeed = async (knex: Knex, now: string) => {
       const parentModel = models.getModel(model.parent, 'entity');
       await knex.batchInsert(
         parentModel.name,
-        mappedEntities.map((entity) => pick(entity, parentModel.fields.map(getColumnName)))
+        mappedEntities.map((entity) => pick(entity, parentModel.fields.map(getColumnName))),
       );
       if (modelNeedsTable(model)) {
         await knex.batchInsert(
           model.name,
-          mappedEntities.map((entity) => pick(entity, model.fields.filter(isInTable).map(getColumnName)))
+          mappedEntities.map((entity) => pick(entity, model.fields.filter(isInTable).map(getColumnName))),
         );
       }
     } else {
