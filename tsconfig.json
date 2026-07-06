@@ -14,6 +14,7 @@
     "sourceMap": true,
     "declaration": true,
     "target": "esnext",
+    "types": ["node"],
     "moduleResolution": "bundler",
     "skipLibCheck": true,
     "strictNullChecks": true,
