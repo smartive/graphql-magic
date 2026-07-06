@@ -1,9 +1,9 @@
-import { GraphQLError as GQLError } from 'graphql';
+import { GraphQLError as GQLError, GraphQLErrorOptions } from 'graphql';
 import { PermissionAction } from './permissions/generate';
 
 export class GraphQLError extends GQLError {
-  constructor(message: string, extensions: ConstructorParameters<typeof GQLError>[6]) {
-    super(message, undefined, undefined, undefined, undefined, undefined, extensions);
+  constructor(message: string, extensions: GraphQLErrorOptions['extensions']) {
+    super(message, { extensions });
   }
 }
 
