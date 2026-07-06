@@ -238,7 +238,7 @@ const permissionLinkQuery = (
   ctx: Pick<FullContext, 'models' | 'user'>,
   subQuery: Knex.QueryBuilder,
   links: PermissionLink[],
-  id: Knex.RawBinding,
+  id: Knex.RawBinding | Knex.ValueDict,
   tableAliasForDeleteRoot?: string,
 ) => {
   const aliases = new AliasGenerator();

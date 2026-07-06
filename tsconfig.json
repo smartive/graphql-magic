@@ -15,7 +15,6 @@
     "declaration": true,
     "target": "esnext",
     "moduleResolution": "bundler",
-    "types": ["node"],
     "skipLibCheck": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true
