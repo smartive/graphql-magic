@@ -7,14 +7,14 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
-  DateTime: { input: DateTime; output: DateTime };
-  Time: { input: Time; output: Time };
-  Upload: { input: unknown; output: unknown };
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  DateTime: { input: DateTime; output: DateTime; }
+  Time: { input: Time; output: Time; }
+  Upload: { input: unknown; output: unknown; }
 };
 
 export type AnotherObject = {
@@ -31,6 +31,7 @@ export type AnotherObject = {
   self?: Maybe<AnotherObject>;
 };
 
+
 export type AnotherObjectManyObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -39,6 +40,7 @@ export type AnotherObjectManyObjectsArgs = {
   search?: InputMaybe<Scalars['String']['input']>;
   where?: InputMaybe<SomeObjectWhere>;
 };
+
 
 export type AnotherObjectSelfArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -100,6 +102,7 @@ export type Answer = Reaction & {
   updatedBy: User;
 };
 
+
 export type AnswerChildAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -107,6 +110,7 @@ export type AnswerChildAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type AnswerChildQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -116,6 +120,7 @@ export type AnswerChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type AnswerChildReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -123,6 +128,7 @@ export type AnswerChildReactionsArgs = {
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
+
 
 export type AnswerChildReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -212,81 +218,99 @@ export type Mutation = {
   updateSomeObject: SomeObject;
 };
 
+
 export type MutationCreateAnswerArgs = {
   data: CreateAnswer;
 };
+
 
 export type MutationCreateQuestionArgs = {
   data: CreateQuestion;
 };
 
+
 export type MutationCreateReviewArgs = {
   data: CreateReview;
 };
 
+
 export type MutationCreateSomeObjectArgs = {
   data: CreateSomeObject;
 };
+
 
 export type MutationDeleteAnotherObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnotherObjectWhereUnique;
 };
 
+
 export type MutationDeleteAnswerArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnswerWhereUnique;
 };
+
 
 export type MutationDeleteQuestionArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: QuestionWhereUnique;
 };
 
+
 export type MutationDeleteReviewArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: ReviewWhereUnique;
 };
+
 
 export type MutationDeleteSomeObjectArgs = {
   dryRun?: InputMaybe<Scalars['Boolean']['input']>;
   where: SomeObjectWhereUnique;
 };
 
+
 export type MutationRestoreAnotherObjectArgs = {
   where: AnotherObjectWhereUnique;
 };
+
 
 export type MutationRestoreAnswerArgs = {
   where: AnswerWhereUnique;
 };
 
+
 export type MutationRestoreQuestionArgs = {
   where: QuestionWhereUnique;
 };
+
 
 export type MutationRestoreReviewArgs = {
   where: ReviewWhereUnique;
 };
 
+
 export type MutationRestoreSomeObjectArgs = {
   where: SomeObjectWhereUnique;
 };
+
 
 export type MutationUpdateAnswerArgs = {
   data: UpdateAnswer;
   where: AnswerWhereUnique;
 };
 
+
 export type MutationUpdateQuestionArgs = {
   data: UpdateQuestion;
   where: QuestionWhereUnique;
 };
 
+
 export type MutationUpdateReviewArgs = {
   data: UpdateReview;
   where: ReviewWhereUnique;
 };
+
 
 export type MutationUpdateSomeObjectArgs = {
   data: UpdateSomeObject;
@@ -295,7 +319,7 @@ export type MutationUpdateSomeObjectArgs = {
 
 export enum Order {
   Asc = 'ASC',
-  Desc = 'DESC',
+  Desc = 'DESC'
 }
 
 export type Query = {
@@ -315,6 +339,7 @@ export type Query = {
   someObject: SomeObject;
 };
 
+
 export type QueryAnotherObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -323,10 +348,12 @@ export type QueryAnotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
+
 export type QueryAnswerArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   where: AnswerWhereLookup;
 };
+
 
 export type QueryAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -335,6 +362,7 @@ export type QueryAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type QueryManyObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -345,10 +373,12 @@ export type QueryManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
+
 export type QueryQuestionArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   where: QuestionWhereLookup;
 };
+
 
 export type QueryQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -358,10 +388,12 @@ export type QueryQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type QueryReactionArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   where: ReactionWhereLookup;
 };
+
 
 export type QueryReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -371,10 +403,12 @@ export type QueryReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
+
 export type QueryReviewArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   where: ReviewWhereLookup;
 };
+
 
 export type QueryReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -383,6 +417,7 @@ export type QueryReviewsArgs = {
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
+
 
 export type QuerySomeObjectArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -410,6 +445,7 @@ export type Question = Reaction & {
   updatedBy: User;
 };
 
+
 export type QuestionChildAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -417,6 +453,7 @@ export type QuestionChildAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type QuestionChildQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -426,6 +463,7 @@ export type QuestionChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type QuestionChildReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -433,6 +471,7 @@ export type QuestionChildReactionsArgs = {
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
+
 
 export type QuestionChildReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -490,6 +529,7 @@ export type Reaction = {
   updatedBy: User;
 };
 
+
 export type ReactionChildAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -497,6 +537,7 @@ export type ReactionChildAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type ReactionChildQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -506,6 +547,7 @@ export type ReactionChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type ReactionChildReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -513,6 +555,7 @@ export type ReactionChildReactionsArgs = {
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
+
 
 export type ReactionChildReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -538,7 +581,7 @@ export type ReactionSubWhere = {
 export enum ReactionType {
   Answer = 'Answer',
   Question = 'Question',
-  Review = 'Review',
+  Review = 'Review'
 }
 
 export type ReactionWhere = {
@@ -578,6 +621,7 @@ export type Review = Reaction & {
   updatedBy: User;
 };
 
+
 export type ReviewChildAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -585,6 +629,7 @@ export type ReviewChildAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type ReviewChildQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -594,6 +639,7 @@ export type ReviewChildQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type ReviewChildReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -601,6 +647,7 @@ export type ReviewChildReactionsArgs = {
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
+
 
 export type ReviewChildReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -648,13 +695,13 @@ export type ReviewWhereUnique = {
 
 export enum Role {
   Admin = 'ADMIN',
-  User = 'USER',
+  User = 'USER'
 }
 
 export enum SomeEnum {
   A = 'A',
   B = 'B',
-  C = 'C',
+  C = 'C'
 }
 
 export type SomeObject = {
@@ -676,6 +723,7 @@ export type SomeObject = {
   updatedBy: User;
   xyz: Scalars['Int']['output'];
 };
+
 
 export type SomeObjectListArgs = {
   magic?: InputMaybe<Scalars['Boolean']['input']>;
@@ -765,6 +813,7 @@ export type User = {
   username?: Maybe<Scalars['String']['output']>;
 };
 
+
 export type UserCreatedAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -772,6 +821,7 @@ export type UserCreatedAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type UserCreatedManyObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -782,6 +832,7 @@ export type UserCreatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
+
 export type UserCreatedQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -789,6 +840,7 @@ export type UserCreatedQuestionsArgs = {
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
+
 
 export type UserCreatedReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -798,6 +850,7 @@ export type UserCreatedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
+
 export type UserCreatedReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -805,6 +858,7 @@ export type UserCreatedReviewsArgs = {
   orderBy?: InputMaybe<Array<ReviewOrderBy>>;
   where?: InputMaybe<ReviewWhere>;
 };
+
 
 export type UserDeletedAnotherObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -814,6 +868,7 @@ export type UserDeletedAnotherObjectsArgs = {
   where?: InputMaybe<AnotherObjectWhere>;
 };
 
+
 export type UserDeletedAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -821,6 +876,7 @@ export type UserDeletedAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type UserDeletedManyObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -831,6 +887,7 @@ export type UserDeletedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
+
 export type UserDeletedQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -838,6 +895,7 @@ export type UserDeletedQuestionsArgs = {
   orderBy?: InputMaybe<Array<QuestionOrderBy>>;
   where?: InputMaybe<QuestionWhere>;
 };
+
 
 export type UserDeletedReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -847,6 +905,7 @@ export type UserDeletedReactionsArgs = {
   where?: InputMaybe<ReactionWhere>;
 };
 
+
 export type UserDeletedReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -855,6 +914,7 @@ export type UserDeletedReviewsArgs = {
   where?: InputMaybe<ReviewWhere>;
 };
 
+
 export type UserUpdatedAnswersArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -862,6 +922,7 @@ export type UserUpdatedAnswersArgs = {
   orderBy?: InputMaybe<Array<AnswerOrderBy>>;
   where?: InputMaybe<AnswerWhere>;
 };
+
 
 export type UserUpdatedManyObjectsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -872,6 +933,7 @@ export type UserUpdatedManyObjectsArgs = {
   where?: InputMaybe<SomeObjectWhere>;
 };
 
+
 export type UserUpdatedQuestionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -880,6 +942,7 @@ export type UserUpdatedQuestionsArgs = {
   where?: InputMaybe<QuestionWhere>;
 };
 
+
 export type UserUpdatedReactionsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -887,6 +950,7 @@ export type UserUpdatedReactionsArgs = {
   orderBy?: InputMaybe<Array<ReactionOrderBy>>;
   where?: InputMaybe<ReactionWhere>;
 };
+
 
 export type UserUpdatedReviewsArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -918,37 +982,35 @@ export type UserWhereUnique = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
+
+
 export type ResolverTypeWrapper<T> = Promise<T> | T;
+
 
 export type ResolverWithResolve<TResult, TParent, TContext, TArgs> = {
   resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
 };
-export type Resolver<
-  TResult,
-  TParent = Record<PropertyKey, never>,
-  TContext = Record<PropertyKey, never>,
-  TArgs = Record<PropertyKey, never>,
-> = ResolverFn<TResult, TParent, TContext, TArgs> | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
+export type Resolver<TResult, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> = ResolverFn<TResult, TParent, TContext, TArgs> | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
 
 export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
-  info: GraphQLResolveInfo,
+  info: GraphQLResolveInfo
 ) => Promise<TResult> | TResult;
 
 export type SubscriptionSubscribeFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
-  info: GraphQLResolveInfo,
+  info: GraphQLResolveInfo
 ) => AsyncIterable<TResult> | Promise<AsyncIterable<TResult>>;
 
 export type SubscriptionResolveFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
   args: TArgs,
   context: TContext,
-  info: GraphQLResolveInfo,
+  info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
 export interface SubscriptionSubscriberObject<TResult, TKey extends string, TParent, TContext, TArgs> {
@@ -965,150 +1027,56 @@ export type SubscriptionObject<TResult, TKey extends string, TParent, TContext, 
   | SubscriptionSubscriberObject<TResult, TKey, TParent, TContext, TArgs>
   | SubscriptionResolverObject<TResult, TParent, TContext, TArgs>;
 
-export type SubscriptionResolver<
-  TResult,
-  TKey extends string,
-  TParent = Record<PropertyKey, never>,
-  TContext = Record<PropertyKey, never>,
-  TArgs = Record<PropertyKey, never>,
-> =
+export type SubscriptionResolver<TResult, TKey extends string, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> =
   | ((...args: any[]) => SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>)
   | SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>;
 
 export type TypeResolveFn<TTypes, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>> = (
   parent: TParent,
   context: TContext,
-  info: GraphQLResolveInfo,
+  info: GraphQLResolveInfo
 ) => Maybe<TTypes> | Promise<Maybe<TTypes>>;
 
-export type IsTypeOfResolverFn<T = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>> = (
-  obj: T,
-  context: TContext,
-  info: GraphQLResolveInfo,
-) => boolean | Promise<boolean>;
+export type IsTypeOfResolverFn<T = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>> = (obj: T, context: TContext, info: GraphQLResolveInfo) => boolean | Promise<boolean>;
 
 export type NextResolverFn<T> = () => Promise<T>;
 
-export type DirectiveResolverFn<
-  TResult = Record<PropertyKey, never>,
-  TParent = Record<PropertyKey, never>,
-  TContext = Record<PropertyKey, never>,
-  TArgs = Record<PropertyKey, never>,
-> = (
+export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> = (
   next: NextResolverFn<TResult>,
   parent: TParent,
   args: TArgs,
   context: TContext,
-  info: GraphQLResolveInfo,
+  info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
+
+
 
 /** Mapping of union types */
 export type ResolversUnionTypes<_RefType extends Record<string, unknown>> = {
-  Bird: Duck | Eagle;
+  Bird:
+    | ( Duck )
+    | ( Eagle )
+  ;
 };
 
 /** Mapping of interface types */
 export type ResolversInterfaceTypes<_RefType extends Record<string, unknown>> = {
   Reaction:
-    | (Omit<
-        Answer,
-        | 'childAnswers'
-        | 'childQuestions'
-        | 'childReactions'
-        | 'childReviews'
-        | 'createdBy'
-        | 'deletedBy'
-        | 'parent'
-        | 'updatedBy'
-      > & {
-        childAnswers: Array<_RefType['Answer']>;
-        childQuestions: Array<_RefType['Question']>;
-        childReactions: Array<_RefType['Reaction']>;
-        childReviews: Array<_RefType['Review']>;
-        createdBy: _RefType['User'];
-        deletedBy?: Maybe<_RefType['User']>;
-        parent?: Maybe<_RefType['Reaction']>;
-        updatedBy: _RefType['User'];
-      })
-    | (Omit<
-        Question,
-        | 'childAnswers'
-        | 'childQuestions'
-        | 'childReactions'
-        | 'childReviews'
-        | 'createdBy'
-        | 'deletedBy'
-        | 'parent'
-        | 'updatedBy'
-      > & {
-        childAnswers: Array<_RefType['Answer']>;
-        childQuestions: Array<_RefType['Question']>;
-        childReactions: Array<_RefType['Reaction']>;
-        childReviews: Array<_RefType['Review']>;
-        createdBy: _RefType['User'];
-        deletedBy?: Maybe<_RefType['User']>;
-        parent?: Maybe<_RefType['Reaction']>;
-        updatedBy: _RefType['User'];
-      })
-    | (Omit<
-        Review,
-        | 'childAnswers'
-        | 'childQuestions'
-        | 'childReactions'
-        | 'childReviews'
-        | 'createdBy'
-        | 'deletedBy'
-        | 'parent'
-        | 'updatedBy'
-      > & {
-        childAnswers: Array<_RefType['Answer']>;
-        childQuestions: Array<_RefType['Question']>;
-        childReactions: Array<_RefType['Reaction']>;
-        childReviews: Array<_RefType['Review']>;
-        createdBy: _RefType['User'];
-        deletedBy?: Maybe<_RefType['User']>;
-        parent?: Maybe<_RefType['Reaction']>;
-        updatedBy: _RefType['User'];
-      });
+    | ( Omit<Answer, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<_RefType['Answer']>, childQuestions: Array<_RefType['Question']>, childReactions: Array<_RefType['Reaction']>, childReviews: Array<_RefType['Review']>, createdBy: _RefType['User'], deletedBy?: Maybe<_RefType['User']>, parent?: Maybe<_RefType['Reaction']>, updatedBy: _RefType['User'] } )
+    | ( Omit<Question, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<_RefType['Answer']>, childQuestions: Array<_RefType['Question']>, childReactions: Array<_RefType['Reaction']>, childReviews: Array<_RefType['Review']>, createdBy: _RefType['User'], deletedBy?: Maybe<_RefType['User']>, parent?: Maybe<_RefType['Reaction']>, updatedBy: _RefType['User'] } )
+    | ( Omit<Review, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<_RefType['Answer']>, childQuestions: Array<_RefType['Question']>, childReactions: Array<_RefType['Reaction']>, childReviews: Array<_RefType['Review']>, createdBy: _RefType['User'], deletedBy?: Maybe<_RefType['User']>, parent?: Maybe<_RefType['Reaction']>, updatedBy: _RefType['User'] } )
+  ;
 };
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  AnotherObject: ResolverTypeWrapper<
-    Omit<AnotherObject, 'deletedBy' | 'manyObjects' | 'myself' | 'self'> & {
-      deletedBy?: Maybe<ResolversTypes['User']>;
-      manyObjects: Array<ResolversTypes['SomeObject']>;
-      myself?: Maybe<ResolversTypes['AnotherObject']>;
-      self?: Maybe<ResolversTypes['AnotherObject']>;
-    }
-  >;
+  AnotherObject: ResolverTypeWrapper<Omit<AnotherObject, 'deletedBy' | 'manyObjects' | 'myself' | 'self'> & { deletedBy?: Maybe<ResolversTypes['User']>, manyObjects: Array<ResolversTypes['SomeObject']>, myself?: Maybe<ResolversTypes['AnotherObject']>, self?: Maybe<ResolversTypes['AnotherObject']> }>;
   AnotherObjectOrderBy: AnotherObjectOrderBy;
   AnotherObjectSubWhere: AnotherObjectSubWhere;
   AnotherObjectWhere: AnotherObjectWhere;
   AnotherObjectWhereLookup: AnotherObjectWhereLookup;
   AnotherObjectWhereUnique: AnotherObjectWhereUnique;
-  Answer: ResolverTypeWrapper<
-    Omit<
-      Answer,
-      | 'childAnswers'
-      | 'childQuestions'
-      | 'childReactions'
-      | 'childReviews'
-      | 'createdBy'
-      | 'deletedBy'
-      | 'parent'
-      | 'updatedBy'
-    > & {
-      childAnswers: Array<ResolversTypes['Answer']>;
-      childQuestions: Array<ResolversTypes['Question']>;
-      childReactions: Array<ResolversTypes['Reaction']>;
-      childReviews: Array<ResolversTypes['Review']>;
-      createdBy: ResolversTypes['User'];
-      deletedBy?: Maybe<ResolversTypes['User']>;
-      parent?: Maybe<ResolversTypes['Reaction']>;
-      updatedBy: ResolversTypes['User'];
-    }
-  >;
+  Answer: ResolverTypeWrapper<Omit<Answer, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversTypes['Answer']>, childQuestions: Array<ResolversTypes['Question']>, childReactions: Array<ResolversTypes['Reaction']>, childReviews: Array<ResolversTypes['Review']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, parent?: Maybe<ResolversTypes['Reaction']>, updatedBy: ResolversTypes['User'] }>;
   AnswerOrderBy: AnswerOrderBy;
   AnswerSubWhere: AnswerSubWhere;
   AnswerWhere: AnswerWhere;
@@ -1129,28 +1097,7 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Order: Order;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  Question: ResolverTypeWrapper<
-    Omit<
-      Question,
-      | 'childAnswers'
-      | 'childQuestions'
-      | 'childReactions'
-      | 'childReviews'
-      | 'createdBy'
-      | 'deletedBy'
-      | 'parent'
-      | 'updatedBy'
-    > & {
-      childAnswers: Array<ResolversTypes['Answer']>;
-      childQuestions: Array<ResolversTypes['Question']>;
-      childReactions: Array<ResolversTypes['Reaction']>;
-      childReviews: Array<ResolversTypes['Review']>;
-      createdBy: ResolversTypes['User'];
-      deletedBy?: Maybe<ResolversTypes['User']>;
-      parent?: Maybe<ResolversTypes['Reaction']>;
-      updatedBy: ResolversTypes['User'];
-    }
-  >;
+  Question: ResolverTypeWrapper<Omit<Question, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversTypes['Answer']>, childQuestions: Array<ResolversTypes['Question']>, childReactions: Array<ResolversTypes['Reaction']>, childReviews: Array<ResolversTypes['Review']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, parent?: Maybe<ResolversTypes['Reaction']>, updatedBy: ResolversTypes['User'] }>;
   QuestionOrderBy: QuestionOrderBy;
   QuestionSubWhere: QuestionSubWhere;
   QuestionWhere: QuestionWhere;
@@ -1163,28 +1110,7 @@ export type ResolversTypes = {
   ReactionWhere: ReactionWhere;
   ReactionWhereLookup: ReactionWhereLookup;
   ReactionWhereUnique: ReactionWhereUnique;
-  Review: ResolverTypeWrapper<
-    Omit<
-      Review,
-      | 'childAnswers'
-      | 'childQuestions'
-      | 'childReactions'
-      | 'childReviews'
-      | 'createdBy'
-      | 'deletedBy'
-      | 'parent'
-      | 'updatedBy'
-    > & {
-      childAnswers: Array<ResolversTypes['Answer']>;
-      childQuestions: Array<ResolversTypes['Question']>;
-      childReactions: Array<ResolversTypes['Reaction']>;
-      childReviews: Array<ResolversTypes['Review']>;
-      createdBy: ResolversTypes['User'];
-      deletedBy?: Maybe<ResolversTypes['User']>;
-      parent?: Maybe<ResolversTypes['Reaction']>;
-      updatedBy: ResolversTypes['User'];
-    }
-  >;
+  Review: ResolverTypeWrapper<Omit<Review, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversTypes['Answer']>, childQuestions: Array<ResolversTypes['Question']>, childReactions: Array<ResolversTypes['Reaction']>, childReviews: Array<ResolversTypes['Review']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, parent?: Maybe<ResolversTypes['Reaction']>, updatedBy: ResolversTypes['User'] }>;
   ReviewOrderBy: ReviewOrderBy;
   ReviewSubWhere: ReviewSubWhere;
   ReviewWhere: ReviewWhere;
@@ -1192,14 +1118,7 @@ export type ResolversTypes = {
   ReviewWhereUnique: ReviewWhereUnique;
   Role: Role;
   SomeEnum: SomeEnum;
-  SomeObject: ResolverTypeWrapper<
-    Omit<SomeObject, 'another' | 'createdBy' | 'deletedBy' | 'updatedBy'> & {
-      another?: Maybe<ResolversTypes['AnotherObject']>;
-      createdBy: ResolversTypes['User'];
-      deletedBy?: Maybe<ResolversTypes['User']>;
-      updatedBy: ResolversTypes['User'];
-    }
-  >;
+  SomeObject: ResolverTypeWrapper<Omit<SomeObject, 'another' | 'createdBy' | 'deletedBy' | 'updatedBy'> & { another?: Maybe<ResolversTypes['AnotherObject']>, createdBy: ResolversTypes['User'], deletedBy?: Maybe<ResolversTypes['User']>, updatedBy: ResolversTypes['User'] }>;
   SomeObjectOrderBy: SomeObjectOrderBy;
   SomeObjectSubWhere: SomeObjectSubWhere;
   SomeObjectWhere: SomeObjectWhere;
@@ -1213,44 +1132,7 @@ export type ResolversTypes = {
   UpdateReview: UpdateReview;
   UpdateSomeObject: UpdateSomeObject;
   Upload: ResolverTypeWrapper<Scalars['Upload']['output']>;
-  User: ResolverTypeWrapper<
-    Omit<
-      User,
-      | 'createdAnswers'
-      | 'createdManyObjects'
-      | 'createdQuestions'
-      | 'createdReactions'
-      | 'createdReviews'
-      | 'deletedAnotherObjects'
-      | 'deletedAnswers'
-      | 'deletedManyObjects'
-      | 'deletedQuestions'
-      | 'deletedReactions'
-      | 'deletedReviews'
-      | 'updatedAnswers'
-      | 'updatedManyObjects'
-      | 'updatedQuestions'
-      | 'updatedReactions'
-      | 'updatedReviews'
-    > & {
-      createdAnswers: Array<ResolversTypes['Answer']>;
-      createdManyObjects: Array<ResolversTypes['SomeObject']>;
-      createdQuestions: Array<ResolversTypes['Question']>;
-      createdReactions: Array<ResolversTypes['Reaction']>;
-      createdReviews: Array<ResolversTypes['Review']>;
-      deletedAnotherObjects: Array<ResolversTypes['AnotherObject']>;
-      deletedAnswers: Array<ResolversTypes['Answer']>;
-      deletedManyObjects: Array<ResolversTypes['SomeObject']>;
-      deletedQuestions: Array<ResolversTypes['Question']>;
-      deletedReactions: Array<ResolversTypes['Reaction']>;
-      deletedReviews: Array<ResolversTypes['Review']>;
-      updatedAnswers: Array<ResolversTypes['Answer']>;
-      updatedManyObjects: Array<ResolversTypes['SomeObject']>;
-      updatedQuestions: Array<ResolversTypes['Question']>;
-      updatedReactions: Array<ResolversTypes['Reaction']>;
-      updatedReviews: Array<ResolversTypes['Review']>;
-    }
-  >;
+  User: ResolverTypeWrapper<Omit<User, 'createdAnswers' | 'createdManyObjects' | 'createdQuestions' | 'createdReactions' | 'createdReviews' | 'deletedAnotherObjects' | 'deletedAnswers' | 'deletedManyObjects' | 'deletedQuestions' | 'deletedReactions' | 'deletedReviews' | 'updatedAnswers' | 'updatedManyObjects' | 'updatedQuestions' | 'updatedReactions' | 'updatedReviews'> & { createdAnswers: Array<ResolversTypes['Answer']>, createdManyObjects: Array<ResolversTypes['SomeObject']>, createdQuestions: Array<ResolversTypes['Question']>, createdReactions: Array<ResolversTypes['Reaction']>, createdReviews: Array<ResolversTypes['Review']>, deletedAnotherObjects: Array<ResolversTypes['AnotherObject']>, deletedAnswers: Array<ResolversTypes['Answer']>, deletedManyObjects: Array<ResolversTypes['SomeObject']>, deletedQuestions: Array<ResolversTypes['Question']>, deletedReactions: Array<ResolversTypes['Reaction']>, deletedReviews: Array<ResolversTypes['Review']>, updatedAnswers: Array<ResolversTypes['Answer']>, updatedManyObjects: Array<ResolversTypes['SomeObject']>, updatedQuestions: Array<ResolversTypes['Question']>, updatedReactions: Array<ResolversTypes['Reaction']>, updatedReviews: Array<ResolversTypes['Review']> }>;
   UserSubWhere: UserSubWhere;
   UserWhere: UserWhere;
   UserWhereLookup: UserWhereLookup;
@@ -1259,37 +1141,13 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  AnotherObject: Omit<AnotherObject, 'deletedBy' | 'manyObjects' | 'myself' | 'self'> & {
-    deletedBy?: Maybe<ResolversParentTypes['User']>;
-    manyObjects: Array<ResolversParentTypes['SomeObject']>;
-    myself?: Maybe<ResolversParentTypes['AnotherObject']>;
-    self?: Maybe<ResolversParentTypes['AnotherObject']>;
-  };
+  AnotherObject: Omit<AnotherObject, 'deletedBy' | 'manyObjects' | 'myself' | 'self'> & { deletedBy?: Maybe<ResolversParentTypes['User']>, manyObjects: Array<ResolversParentTypes['SomeObject']>, myself?: Maybe<ResolversParentTypes['AnotherObject']>, self?: Maybe<ResolversParentTypes['AnotherObject']> };
   AnotherObjectOrderBy: AnotherObjectOrderBy;
   AnotherObjectSubWhere: AnotherObjectSubWhere;
   AnotherObjectWhere: AnotherObjectWhere;
   AnotherObjectWhereLookup: AnotherObjectWhereLookup;
   AnotherObjectWhereUnique: AnotherObjectWhereUnique;
-  Answer: Omit<
-    Answer,
-    | 'childAnswers'
-    | 'childQuestions'
-    | 'childReactions'
-    | 'childReviews'
-    | 'createdBy'
-    | 'deletedBy'
-    | 'parent'
-    | 'updatedBy'
-  > & {
-    childAnswers: Array<ResolversParentTypes['Answer']>;
-    childQuestions: Array<ResolversParentTypes['Question']>;
-    childReactions: Array<ResolversParentTypes['Reaction']>;
-    childReviews: Array<ResolversParentTypes['Review']>;
-    createdBy: ResolversParentTypes['User'];
-    deletedBy?: Maybe<ResolversParentTypes['User']>;
-    parent?: Maybe<ResolversParentTypes['Reaction']>;
-    updatedBy: ResolversParentTypes['User'];
-  };
+  Answer: Omit<Answer, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversParentTypes['Answer']>, childQuestions: Array<ResolversParentTypes['Question']>, childReactions: Array<ResolversParentTypes['Reaction']>, childReviews: Array<ResolversParentTypes['Review']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, parent?: Maybe<ResolversParentTypes['Reaction']>, updatedBy: ResolversParentTypes['User'] };
   AnswerOrderBy: AnswerOrderBy;
   AnswerSubWhere: AnswerSubWhere;
   AnswerWhere: AnswerWhere;
@@ -1309,26 +1167,7 @@ export type ResolversParentTypes = {
   Int: Scalars['Int']['output'];
   Mutation: Record<PropertyKey, never>;
   Query: Record<PropertyKey, never>;
-  Question: Omit<
-    Question,
-    | 'childAnswers'
-    | 'childQuestions'
-    | 'childReactions'
-    | 'childReviews'
-    | 'createdBy'
-    | 'deletedBy'
-    | 'parent'
-    | 'updatedBy'
-  > & {
-    childAnswers: Array<ResolversParentTypes['Answer']>;
-    childQuestions: Array<ResolversParentTypes['Question']>;
-    childReactions: Array<ResolversParentTypes['Reaction']>;
-    childReviews: Array<ResolversParentTypes['Review']>;
-    createdBy: ResolversParentTypes['User'];
-    deletedBy?: Maybe<ResolversParentTypes['User']>;
-    parent?: Maybe<ResolversParentTypes['Reaction']>;
-    updatedBy: ResolversParentTypes['User'];
-  };
+  Question: Omit<Question, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversParentTypes['Answer']>, childQuestions: Array<ResolversParentTypes['Question']>, childReactions: Array<ResolversParentTypes['Reaction']>, childReviews: Array<ResolversParentTypes['Review']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, parent?: Maybe<ResolversParentTypes['Reaction']>, updatedBy: ResolversParentTypes['User'] };
   QuestionOrderBy: QuestionOrderBy;
   QuestionSubWhere: QuestionSubWhere;
   QuestionWhere: QuestionWhere;
@@ -1340,37 +1179,13 @@ export type ResolversParentTypes = {
   ReactionWhere: ReactionWhere;
   ReactionWhereLookup: ReactionWhereLookup;
   ReactionWhereUnique: ReactionWhereUnique;
-  Review: Omit<
-    Review,
-    | 'childAnswers'
-    | 'childQuestions'
-    | 'childReactions'
-    | 'childReviews'
-    | 'createdBy'
-    | 'deletedBy'
-    | 'parent'
-    | 'updatedBy'
-  > & {
-    childAnswers: Array<ResolversParentTypes['Answer']>;
-    childQuestions: Array<ResolversParentTypes['Question']>;
-    childReactions: Array<ResolversParentTypes['Reaction']>;
-    childReviews: Array<ResolversParentTypes['Review']>;
-    createdBy: ResolversParentTypes['User'];
-    deletedBy?: Maybe<ResolversParentTypes['User']>;
-    parent?: Maybe<ResolversParentTypes['Reaction']>;
-    updatedBy: ResolversParentTypes['User'];
-  };
+  Review: Omit<Review, 'childAnswers' | 'childQuestions' | 'childReactions' | 'childReviews' | 'createdBy' | 'deletedBy' | 'parent' | 'updatedBy'> & { childAnswers: Array<ResolversParentTypes['Answer']>, childQuestions: Array<ResolversParentTypes['Question']>, childReactions: Array<ResolversParentTypes['Reaction']>, childReviews: Array<ResolversParentTypes['Review']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, parent?: Maybe<ResolversParentTypes['Reaction']>, updatedBy: ResolversParentTypes['User'] };
   ReviewOrderBy: ReviewOrderBy;
   ReviewSubWhere: ReviewSubWhere;
   ReviewWhere: ReviewWhere;
   ReviewWhereLookup: ReviewWhereLookup;
   ReviewWhereUnique: ReviewWhereUnique;
-  SomeObject: Omit<SomeObject, 'another' | 'createdBy' | 'deletedBy' | 'updatedBy'> & {
-    another?: Maybe<ResolversParentTypes['AnotherObject']>;
-    createdBy: ResolversParentTypes['User'];
-    deletedBy?: Maybe<ResolversParentTypes['User']>;
-    updatedBy: ResolversParentTypes['User'];
-  };
+  SomeObject: Omit<SomeObject, 'another' | 'createdBy' | 'deletedBy' | 'updatedBy'> & { another?: Maybe<ResolversParentTypes['AnotherObject']>, createdBy: ResolversParentTypes['User'], deletedBy?: Maybe<ResolversParentTypes['User']>, updatedBy: ResolversParentTypes['User'] };
   SomeObjectOrderBy: SomeObjectOrderBy;
   SomeObjectSubWhere: SomeObjectSubWhere;
   SomeObjectWhere: SomeObjectWhere;
@@ -1384,102 +1199,31 @@ export type ResolversParentTypes = {
   UpdateReview: UpdateReview;
   UpdateSomeObject: UpdateSomeObject;
   Upload: Scalars['Upload']['output'];
-  User: Omit<
-    User,
-    | 'createdAnswers'
-    | 'createdManyObjects'
-    | 'createdQuestions'
-    | 'createdReactions'
-    | 'createdReviews'
-    | 'deletedAnotherObjects'
-    | 'deletedAnswers'
-    | 'deletedManyObjects'
-    | 'deletedQuestions'
-    | 'deletedReactions'
-    | 'deletedReviews'
-    | 'updatedAnswers'
-    | 'updatedManyObjects'
-    | 'updatedQuestions'
-    | 'updatedReactions'
-    | 'updatedReviews'
-  > & {
-    createdAnswers: Array<ResolversParentTypes['Answer']>;
-    createdManyObjects: Array<ResolversParentTypes['SomeObject']>;
-    createdQuestions: Array<ResolversParentTypes['Question']>;
-    createdReactions: Array<ResolversParentTypes['Reaction']>;
-    createdReviews: Array<ResolversParentTypes['Review']>;
-    deletedAnotherObjects: Array<ResolversParentTypes['AnotherObject']>;
-    deletedAnswers: Array<ResolversParentTypes['Answer']>;
-    deletedManyObjects: Array<ResolversParentTypes['SomeObject']>;
-    deletedQuestions: Array<ResolversParentTypes['Question']>;
-    deletedReactions: Array<ResolversParentTypes['Reaction']>;
-    deletedReviews: Array<ResolversParentTypes['Review']>;
-    updatedAnswers: Array<ResolversParentTypes['Answer']>;
-    updatedManyObjects: Array<ResolversParentTypes['SomeObject']>;
-    updatedQuestions: Array<ResolversParentTypes['Question']>;
-    updatedReactions: Array<ResolversParentTypes['Reaction']>;
-    updatedReviews: Array<ResolversParentTypes['Review']>;
-  };
+  User: Omit<User, 'createdAnswers' | 'createdManyObjects' | 'createdQuestions' | 'createdReactions' | 'createdReviews' | 'deletedAnotherObjects' | 'deletedAnswers' | 'deletedManyObjects' | 'deletedQuestions' | 'deletedReactions' | 'deletedReviews' | 'updatedAnswers' | 'updatedManyObjects' | 'updatedQuestions' | 'updatedReactions' | 'updatedReviews'> & { createdAnswers: Array<ResolversParentTypes['Answer']>, createdManyObjects: Array<ResolversParentTypes['SomeObject']>, createdQuestions: Array<ResolversParentTypes['Question']>, createdReactions: Array<ResolversParentTypes['Reaction']>, createdReviews: Array<ResolversParentTypes['Review']>, deletedAnotherObjects: Array<ResolversParentTypes['AnotherObject']>, deletedAnswers: Array<ResolversParentTypes['Answer']>, deletedManyObjects: Array<ResolversParentTypes['SomeObject']>, deletedQuestions: Array<ResolversParentTypes['Question']>, deletedReactions: Array<ResolversParentTypes['Reaction']>, deletedReviews: Array<ResolversParentTypes['Review']>, updatedAnswers: Array<ResolversParentTypes['Answer']>, updatedManyObjects: Array<ResolversParentTypes['SomeObject']>, updatedQuestions: Array<ResolversParentTypes['Question']>, updatedReactions: Array<ResolversParentTypes['Reaction']>, updatedReviews: Array<ResolversParentTypes['Review']> };
   UserSubWhere: UserSubWhere;
   UserWhere: UserWhere;
   UserWhereLookup: UserWhereLookup;
   UserWhereUnique: UserWhereUnique;
 };
 
-export type AnotherObjectResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['AnotherObject'] = ResolversParentTypes['AnotherObject'],
-> = {
+export type AnotherObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['AnotherObject'] = ResolversParentTypes['AnotherObject']> = {
   deleteRootId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   deleteRootType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   deletedBy?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  manyObjects?: Resolver<
-    Array<ResolversTypes['SomeObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnotherObjectManyObjectsArgs, 'deleted'>
-  >;
+  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<AnotherObjectManyObjectsArgs, 'deleted'>>;
   myself?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  self?: Resolver<
-    Maybe<ResolversTypes['AnotherObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnotherObjectSelfArgs, 'deleted'>
-  >;
+  self?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<AnotherObjectSelfArgs, 'deleted'>>;
 };
 
-export type AnswerResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Answer'] = ResolversParentTypes['Answer'],
-> = {
-  childAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnswerChildAnswersArgs, 'deleted'>
-  >;
-  childQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnswerChildQuestionsArgs, 'deleted'>
-  >;
-  childReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnswerChildReactionsArgs, 'deleted'>
-  >;
-  childReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<AnswerChildReviewsArgs, 'deleted'>
-  >;
+export type AnswerResolvers<ContextType = any, ParentType extends ResolversParentTypes['Answer'] = ResolversParentTypes['Answer']> = {
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<AnswerChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<AnswerChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<AnswerChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<AnswerChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1496,10 +1240,7 @@ export type AnswerResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type BirdResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Bird'] = ResolversParentTypes['Bird'],
-> = {
+export type BirdResolvers<ContextType = any, ParentType extends ResolversParentTypes['Bird'] = ResolversParentTypes['Bird']> = {
   __resolveType: TypeResolveFn<'Duck' | 'Eagle', ParentType, ContextType>;
 };
 
@@ -1507,198 +1248,58 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type DuckResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Duck'] = ResolversParentTypes['Duck'],
-> = {
+export type DuckResolvers<ContextType = any, ParentType extends ResolversParentTypes['Duck'] = ResolversParentTypes['Duck']> = {
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type EagleResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Eagle'] = ResolversParentTypes['Eagle'],
-> = {
+export type EagleResolvers<ContextType = any, ParentType extends ResolversParentTypes['Eagle'] = ResolversParentTypes['Eagle']> = {
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type MutationResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation'],
-> = {
-  createAnswer?: Resolver<
-    ResolversTypes['Answer'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationCreateAnswerArgs, 'data'>
-  >;
-  createQuestion?: Resolver<
-    ResolversTypes['Question'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationCreateQuestionArgs, 'data'>
-  >;
-  createReview?: Resolver<
-    ResolversTypes['Review'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationCreateReviewArgs, 'data'>
-  >;
-  createSomeObject?: Resolver<
-    ResolversTypes['SomeObject'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationCreateSomeObjectArgs, 'data'>
-  >;
-  deleteAnotherObject?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeleteAnotherObjectArgs, 'where'>
-  >;
+export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+  createAnswer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<MutationCreateAnswerArgs, 'data'>>;
+  createQuestion?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<MutationCreateQuestionArgs, 'data'>>;
+  createReview?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<MutationCreateReviewArgs, 'data'>>;
+  createSomeObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<MutationCreateSomeObjectArgs, 'data'>>;
+  deleteAnotherObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteAnotherObjectArgs, 'where'>>;
   deleteAnswer?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteAnswerArgs, 'where'>>;
-  deleteQuestion?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeleteQuestionArgs, 'where'>
-  >;
+  deleteQuestion?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteQuestionArgs, 'where'>>;
   deleteReview?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteReviewArgs, 'where'>>;
-  deleteSomeObject?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeleteSomeObjectArgs, 'where'>
-  >;
-  restoreAnotherObject?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationRestoreAnotherObjectArgs, 'where'>
-  >;
+  deleteSomeObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationDeleteSomeObjectArgs, 'where'>>;
+  restoreAnotherObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreAnotherObjectArgs, 'where'>>;
   restoreAnswer?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreAnswerArgs, 'where'>>;
-  restoreQuestion?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationRestoreQuestionArgs, 'where'>
-  >;
+  restoreQuestion?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreQuestionArgs, 'where'>>;
   restoreReview?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreReviewArgs, 'where'>>;
-  restoreSomeObject?: Resolver<
-    ResolversTypes['ID'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationRestoreSomeObjectArgs, 'where'>
-  >;
-  updateAnswer?: Resolver<
-    ResolversTypes['Answer'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationUpdateAnswerArgs, 'data' | 'where'>
-  >;
-  updateQuestion?: Resolver<
-    ResolversTypes['Question'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationUpdateQuestionArgs, 'data' | 'where'>
-  >;
-  updateReview?: Resolver<
-    ResolversTypes['Review'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationUpdateReviewArgs, 'data' | 'where'>
-  >;
-  updateSomeObject?: Resolver<
-    ResolversTypes['SomeObject'],
-    ParentType,
-    ContextType,
-    RequireFields<MutationUpdateSomeObjectArgs, 'data' | 'where'>
-  >;
+  restoreSomeObject?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationRestoreSomeObjectArgs, 'where'>>;
+  updateAnswer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<MutationUpdateAnswerArgs, 'data' | 'where'>>;
+  updateQuestion?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<MutationUpdateQuestionArgs, 'data' | 'where'>>;
+  updateReview?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<MutationUpdateReviewArgs, 'data' | 'where'>>;
+  updateSomeObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<MutationUpdateSomeObjectArgs, 'data' | 'where'>>;
 };
 
-export type QueryResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
-> = {
-  anotherObjects?: Resolver<
-    Array<ResolversTypes['AnotherObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryAnotherObjectsArgs, 'deleted'>
-  >;
+export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+  anotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<QueryAnotherObjectsArgs, 'deleted'>>;
   answer?: Resolver<ResolversTypes['Answer'], ParentType, ContextType, RequireFields<QueryAnswerArgs, 'deleted' | 'where'>>;
   answers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<QueryAnswersArgs, 'deleted'>>;
   birds?: Resolver<Array<ResolversTypes['Bird']>, ParentType, ContextType>;
-  manyObjects?: Resolver<
-    Array<ResolversTypes['SomeObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryManyObjectsArgs, 'deleted'>
-  >;
+  manyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<QueryManyObjectsArgs, 'deleted'>>;
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  question?: Resolver<
-    ResolversTypes['Question'],
-    ParentType,
-    ContextType,
-    RequireFields<QueryQuestionArgs, 'deleted' | 'where'>
-  >;
-  questions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryQuestionsArgs, 'deleted'>
-  >;
-  reaction?: Resolver<
-    ResolversTypes['Reaction'],
-    ParentType,
-    ContextType,
-    RequireFields<QueryReactionArgs, 'deleted' | 'where'>
-  >;
-  reactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryReactionsArgs, 'deleted'>
-  >;
+  question?: Resolver<ResolversTypes['Question'], ParentType, ContextType, RequireFields<QueryQuestionArgs, 'deleted' | 'where'>>;
+  questions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<QueryQuestionsArgs, 'deleted'>>;
+  reaction?: Resolver<ResolversTypes['Reaction'], ParentType, ContextType, RequireFields<QueryReactionArgs, 'deleted' | 'where'>>;
+  reactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<QueryReactionsArgs, 'deleted'>>;
   review?: Resolver<ResolversTypes['Review'], ParentType, ContextType, RequireFields<QueryReviewArgs, 'deleted' | 'where'>>;
   reviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<QueryReviewsArgs, 'deleted'>>;
-  someObject?: Resolver<
-    ResolversTypes['SomeObject'],
-    ParentType,
-    ContextType,
-    RequireFields<QuerySomeObjectArgs, 'deleted' | 'where'>
-  >;
+  someObject?: Resolver<ResolversTypes['SomeObject'], ParentType, ContextType, RequireFields<QuerySomeObjectArgs, 'deleted' | 'where'>>;
 };
 
-export type QuestionResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Question'] = ResolversParentTypes['Question'],
-> = {
-  childAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<QuestionChildAnswersArgs, 'deleted'>
-  >;
-  childQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<QuestionChildQuestionsArgs, 'deleted'>
-  >;
-  childReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<QuestionChildReactionsArgs, 'deleted'>
-  >;
-  childReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<QuestionChildReviewsArgs, 'deleted'>
-  >;
+export type QuestionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Question'] = ResolversParentTypes['Question']> = {
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<QuestionChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<QuestionChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<QuestionChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<QuestionChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1715,41 +1316,15 @@ export type QuestionResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type ReactionResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Reaction'] = ResolversParentTypes['Reaction'],
-> = {
+export type ReactionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Reaction'] = ResolversParentTypes['Reaction']> = {
   __resolveType: TypeResolveFn<'Answer' | 'Question' | 'Review', ParentType, ContextType>;
 };
 
-export type ReviewResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review'],
-> = {
-  childAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<ReviewChildAnswersArgs, 'deleted'>
-  >;
-  childQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<ReviewChildQuestionsArgs, 'deleted'>
-  >;
-  childReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<ReviewChildReactionsArgs, 'deleted'>
-  >;
-  childReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<ReviewChildReviewsArgs, 'deleted'>
-  >;
+export type ReviewResolvers<ContextType = any, ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review']> = {
+  childAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<ReviewChildAnswersArgs, 'deleted'>>;
+  childQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<ReviewChildQuestionsArgs, 'deleted'>>;
+  childReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<ReviewChildReactionsArgs, 'deleted'>>;
+  childReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<ReviewChildReviewsArgs, 'deleted'>>;
   content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1767,10 +1342,7 @@ export type ReviewResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type SomeObjectResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SomeObject'] = ResolversParentTypes['SomeObject'],
-> = {
+export type SomeObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['SomeObject'] = ResolversParentTypes['SomeObject']> = {
   another?: Resolver<Maybe<ResolversTypes['AnotherObject']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
@@ -1789,10 +1361,7 @@ export type SomeObjectResolvers<
   xyz?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
-export type SomeRawObjectResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SomeRawObject'] = ResolversParentTypes['SomeRawObject'],
-> = {
+export type SomeRawObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['SomeRawObject'] = ResolversParentTypes['SomeRawObject']> = {
   field?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
@@ -1804,108 +1373,25 @@ export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTyp
   name: 'Upload';
 }
 
-export type UserResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User'],
-> = {
-  createdAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserCreatedAnswersArgs, 'deleted'>
-  >;
-  createdManyObjects?: Resolver<
-    Array<ResolversTypes['SomeObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserCreatedManyObjectsArgs, 'deleted'>
-  >;
-  createdQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserCreatedQuestionsArgs, 'deleted'>
-  >;
-  createdReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserCreatedReactionsArgs, 'deleted'>
-  >;
-  createdReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserCreatedReviewsArgs, 'deleted'>
-  >;
-  deletedAnotherObjects?: Resolver<
-    Array<ResolversTypes['AnotherObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedAnotherObjectsArgs, 'deleted'>
-  >;
-  deletedAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedAnswersArgs, 'deleted'>
-  >;
-  deletedManyObjects?: Resolver<
-    Array<ResolversTypes['SomeObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedManyObjectsArgs, 'deleted'>
-  >;
-  deletedQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedQuestionsArgs, 'deleted'>
-  >;
-  deletedReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedReactionsArgs, 'deleted'>
-  >;
-  deletedReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserDeletedReviewsArgs, 'deleted'>
-  >;
+export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+  createdAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserCreatedAnswersArgs, 'deleted'>>;
+  createdManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserCreatedManyObjectsArgs, 'deleted'>>;
+  createdQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserCreatedQuestionsArgs, 'deleted'>>;
+  createdReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserCreatedReactionsArgs, 'deleted'>>;
+  createdReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserCreatedReviewsArgs, 'deleted'>>;
+  deletedAnotherObjects?: Resolver<Array<ResolversTypes['AnotherObject']>, ParentType, ContextType, RequireFields<UserDeletedAnotherObjectsArgs, 'deleted'>>;
+  deletedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserDeletedAnswersArgs, 'deleted'>>;
+  deletedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserDeletedManyObjectsArgs, 'deleted'>>;
+  deletedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserDeletedQuestionsArgs, 'deleted'>>;
+  deletedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserDeletedReactionsArgs, 'deleted'>>;
+  deletedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserDeletedReviewsArgs, 'deleted'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['Role'], ParentType, ContextType>;
-  updatedAnswers?: Resolver<
-    Array<ResolversTypes['Answer']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserUpdatedAnswersArgs, 'deleted'>
-  >;
-  updatedManyObjects?: Resolver<
-    Array<ResolversTypes['SomeObject']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserUpdatedManyObjectsArgs, 'deleted'>
-  >;
-  updatedQuestions?: Resolver<
-    Array<ResolversTypes['Question']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserUpdatedQuestionsArgs, 'deleted'>
-  >;
-  updatedReactions?: Resolver<
-    Array<ResolversTypes['Reaction']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserUpdatedReactionsArgs, 'deleted'>
-  >;
-  updatedReviews?: Resolver<
-    Array<ResolversTypes['Review']>,
-    ParentType,
-    ContextType,
-    RequireFields<UserUpdatedReviewsArgs, 'deleted'>
-  >;
+  updatedAnswers?: Resolver<Array<ResolversTypes['Answer']>, ParentType, ContextType, RequireFields<UserUpdatedAnswersArgs, 'deleted'>>;
+  updatedManyObjects?: Resolver<Array<ResolversTypes['SomeObject']>, ParentType, ContextType, RequireFields<UserUpdatedManyObjectsArgs, 'deleted'>>;
+  updatedQuestions?: Resolver<Array<ResolversTypes['Question']>, ParentType, ContextType, RequireFields<UserUpdatedQuestionsArgs, 'deleted'>>;
+  updatedReactions?: Resolver<Array<ResolversTypes['Reaction']>, ParentType, ContextType, RequireFields<UserUpdatedReactionsArgs, 'deleted'>>;
+  updatedReviews?: Resolver<Array<ResolversTypes['Review']>, ParentType, ContextType, RequireFields<UserUpdatedReviewsArgs, 'deleted'>>;
   username?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
@@ -1927,3 +1413,4 @@ export type Resolvers<ContextType = any> = {
   Upload?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
 };
+

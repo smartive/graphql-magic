@@ -1,9 +1,6 @@
 import { DateTime } from 'luxon';
 
-type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
-type Hour = `0${Digit}` | `1${Digit}` | `2${'0' | '1' | '2' | '3'}`;
-type Minute = `${'0' | '1' | '2' | '3' | '4' | '5'}${Digit}`;
-export type Time = `${Hour}:${Minute}`;
+type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';type Hour = `0${Digit}` | `1${Digit}` | `2${'0' | '1' | '2' | '3'}`;type Minute = `${'0' | '1' | '2' | '3' | '4' | '5'}${Digit}`;export type Time = `${Hour}:${Minute}`;
 
 export type ID = string;
 
@@ -28,333 +25,333 @@ export type Order = 'ASC' | 'DESC';
 export type Bird = Duck | Eagle;
 
 export type SomeRawObject = {
-  field: string | null;
-};
+  'field': string | null;
+}
 
 export type Duck = {
-  name: string | null;
-};
+  'name': string | null;
+}
 
 export type Eagle = {
-  name: string | null;
-};
+  'name': string | null;
+}
 
 export type Query = {
-  birds: Bird[];
-};
+  'birds': Bird[];
+}
 
 export type User = {
-  id: string;
-  username: string | null;
-  role: Role;
-};
+  'id': string;
+  'username': string | null;
+  'role': Role;
+}
 
 export type UserInitializer = {
-  id: string;
-  username?: string | null;
-  role: Role;
-};
+  'id': string;
+  'username'?: string | null;
+  'role': Role;
+}
 
 export type UserMutator = {
-  id?: string;
-  username?: string | null;
-  role?: Role;
-};
+  'id'?: string;
+  'username'?: string | null;
+  'role'?: Role;
+}
 
 export type UserSeed = {
-  id: string;
-  username?: string | null;
-  role: string;
-};
+  'id': string;
+  'username'?: string | null;
+  'role': string;
+}
 
 export type AnotherObject = {
-  id: string;
-  name: string | null;
-  myselfId: string | null;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-};
+  'id': string;
+  'name': string | null;
+  'myselfId': string | null;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+}
 
 export type AnotherObjectInitializer = {
-  id: string;
-  name?: string | null;
-  myselfId?: string | null;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'name'?: string | null;
+  'myselfId'?: string | null;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type AnotherObjectMutator = {
-  id?: string;
-  name?: string | null;
-  myselfId?: string | null;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id'?: string;
+  'name'?: string | null;
+  'myselfId'?: string | null;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type AnotherObjectSeed = {
-  id: string;
-  name?: string | null;
-  myselfId?: string | null;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'name'?: string | null;
+  'myselfId'?: string | null;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type SomeObject = {
-  id: string;
-  field: string | null;
-  anotherId: string | null;
-  float: number;
-  list: SomeEnum[];
-  xyz: number;
-  time: Time | null;
-  createdAt: DateTime;
-  createdById: string;
-  updatedAt: DateTime;
-  updatedById: string;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-};
+  'id': string;
+  'field': string | null;
+  'anotherId': string | null;
+  'float': number;
+  'list': SomeEnum[];
+  'xyz': number;
+  'time': Time | null;
+  'createdAt': DateTime;
+  'createdById': string;
+  'updatedAt': DateTime;
+  'updatedById': string;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+}
 
 export type SomeObjectInitializer = {
-  id: string;
-  field?: string | null;
-  anotherId?: string | null;
-  float: number;
-  list: SomeEnum[] | string;
-  xyz: number;
-  time?: Time | null;
-  createdAt: DateTime | string;
-  createdById: string;
-  updatedAt: DateTime | string;
-  updatedById: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'field'?: string | null;
+  'anotherId'?: string | null;
+  'float': number;
+  'list': SomeEnum[] | string;
+  'xyz': number;
+  'time'?: Time | null;
+  'createdAt': (DateTime | string);
+  'createdById': string;
+  'updatedAt': (DateTime | string);
+  'updatedById': string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type SomeObjectMutator = {
-  id?: string;
-  field?: string | null;
-  anotherId?: string | null;
-  float?: number;
-  list?: SomeEnum[] | string;
-  xyz?: number;
-  time?: Time | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id'?: string;
+  'field'?: string | null;
+  'anotherId'?: string | null;
+  'float'?: number;
+  'list'?: SomeEnum[] | string;
+  'xyz'?: number;
+  'time'?: Time | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type SomeObjectSeed = {
-  id: string;
-  field?: string | null;
-  anotherId?: string | null;
-  float: number;
-  list: string[] | string;
-  xyz: number;
-  time?: Time | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'field'?: string | null;
+  'anotherId'?: string | null;
+  'float': number;
+  'list': string[] | string;
+  'xyz': number;
+  'time'?: Time | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type Reaction = {
-  id: string;
-  type: ReactionType;
-  parentId: string | null;
-  content: string | null;
-  createdAt: DateTime;
-  createdById: string;
-  updatedAt: DateTime;
-  updatedById: string;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-};
+  'id': string;
+  'type': ReactionType;
+  'parentId': string | null;
+  'content': string | null;
+  'createdAt': DateTime;
+  'createdById': string;
+  'updatedAt': DateTime;
+  'updatedById': string;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+}
 
 export type ReactionInitializer = {
-  id: string;
-  type: ReactionType;
-  parentId?: string | null;
-  content?: string | null;
-  createdAt: DateTime | string;
-  createdById: string;
-  updatedAt: DateTime | string;
-  updatedById: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'type': ReactionType;
+  'parentId'?: string | null;
+  'content'?: string | null;
+  'createdAt': (DateTime | string);
+  'createdById': string;
+  'updatedAt': (DateTime | string);
+  'updatedById': string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type ReactionMutator = {
-  id?: string;
-  type?: ReactionType;
-  parentId?: string | null;
-  content?: string | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id'?: string;
+  'type'?: ReactionType;
+  'parentId'?: string | null;
+  'content'?: string | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type Review = {
-  id: string;
-  type: ReactionType;
-  parentId: string | null;
-  content: string | null;
-  createdAt: DateTime;
-  createdById: string;
-  updatedAt: DateTime;
-  updatedById: string;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-  rating: number | null;
-};
+  'id': string;
+  'type': ReactionType;
+  'parentId': string | null;
+  'content': string | null;
+  'createdAt': DateTime;
+  'createdById': string;
+  'updatedAt': DateTime;
+  'updatedById': string;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+  'rating': number | null;
+}
 
 export type ReviewInitializer = {
-  id: string;
-  rating?: number | null;
-};
+  'id': string;
+  'rating'?: number | null;
+}
 
 export type ReviewMutator = {
-  id?: string;
-  rating?: number | null;
-};
+  'id'?: string;
+  'rating'?: number | null;
+}
 
 export type ReviewSeed = {
-  id: string;
-  parentId?: string | null;
-  content?: string | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-  rating?: number | null;
-};
+  'id': string;
+  'parentId'?: string | null;
+  'content'?: string | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+  'rating'?: number | null;
+}
 
 export type Question = {
-  id: string;
-  type: ReactionType;
-  parentId: string | null;
-  content: string | null;
-  createdAt: DateTime;
-  createdById: string;
-  updatedAt: DateTime;
-  updatedById: string;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-};
+  'id': string;
+  'type': ReactionType;
+  'parentId': string | null;
+  'content': string | null;
+  'createdAt': DateTime;
+  'createdById': string;
+  'updatedAt': DateTime;
+  'updatedById': string;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+}
 
 export type QuestionInitializer = {
-  id: string;
-};
+  'id': string;
+}
 
 export type QuestionMutator = {
-  id?: string;
-};
+  'id'?: string;
+}
 
 export type QuestionSeed = {
-  id: string;
-  parentId?: string | null;
-  content?: string | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'parentId'?: string | null;
+  'content'?: string | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type Answer = {
-  id: string;
-  type: ReactionType;
-  parentId: string | null;
-  content: string | null;
-  createdAt: DateTime;
-  createdById: string;
-  updatedAt: DateTime;
-  updatedById: string;
-  deleted: boolean;
-  deletedAt: DateTime | null;
-  deletedById: string | null;
-  deleteRootType: string | null;
-  deleteRootId: string | null;
-};
+  'id': string;
+  'type': ReactionType;
+  'parentId': string | null;
+  'content': string | null;
+  'createdAt': DateTime;
+  'createdById': string;
+  'updatedAt': DateTime;
+  'updatedById': string;
+  'deleted': boolean;
+  'deletedAt': DateTime | null;
+  'deletedById': string | null;
+  'deleteRootType': string | null;
+  'deleteRootId': string | null;
+}
 
 export type AnswerInitializer = {
-  id: string;
-};
+  'id': string;
+}
 
 export type AnswerMutator = {
-  id?: string;
-};
+  'id'?: string;
+}
 
 export type AnswerSeed = {
-  id: string;
-  parentId?: string | null;
-  content?: string | null;
-  createdAt?: DateTime | string;
-  createdById?: string;
-  updatedAt?: DateTime | string;
-  updatedById?: string;
-  deleted?: boolean;
-  deletedAt?: (DateTime | string) | null;
-  deletedById?: string | null;
-  deleteRootType?: string | null;
-  deleteRootId?: string | null;
-};
+  'id': string;
+  'parentId'?: string | null;
+  'content'?: string | null;
+  'createdAt'?: (DateTime | string);
+  'createdById'?: string;
+  'updatedAt'?: (DateTime | string);
+  'updatedById'?: string;
+  'deleted'?: boolean;
+  'deletedAt'?: (DateTime | string) | null;
+  'deletedById'?: string | null;
+  'deleteRootType'?: string | null;
+  'deleteRootId'?: string | null;
+}
 
 export type SeedData = {
   User: UserSeed[];
@@ -363,4 +360,4 @@ export type SeedData = {
   Review: ReviewSeed[];
   Question: QuestionSeed[];
   Answer: AnswerSeed[];
-};
+}
