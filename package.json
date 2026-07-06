@@ -43,7 +43,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@apollo/server": "^5.2.0",
     "@graphql-codegen/add": "^7.0.0",
     "@graphql-codegen/cli": "^7.0.0",
     "@graphql-codegen/typescript": "^6.0.0",
