@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "project": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "ignore": [
+    "**/generated/**"
+  ],
+  "ignoreDependencies": [
+    "conventional-changelog-conventionalcommits",
+    "@graphql-codegen/typescript",
+    "@graphql-codegen/typescript-operations",
+    "@graphql-codegen/typescript-resolvers"
+  ]
+}

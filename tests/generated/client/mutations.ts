@@ -1,4 +1,4 @@
-import { gql } from './gql';
+import { gql } from "./gql";
 
 export const DELETE_ANOTHER_OBJECT = gql`
   mutation DeleteAnotherObjectMutation($id: ID!) {
@@ -14,17 +14,13 @@ export const RESTORE_ANOTHER_OBJECT = gql`
 
 export const CREATE_SOME_OBJECT = gql`
   mutation CreateSomeObjectMutation($data: CreateSomeObject!) {
-    createSomeObject(data: $data) {
-      id
-    }
+    createSomeObject(data: $data) { id }
   }
 `;
 
 export const UPDATE_SOME_OBJECT = gql`
   mutation UpdateSomeObjectMutation($id: ID!, $data: UpdateSomeObject!) {
-    updateSomeObject(where: { id: $id }, data: $data) {
-      id
-    }
+    updateSomeObject(where: { id: $id }, data: $data) { id }
   }
 `;
 
@@ -42,17 +38,13 @@ export const RESTORE_SOME_OBJECT = gql`
 
 export const CREATE_REVIEW = gql`
   mutation CreateReviewMutation($data: CreateReview!) {
-    createReview(data: $data) {
-      id
-    }
+    createReview(data: $data) { id }
   }
 `;
 
 export const UPDATE_REVIEW = gql`
   mutation UpdateReviewMutation($id: ID!, $data: UpdateReview!) {
-    updateReview(where: { id: $id }, data: $data) {
-      id
-    }
+    updateReview(where: { id: $id }, data: $data) { id }
   }
 `;
 
@@ -70,17 +62,13 @@ export const RESTORE_REVIEW = gql`
 
 export const CREATE_QUESTION = gql`
   mutation CreateQuestionMutation($data: CreateQuestion!) {
-    createQuestion(data: $data) {
-      id
-    }
+    createQuestion(data: $data) { id }
   }
 `;
 
 export const UPDATE_QUESTION = gql`
   mutation UpdateQuestionMutation($id: ID!, $data: UpdateQuestion!) {
-    updateQuestion(where: { id: $id }, data: $data) {
-      id
-    }
+    updateQuestion(where: { id: $id }, data: $data) { id }
   }
 `;
 
@@ -98,17 +86,13 @@ export const RESTORE_QUESTION = gql`
 
 export const CREATE_ANSWER = gql`
   mutation CreateAnswerMutation($data: CreateAnswer!) {
-    createAnswer(data: $data) {
-      id
-    }
+    createAnswer(data: $data) { id }
   }
 `;
 
 export const UPDATE_ANSWER = gql`
   mutation UpdateAnswerMutation($id: ID!, $data: UpdateAnswer!) {
-    updateAnswer(where: { id: $id }, data: $data) {
-      id
-    }
+    updateAnswer(where: { id: $id }, data: $data) { id }
   }
 `;
 

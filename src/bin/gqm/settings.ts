@@ -100,6 +100,14 @@ type Settings = {
   [key in keyof typeof DEFAULTS]: string;
 };
 
+const ensureFileContains = (filePath: string, content: string, fallback?: string) => {
+  ensureFileExists(filePath, '');
+  const fileContent = readFileSync(filePath, 'utf-8');
+  if (!fileContent.includes(content)) {
+    writeFileSync(filePath, fileContent + (fallback ?? content));
+  }
+};
+
 const initSetting = async (name: string) => {
   const { question, defaultValue, init } = DEFAULTS[name];
   const value = (await readLine(`${question} (${defaultValue})`)) || defaultValue;
@@ -122,7 +130,7 @@ const saveSettings = (settings: Settings) => {
   writeToFile(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n');
 };
 
-export const getSettings = async (): Promise<Settings> => {
+const getSettings = async (): Promise<Settings> => {
   if (!existsSync(SETTINGS_PATH)) {
     await initSettings();
   }
@@ -169,14 +177,6 @@ export const ensureFileExists = (filePath: string, content: string) => {
     console.info(`Creating ${filePath}`);
     ensureDirectoryExists(dirname(filePath));
     writeFileSync(filePath, content);
-  }
-};
-
-export const ensureFileContains = (filePath: string, content: string, fallback?: string) => {
-  ensureFileExists(filePath, '');
-  const fileContent = readFileSync(filePath, 'utf-8');
-  if (!fileContent.includes(content)) {
-    writeFileSync(filePath, fileContent + (fallback ?? content));
   }
 };
 

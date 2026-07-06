@@ -2,12 +2,19 @@
   {
     "name": "SomeEnum",
     "kind": "enum",
-    "values": ["A", "B", "C"]
+    "values": [
+      "A",
+      "B",
+      "C"
+    ]
   },
   {
     "name": "Role",
     "kind": "enum",
-    "values": ["ADMIN", "USER"]
+    "values": [
+      "ADMIN",
+      "USER"
+    ]
   },
   {
     "name": "SomeRawObject",
@@ -701,7 +708,10 @@
   {
     "kind": "union",
     "name": "Bird",
-    "types": ["Duck", "Eagle"]
+    "types": [
+      "Duck",
+      "Eagle"
+    ]
   },
   {
     "kind": "object",
@@ -751,11 +761,18 @@
   {
     "kind": "raw-enum",
     "name": "Order",
-    "values": ["ASC", "DESC"]
+    "values": [
+      "ASC",
+      "DESC"
+    ]
   },
   {
     "kind": "enum",
     "name": "ReactionType",
-    "values": ["Review", "Question", "Answer"]
+    "values": [
+      "Review",
+      "Question",
+      "Answer"
+    ]
   }
 ]
