@@ -10,7 +10,7 @@ describe('delete', () => {
           mutation DeleteAnotherObject {
             deleteAnotherObject(where: { id: "${ANOTHER_ID}" })
           }
-        `)
+        `),
       ).toMatchSnapshot();
 
       expect(
@@ -21,7 +21,7 @@ describe('delete', () => {
               deleted
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });

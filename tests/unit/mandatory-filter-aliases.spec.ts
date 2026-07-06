@@ -120,10 +120,7 @@ describe('collectMandatoryFilterAliases', () => {
     expect(
       collectMandatoryFilterAliases(portfolio, {
         goal: {
-          AND: [
-            { status: ['ACTIVE'] },
-            { relation: { status: ['ACTIVE'] } },
-          ],
+          AND: [{ status: ['ACTIVE'] }, { relation: { status: ['ACTIVE'] } }],
         },
       }),
     ).toEqual(new Set(['Portfolio__W__goal', 'Goal__W__relation']));

@@ -22,7 +22,7 @@ describe('query', () => {
               }
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -85,7 +85,7 @@ describe('query', () => {
               }
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -99,7 +99,7 @@ describe('query', () => {
               id
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -113,7 +113,7 @@ describe('query', () => {
               id
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -127,7 +127,7 @@ describe('query', () => {
               id
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -168,7 +168,7 @@ describe('query', () => {
               }
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });
@@ -197,7 +197,7 @@ describe('query', () => {
               }
             }
           }
-        `)
+        `),
       ).toMatchSnapshot();
     });
   });

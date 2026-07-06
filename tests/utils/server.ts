@@ -8,10 +8,7 @@ import { graphqlRequest } from './graphql-client';
 import { models, permissions } from './models';
 
 export const withServer = async (
-  cb: (
-    request: (document: string, ...variablesAndRequestHeaders: any) => Promise<any>,
-    knex: Knex
-  ) => Promise<void>
+  cb: (request: (document: string, ...variablesAndRequestHeaders: any) => Promise<any>, knex: Knex) => Promise<void>,
 ) => {
   let handler: RequestListener;
   const server = createServer((req, res) => handler(req, res));
@@ -22,7 +19,7 @@ export const withServer = async (
       .once('listening', function () {
         res(this.address().port);
       })
-      .once('error', rej)
+      .once('error', rej),
   );
 
   const rootKnex = getKnex();
@@ -65,10 +62,8 @@ export const withServer = async (
       res.end(JSON.stringify(result));
     };
 
-    const request = <T, V>(
-      document: string,
-      ...variablesAndRequestHeaders: any
-    ) => graphqlRequest(`http://localhost:${port}`, document, ...variablesAndRequestHeaders);
+    const request = <T, V>(document: string, ...variablesAndRequestHeaders: any) =>
+      graphqlRequest(`http://localhost:${port}`, document, ...variablesAndRequestHeaders);
 
     await cb(request, knex);
   } finally {

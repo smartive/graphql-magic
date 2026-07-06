@@ -98,10 +98,7 @@ describe('staticEval optional chaining', () => {
     `,
       { overwrite: true },
     );
-    const declaration = project
-      .getSourceFileOrThrow('m.ts')
-      .getVariableDeclarationOrThrow('value')
-      .getInitializerOrThrow();
+    const declaration = project.getSourceFileOrThrow('m.ts').getVariableDeclarationOrThrow('value').getInitializerOrThrow();
     expect(staticEval(declaration, {})).toBe('yes');
   });
 });

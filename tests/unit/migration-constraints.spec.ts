@@ -615,9 +615,7 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
 describe('MigrationGenerator unique constraints', () => {
   type UniqueIndexRow = { table_name: string; index_name: string; index_def: string };
 
-  const createUniqueModels = (
-    constraints: { kind: 'unique'; name: string; fields: readonly string[]; where?: string }[],
-  ) =>
+  const createUniqueModels = (constraints: { kind: 'unique'; name: string; fields: readonly string[]; where?: string }[]) =>
     new Models([
       {
         kind: 'entity',
@@ -678,9 +676,7 @@ describe('MigrationGenerator unique constraints', () => {
 
     const migration = await generator.generate();
 
-    expect(migration).toContain(
-      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate")',
-    );
+    expect(migration).toContain('CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate")');
     expect(migration).not.toContain('Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE');
   });
 
@@ -752,9 +748,9 @@ describe('MigrationGenerator unique constraints', () => {
   });
 
   it('throws when a unique constraint references a non-existent column', () => {
-    expect(() =>
-      createUniqueModels([{ kind: 'unique', name: 'bad', fields: ['startDate', 'nope'] }]),
-    ).toThrow(/Unique constraint "bad" references column "nope" which does not exist on model Product/);
+    expect(() => createUniqueModels([{ kind: 'unique', name: 'bad', fields: ['startDate', 'nope'] }])).toThrow(
+      /Unique constraint "bad" references column "nope" which does not exist on model Product/,
+    );
   });
 
   it('throws when a unique constraint references no columns', () => {

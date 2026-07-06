@@ -18,7 +18,7 @@ describe('inheritance', () => {
                 }
               }
             }
-          `)
+          `),
         ).toMatchSnapshot();
       });
     });
@@ -36,7 +36,7 @@ describe('inheritance', () => {
                 }
               }
             }
-          `)
+          `),
         ).toMatchSnapshot();
       });
     });
@@ -52,7 +52,7 @@ describe('inheritance', () => {
                 rating
               }
             }
-          `)
+          `),
         ).toMatchSnapshot();
       });
     });
@@ -68,7 +68,7 @@ describe('inheritance', () => {
                 rating
               }
             }
-          `)
+          `),
         ).toMatchSnapshot();
       });
     });
@@ -95,8 +95,8 @@ describe('inheritance', () => {
                 }
               }
             `,
-            { data: { content: 'A review', rating: 5 } }
-          )
+            { data: { content: 'A review', rating: 5 } },
+          ),
         ).toMatchSnapshot();
       });
     });
@@ -113,8 +113,8 @@ describe('inheritance', () => {
                 }
               }
             `,
-            { id: REVIEW_ID, data: { content: 'A review', rating: 5 } }
-          )
+            { id: REVIEW_ID, data: { content: 'A review', rating: 5 } },
+          ),
         ).toMatchSnapshot();
       });
     });

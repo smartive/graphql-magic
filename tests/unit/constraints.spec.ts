@@ -122,9 +122,7 @@ describe('constraints', () => {
           name: 'bad',
           elements: [{ column: 'unknown_column', operator: '=' }],
         }),
-      ).toThrow(
-        /Exclude constraint "bad" references column "unknown_column" which does not exist on model Product/,
-      );
+      ).toThrow(/Exclude constraint "bad" references column "unknown_column" which does not exist on model Product/);
     });
   });
 
