@@ -419,7 +419,7 @@ const applyWhere = (node: FilterNode, where: Where | undefined, ops: QueryBuilde
     }
 
     if (isExpressionField) {
-      ops.push((query) => query.whereRaw(`${column} = ?`, [value]));
+      ops.push((query) => query.whereRaw(`${column} = ?`, [value as string]));
     } else {
       ops.push((query) => query.where({ [column]: value }));
     }
