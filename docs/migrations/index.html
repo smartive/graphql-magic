@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Migrations | graphql-magic</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://smartive.github.io/graphql-magic/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://smartive.github.io/graphql-magic/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://smartive.github.io/graphql-magic/docs/migrations"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Migrations | graphql-magic"><meta data-rh="true" name="description" content="Migrations are there to keep the database schema in sync with the models."><meta data-rh="true" property="og:description" content="Migrations are there to keep the database schema in sync with the models."><link data-rh="true" rel="icon" href="/graphql-magic/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://smartive.github.io/graphql-magic/docs/migrations"><link data-rh="true" rel="alternate" href="https://smartive.github.io/graphql-magic/docs/migrations" hreflang="en"><link data-rh="true" rel="alternate" href="https://smartive.github.io/graphql-magic/docs/migrations" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Migrations","item":"https://smartive.github.io/graphql-magic/docs/migrations"}]}</script><link rel="stylesheet" href="/graphql-magic/assets/css/styles.f3e3cabf.css">
-<script src="/graphql-magic/assets/js/runtime~main.c5a93c9f.js" defer="defer"></script>
+<script src="/graphql-magic/assets/js/runtime~main.2e6c8d9f.js" defer="defer"></script>
 <script src="/graphql-magic/assets/js/main.1eb38838.js" defer="defer"></script>
 </head>
 <body>
@@ -36,7 +36,16 @@
 <li class=""><strong>New tables</strong>: add each constraint in the <code>up</code> migration.</li>
 <li class=""><strong>Existing tables</strong>: add new constraints, and for existing constraints, if the definition changed, drop and re-add the constraint.</li>
 </ul>
-<p>Constraint names follow the pattern <code>{table}_{constraintName}_{kind}_{index}</code>.</p>
+<p>Constraint names follow the pattern <code>{table}_{constraintName}_{kind}</code>. The name is independent of the
+constraint&#x27;s position in the model&#x27;s <code>constraints</code> list, so reordering or inserting constraints never
+renames the others. Because there is no positional suffix, the <code>{constraintName}</code> must be unique per table
+and kind; the generator throws if two constraints on the same table would produce the same name.</p>
+<blockquote>
+<p><strong>Upgrading from the positional scheme:</strong> earlier versions suffixed the name with the constraint&#x27;s index
+(<code>{table}_{constraintName}_{kind}_{index}</code>). To migrate an existing database to the suffix-free names in
+one step, run <code>npx gqm generate-constraint-rename-migration</code> and apply the generated migration; on an
+already-migrated database it produces an empty migration.</p>
+</blockquote>
 <p><strong>Check constraints</strong> (<code>kind: &#x27;check&#x27;</code>): Expression changes trigger a migration.</p>
 <p><strong>EXCLUDE constraints</strong> (<code>kind: &#x27;exclude&#x27;</code>): When any exclude constraint uses column grouping (<code>{ column, operator: &#x27;=&#x27; }</code>), <code>CREATE EXTENSION IF NOT EXISTS btree_gist</code> is added automatically.</p>
 <p><strong>Constraint triggers</strong> (<code>kind: &#x27;constraint_trigger&#x27;</code>): The referenced function must exist in <code>functions.ts</code>; it is created by the functions migration before the trigger.</p>
