@@ -301,40 +301,40 @@ export class MigrationGenerator {
           });
 
           if (model.constraints?.length) {
-            for (let i = 0; i < model.constraints.length; i++) {
-              const entry = model.constraints[i];
+            this.validateConstraintNames(model);
+            for (const entry of model.constraints) {
               if (entry.kind === 'check') {
                 validateCheckConstraint(model, entry);
                 const table = model.name;
-                const constraintName = this.getConstraintName(model, entry, i);
+                const constraintName = this.getConstraintName(model, entry);
                 up.push(() => {
                   this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable, entry.notValid);
                 });
               } else if (entry.kind === 'exclude') {
                 validateExcludeConstraint(model, entry);
                 const table = model.name;
-                const constraintName = this.getConstraintName(model, entry, i);
+                const constraintName = this.getConstraintName(model, entry);
                 up.push(() => {
                   this.addExcludeConstraint(table, constraintName, entry);
                 });
               } else if (entry.kind === 'constraint_trigger') {
                 this.validateConstraintTrigger(model, entry);
                 const table = model.name;
-                const constraintName = this.getConstraintName(model, entry, i);
+                const constraintName = this.getConstraintName(model, entry);
                 up.push(() => {
                   this.addConstraintTrigger(table, constraintName, entry);
                 });
               } else if (entry.kind === 'trigger') {
                 this.validateTriggerFunction(model, entry);
                 const table = model.name;
-                const triggerName = this.getConstraintName(model, entry, i);
+                const triggerName = this.getConstraintName(model, entry);
                 up.push(() => {
                   this.addTrigger(table, triggerName, entry);
                 });
               } else if (entry.kind === 'unique') {
                 validateUniqueConstraint(model, entry);
                 const table = model.name;
-                const constraintName = this.getConstraintName(model, entry, i);
+                const constraintName = this.getConstraintName(model, entry);
                 up.push(() => {
                   this.addUniqueIndex(table, constraintName, entry);
                 });
@@ -392,16 +392,16 @@ export class MigrationGenerator {
           this.updateFields(model, existingFields, up, down);
 
           if (model.constraints?.length) {
+            this.validateConstraintNames(model);
             const existingExcludeMap = this.existingExcludeConstraints[model.name];
             const existingTriggerMap = this.existingConstraintTriggers[model.name];
             const existingPlainTriggerMap = this.existingTriggers[model.name];
-            for (let i = 0; i < model.constraints.length; i++) {
-              const entry = model.constraints[i];
+            for (const entry of model.constraints) {
               const table = model.name;
-              const constraintName = this.getConstraintName(model, entry, i);
+              const constraintName = this.getConstraintName(model, entry);
               if (entry.kind === 'check') {
                 validateCheckConstraint(model, entry);
-                const existingConstraint = this.findExistingConstraint(table, entry, constraintName);
+                const existingConstraint = this.findExistingConstraint(table, constraintName);
                 if (!existingConstraint) {
                   up.push(() => {
                     this.addCheckConstraint(table, constraintName, entry.expression, entry.deferrable, entry.notValid);
@@ -675,6 +675,138 @@ export class MigrationGenerator {
     }
     this.migration('up', up);
     this.migration('down', down.reverse());
+
+    return writer.toString();
+  }
+
+  /**
+   * Generate a one-off migration that renames every managed constraint/trigger/index from the legacy
+   * positional scheme (`{table}_{name}_{kind}_{index}`) to the current stable scheme (`{table}_{name}_{kind}`).
+   *
+   * Run this once when upgrading across the naming change: it inspects the live database, matches each
+   * model constraint to its legacy-named object by the `{stableName}_{index}` pattern, and emits the
+   * reversible RENAME statements. On an already-migrated database nothing matches and it produces an
+   * empty migration — the signal that the rename is complete.
+   */
+  public async generateConstraintRenameMigration(): Promise<string> {
+    const { writer, schema, models } = this;
+
+    const loadNames = async (sql: string): Promise<Record<string, Set<string>>> => {
+      const result = await schema.knex.raw(sql);
+      const rows: { table_name: string; object_name: string }[] =
+        'rows' in result && Array.isArray((result as { rows: unknown }).rows)
+          ? (result as { rows: { table_name: string; object_name: string }[] }).rows
+          : [];
+      const map: Record<string, Set<string>> = {};
+      for (const row of rows) {
+        const table = row.table_name.split('.').pop()?.replace(/^"|"$/g, '') ?? row.table_name;
+        (map[table] ??= new Set()).add(row.object_name);
+      }
+
+      return map;
+    };
+
+    // Names as gqm introspects them: constraints + constraint-triggers by pg_constraint.conname, plain
+    // triggers by pg_trigger.tgname, unique (partial) indexes by the index relation name.
+    const checkConstraints = await loadNames(
+      `SELECT c.conrelid::regclass::text AS table_name, c.conname AS object_name FROM pg_constraint c JOIN pg_namespace n ON c.connamespace = n.oid WHERE n.nspname = 'public' AND c.contype = 'c'`,
+    );
+    const excludeConstraints = await loadNames(
+      `SELECT c.conrelid::regclass::text AS table_name, c.conname AS object_name FROM pg_constraint c JOIN pg_namespace n ON c.connamespace = n.oid WHERE n.nspname = 'public' AND c.contype = 'x'`,
+    );
+    const constraintTriggers = await loadNames(
+      `SELECT c.conrelid::regclass::text AS table_name, c.conname AS object_name FROM pg_constraint c JOIN pg_namespace n ON c.connamespace = n.oid WHERE n.nspname = 'public' AND c.contype = 't'`,
+    );
+    const plainTriggers = await loadNames(
+      `SELECT c.relname AS table_name, t.tgname AS object_name FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nspname = 'public' AND NOT t.tgisinternal AND t.tgconstraint = 0`,
+    );
+    const uniqueIndexes = await loadNames(
+      `SELECT t.relname AS table_name, i.relname AS object_name FROM pg_index ix JOIN pg_class i ON i.oid = ix.indexrelid JOIN pg_class t ON t.oid = ix.indrelid JOIN pg_namespace n ON n.oid = t.relnamespace WHERE n.nspname = 'public' AND ix.indisunique AND NOT ix.indisprimary AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = ix.indexrelid)`,
+    );
+
+    // Find the legacy-named object (`{stableName}_{index}`) for a stable name; undefined if it is absent
+    // or already renamed to the stable name.
+    const findLegacyName = (existing: Set<string> | undefined, stableName: string): string | undefined => {
+      if (!existing || existing.has(stableName)) {
+        return undefined;
+      }
+      const legacyPattern = new RegExp(`^${stableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}_\\d+$`);
+      for (const name of existing) {
+        if (legacyPattern.test(name)) {
+          return name;
+        }
+      }
+
+      return undefined;
+    };
+
+    const renameConstraint = (table: string, from: string, to: string) =>
+      `await knex.raw('ALTER TABLE "${table}" RENAME CONSTRAINT "${from}" TO "${to}"');`;
+    const renameTrigger = (table: string, from: string, to: string) =>
+      `await knex.raw('ALTER TRIGGER "${from}" ON "${table}" RENAME TO "${to}"');`;
+    const renameIndex = (from: string, to: string) => `await knex.raw('ALTER INDEX "${from}" RENAME TO "${to}"');`;
+
+    const up: string[] = [];
+    const down: string[] = [];
+
+    for (const model of models.entities) {
+      if (!model.constraints?.length) {
+        continue;
+      }
+      this.validateConstraintNames(model);
+      const table = model.name;
+      for (const entry of model.constraints) {
+        const stableName = this.getConstraintName(model, entry);
+        if (entry.kind === 'check' || entry.kind === 'exclude') {
+          const legacy = findLegacyName(
+            entry.kind === 'check' ? checkConstraints[table] : excludeConstraints[table],
+            stableName,
+          );
+          if (!legacy) {
+            continue;
+          }
+          up.push(renameConstraint(table, legacy, stableName));
+          down.push(renameConstraint(table, stableName, legacy));
+        } else if (entry.kind === 'constraint_trigger') {
+          const legacy = findLegacyName(constraintTriggers[table], stableName);
+          if (!legacy) {
+            continue;
+          }
+          // A constraint trigger owns both a pg_constraint (conname, what gqm matches) and a pg_trigger
+          // (tgname); RENAME CONSTRAINT and ALTER TRIGGER each touch only one, so rename both to stay in sync.
+          up.push(renameConstraint(table, legacy, stableName), renameTrigger(table, legacy, stableName));
+          down.push(renameConstraint(table, stableName, legacy), renameTrigger(table, stableName, legacy));
+        } else if (entry.kind === 'trigger') {
+          const legacy = findLegacyName(plainTriggers[table], stableName);
+          if (!legacy) {
+            continue;
+          }
+          up.push(renameTrigger(table, legacy, stableName));
+          down.push(renameTrigger(table, stableName, legacy));
+        } else if (entry.kind === 'unique') {
+          const legacy = findLegacyName(uniqueIndexes[table], stableName);
+          if (!legacy) {
+            continue;
+          }
+          up.push(renameIndex(legacy, stableName));
+          down.push(renameIndex(stableName, legacy));
+        }
+      }
+    }
+
+    if (up.length) {
+      this.needsMigration = true;
+    }
+
+    writer.writeLine(`import { Knex } from 'knex';`).blankLine();
+    this.migration(
+      'up',
+      up.map((line) => () => writer.writeLine(line)),
+    );
+    this.migration(
+      'down',
+      down.reverse().map((line) => () => writer.writeLine(line)),
+    );
 
     return writer.toString();
   }
@@ -992,15 +1124,38 @@ export class MigrationGenerator {
 
   private static readonly POSTGRES_MAX_IDENTIFIER_LENGTH = 63;
 
-  private getConstraintName(model: EntityModel, entry: { kind: string; name: string }, index: number): string {
-    const name = `${model.name}_${entry.name}_${entry.kind}_${index}`;
+  // Constraint/trigger object names are `{table}_{constraintName}_{kind}` — stable and independent of the
+  // constraint's position in the model's `constraints` array. Per-table uniqueness of these names is
+  // enforced by `validateConstraintNames` (called once per model), so no positional suffix is needed.
+  private getConstraintName(model: EntityModel, entry: { kind: string; name: string }): string {
+    const name = `${model.name}_${entry.name}_${entry.kind}`;
     if (name.length > MigrationGenerator.POSTGRES_MAX_IDENTIFIER_LENGTH) {
       throw new Error(
-        `Generated constraint name "${name}" (${name.length} characters) exceeds PostgreSQL's maximum identifier length of ${MigrationGenerator.POSTGRES_MAX_IDENTIFIER_LENGTH} characters. Shorten the constraint name "${entry.name}" on model "${model.name}" (pattern: {table}_{constraintName}_{kind}_{index}).`,
+        `Generated constraint name "${name}" (${name.length} characters) exceeds PostgreSQL's maximum identifier length of ${MigrationGenerator.POSTGRES_MAX_IDENTIFIER_LENGTH} characters. Shorten the constraint name "${entry.name}" on model "${model.name}" (pattern: {table}_{constraintName}_{kind}).`,
       );
     }
 
     return name;
+  }
+
+  // A model's constraint names must be unique per table: with the positional suffix gone, two entries that
+  // share the same `{table}_{name}_{kind}` would collide on one Postgres object. Fail fast with a clear
+  // message pointing at the offending name so the model author renames one of them.
+  private validateConstraintNames(model: EntityModel): void {
+    if (!model.constraints?.length) {
+      return;
+    }
+
+    const seen = new Set<string>();
+    for (const entry of model.constraints) {
+      const name = this.getConstraintName(model, entry);
+      if (seen.has(name)) {
+        throw new Error(
+          `Duplicate constraint name "${name}" on model "${model.name}": two entries in its \`constraints\` produce the same object name. Give the constraint "${entry.name}" (kind "${entry.kind}") a distinct name.`,
+        );
+      }
+      seen.add(name);
+    }
   }
 
   private static readonly SQL_KEYWORDS = new Set([
@@ -1206,7 +1361,6 @@ export class MigrationGenerator {
 
   private findExistingConstraint(
     table: string,
-    entry: { kind: 'check'; name: string; expression: string },
     preferredConstraintName: string,
   ): { constraintName: string; expression: string; notValid: boolean } | null {
     const existingMap = this.existingCheckConstraints[table];
@@ -1214,6 +1368,9 @@ export class MigrationGenerator {
       return null;
     }
 
+    // Constraint names are now stable (`{table}_{name}_{kind}`, no positional suffix), so an existing
+    // constraint is matched by its exact name. The former prefix+expression fallback existed only to
+    // re-associate a check whose positional suffix had shifted; that can no longer happen.
     const preferred = existingMap.get(preferredConstraintName);
     if (preferred !== undefined) {
       return {
@@ -1221,20 +1378,6 @@ export class MigrationGenerator {
         expression: preferred.expression,
         notValid: preferred.notValid,
       };
-    }
-
-    const normalizedNewExpression = this.normalizeCheckExpression(entry.expression);
-    const constraintPrefix = `${table}_${entry.name}_${entry.kind}_`;
-
-    for (const [constraintName, { expression, notValid }] of existingMap.entries()) {
-      if (!constraintName.startsWith(constraintPrefix)) {
-        continue;
-      }
-      if (this.normalizeCheckExpression(expression) !== normalizedNewExpression) {
-        continue;
-      }
-
-      return { constraintName, expression, notValid };
     }
 
     return null;

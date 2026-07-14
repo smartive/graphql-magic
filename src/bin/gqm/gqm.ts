@@ -121,6 +121,28 @@ const commands: Record<string, Command> = {
       }
     },
   },
+  'generate-constraint-rename-migration': {
+    description: 'Generate a one-off migration renaming constraints/triggers/indexes to the stable (suffix-free) names',
+    usage: 'gqm generate-constraint-rename-migration [<name>] [<date>]',
+    run: async (positionals) => {
+      const [providedName, date] = positionals;
+      const name = providedName || 'rename-constraints-to-stable-names';
+
+      const knexfile = await parseKnexfile();
+      const db = knex(knexfile);
+
+      try {
+        const models = await parseModels();
+        const functionsPath = await getSetting('functionsPath');
+        const parsedFunctions = parseFunctionsFile(functionsPath);
+        const migration = await new MigrationGenerator(db, models, parsedFunctions).generateConstraintRenameMigration();
+
+        writeToFile(`migrations/${date || getMigrationDate()}_${name}.ts`, migration);
+      } finally {
+        await db.destroy();
+      }
+    },
+  },
   'check-needs-migration': {
     description: 'Check if a migration is needed',
     usage: 'gqm check-needs-migration',
