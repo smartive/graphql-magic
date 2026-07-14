@@ -145,7 +145,7 @@ describe('MigrationGenerator check constraints', () => {
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_score_non_negative_check_0',
+          constraint_name: 'Product_score_non_negative_check',
           constraint_def: 'CHECK ( (( "score"   >=   0 )) )',
           convalidated: true,
         },
@@ -184,7 +184,7 @@ describe('MigrationGenerator check constraints', () => {
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_period_start_before_end_check_0',
+          constraint_name: 'Product_period_start_before_end_check',
           constraint_def: 'CHECK (((deleted = true) OR ("endDate" IS NULL) OR ("startDate" <= "endDate")))',
           convalidated: true,
         },
@@ -197,7 +197,7 @@ describe('MigrationGenerator check constraints', () => {
     expect(generator.needsMigration).toBe(false);
   });
 
-  it('does not detect changes if only generated constraint index changed but expression is identical', async () => {
+  it('does not detect changes when the stable constraint names and expressions match', async () => {
     const models = createProductModels([
       { kind: 'check', name: 'first', expression: '"score" >= 0' },
       { kind: 'check', name: 'second', expression: '"score" <= 100' },
@@ -206,13 +206,13 @@ describe('MigrationGenerator check constraints', () => {
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_first_check_1',
+          constraint_name: 'Product_first_check',
           constraint_def: 'CHECK ((("score" >= 0)))',
           convalidated: true,
         },
         {
           table_name: 'Product',
-          constraint_name: 'Product_second_check_0',
+          constraint_name: 'Product_second_check',
           constraint_def: 'CHECK ((("score" <= 100)))',
           convalidated: true,
         },
@@ -225,13 +225,34 @@ describe('MigrationGenerator check constraints', () => {
     expect(generator.needsMigration).toBe(false);
   });
 
+  it('detects a needed migration when a constraint still carries the legacy positional suffix', async () => {
+    // Constraint names no longer carry a positional suffix, so a legacy `_{index}`-named constraint is
+    // NOT matched to its model entry — it must be renamed (see generate-constraint-rename-migration).
+    const models = createProductModels([{ kind: 'check', name: 'first', expression: '"score" >= 0' }]);
+    const generator = createGenerator(
+      [
+        {
+          table_name: 'Product',
+          constraint_name: 'Product_first_check_0',
+          constraint_def: 'CHECK ((("score" >= 0)))',
+          convalidated: true,
+        },
+      ],
+      models,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+  });
+
   it('still detects actual expression changes', async () => {
     const models = createProductModels([{ kind: 'check', name: 'score_non_negative', expression: '"score" >= 0' }]);
     const generator = createGenerator(
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_score_non_negative_check_0',
+          constraint_name: 'Product_score_non_negative_check',
           constraint_def: 'CHECK (("score" > 0))',
           convalidated: true,
         },
@@ -242,8 +263,8 @@ describe('MigrationGenerator check constraints', () => {
     const migration = await generator.generate();
 
     expect(generator.needsMigration).toBe(true);
-    expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check_0"');
-    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0)');
+    expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check"');
+    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check" CHECK ("score" >= 0)');
   });
 
   it('appends NOT VALID when notValid is true', async () => {
@@ -254,7 +275,7 @@ describe('MigrationGenerator check constraints', () => {
 
     const migration = await generator.generate();
 
-    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID');
+    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check" CHECK ("score" >= 0) NOT VALID');
   });
 
   it('detects when notValid has changed', async () => {
@@ -265,7 +286,7 @@ describe('MigrationGenerator check constraints', () => {
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_score_non_negative_check_0',
+          constraint_name: 'Product_score_non_negative_check',
           constraint_def: 'CHECK (("score" >= 0))',
           convalidated: true,
         },
@@ -276,8 +297,8 @@ describe('MigrationGenerator check constraints', () => {
     const migration = await generator.generate();
 
     expect(generator.needsMigration).toBe(true);
-    expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check_0"');
-    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check_0" CHECK ("score" >= 0) NOT VALID');
+    expect(migration).toContain('DROP CONSTRAINT "Product_score_non_negative_check"');
+    expect(migration).toContain('ADD CONSTRAINT "Product_score_non_negative_check" CHECK ("score" >= 0) NOT VALID');
   });
 
   it('warns and treats constraint as changed when canonicalization fails', async () => {
@@ -290,7 +311,7 @@ describe('MigrationGenerator check constraints', () => {
       [
         {
           table_name: 'Product',
-          constraint_name: 'Product_score_non_negative_check_0',
+          constraint_name: 'Product_score_non_negative_check',
           constraint_def: 'CHECK (("score" >= 0))',
           convalidated: true,
         },
@@ -358,7 +379,22 @@ describe('MigrationGenerator constraint name length', () => {
     const generator = createGenerator([], models);
 
     await expect(generator.generate()).rejects.toThrow(
-      /Generated constraint name "Product_.*_check_0" \(6\d characters\) exceeds PostgreSQL's maximum identifier length of 63 characters/,
+      /Generated constraint name "Product_.*_check" \(6\d characters\) exceeds PostgreSQL's maximum identifier length of 63 characters/,
+    );
+  });
+});
+
+describe('MigrationGenerator duplicate constraint names', () => {
+  it('throws when two constraints on the same table produce the same name', async () => {
+    // Without a positional suffix, two entries with the same name + kind collide on one Postgres object.
+    const models = createProductModels([
+      { kind: 'check', name: 'score_bound', expression: '"score" >= 0' },
+      { kind: 'check', name: 'score_bound', expression: '"score" <= 100' },
+    ]);
+    const generator = createGenerator([], models);
+
+    await expect(generator.generate()).rejects.toThrow(
+      /Duplicate constraint name "Product_score_bound_check" on model "Product"/,
     );
   });
 });
@@ -532,7 +568,7 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
 
   // pg_get_triggerdef output for the trigger defined by createTriggerModels (default options).
   const dbTriggerDef =
-    'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON public."Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()';
+    'CREATE TRIGGER "Customer_mirror_status_trigger" AFTER INSERT OR UPDATE ON public."Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()';
 
   it('creates a CREATE TRIGGER when none exists (existing table)', async () => {
     const generator = createTriggerGenerator(createTriggerModels(), [], true);
@@ -540,18 +576,18 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(migration).toContain(
-      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+      'CREATE TRIGGER "Customer_mirror_status_trigger" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
     );
     expect(migration).not.toContain('CREATE CONSTRAINT TRIGGER');
     expect(migration).not.toContain('DEFERRABLE');
     // down drops it
-    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger_0" ON "Customer"');
+    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger" ON "Customer"');
   });
 
   it('does not detect changes when the trigger already matches (idempotent)', async () => {
     const generator = createTriggerGenerator(
       createTriggerModels(),
-      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger', trigger_def: dbTriggerDef }],
       true,
     );
 
@@ -563,7 +599,7 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
   it('is idempotent regardless of event ordering in the existing def', async () => {
     const generator = createTriggerGenerator(
       createTriggerModels({ events: ['UPDATE', 'INSERT'] }),
-      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger', trigger_def: dbTriggerDef }],
       true,
     );
 
@@ -576,16 +612,16 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
     const generator = createTriggerGenerator(
       // Model now also fires on DELETE -> differs from the stored def.
       createTriggerModels({ events: ['INSERT', 'UPDATE', 'DELETE'] }),
-      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger_0', trigger_def: dbTriggerDef }],
+      [{ table_name: 'Customer', trigger_name: 'Customer_mirror_status_trigger', trigger_def: dbTriggerDef }],
       true,
     );
 
     const migration = await generator.generate();
 
     expect(generator.needsMigration).toBe(true);
-    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger_0" ON "Customer"');
+    expect(migration).toContain('DROP TRIGGER IF EXISTS "Customer_mirror_status_trigger" ON "Customer"');
     expect(migration).toContain(
-      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE OR DELETE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+      'CREATE TRIGGER "Customer_mirror_status_trigger" AFTER INSERT OR UPDATE OR DELETE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
     );
   });
 
@@ -596,7 +632,7 @@ describe('MigrationGenerator trigger (regular, non-constraint)', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(migration).toContain(
-      'CREATE TRIGGER "Customer_mirror_status_trigger_0" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
+      'CREATE TRIGGER "Customer_mirror_status_trigger" AFTER INSERT OR UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION mirror_user_status()',
     );
   });
 
@@ -665,9 +701,9 @@ describe('MigrationGenerator unique constraints', () => {
 
     expect(generator.needsMigration).toBe(true);
     expect(migration).toContain(
-      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
+      'CREATE UNIQUE INDEX "Product_start_end_unique" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
     );
-    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique_0"');
+    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique"');
   });
 
   it('emits a non-partial unique index when no where is given', async () => {
@@ -676,8 +712,8 @@ describe('MigrationGenerator unique constraints', () => {
 
     const migration = await generator.generate();
 
-    expect(migration).toContain('CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate")');
-    expect(migration).not.toContain('Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE');
+    expect(migration).toContain('CREATE UNIQUE INDEX "Product_start_end_unique" ON "Product" ("startDate", "endDate")');
+    expect(migration).not.toContain('Product_start_end_unique" ON "Product" ("startDate", "endDate") WHERE');
   });
 
   it('detects no change when the existing partial index matches (pg_get_indexdef shape)', async () => {
@@ -688,9 +724,9 @@ describe('MigrationGenerator unique constraints', () => {
       [
         {
           table_name: 'Product',
-          index_name: 'Product_start_end_unique_0',
+          index_name: 'Product_start_end_unique',
           index_def:
-            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate", "endDate") WHERE (deleted = false)',
+            'CREATE UNIQUE INDEX "Product_start_end_unique" ON public."Product" USING btree ("startDate", "endDate") WHERE (deleted = false)',
         },
       ],
       models,
@@ -709,9 +745,9 @@ describe('MigrationGenerator unique constraints', () => {
       [
         {
           table_name: 'Product',
-          index_name: 'Product_start_end_unique_0',
+          index_name: 'Product_start_end_unique',
           index_def:
-            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate") WHERE (deleted = false)',
+            'CREATE UNIQUE INDEX "Product_start_end_unique" ON public."Product" USING btree ("startDate") WHERE (deleted = false)',
         },
       ],
       models,
@@ -720,9 +756,9 @@ describe('MigrationGenerator unique constraints', () => {
     const migration = await generator.generate();
 
     expect(generator.needsMigration).toBe(true);
-    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique_0"');
+    expect(migration).toContain('DROP INDEX IF EXISTS "Product_start_end_unique"');
     expect(migration).toContain(
-      'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
+      'CREATE UNIQUE INDEX "Product_start_end_unique" ON "Product" ("startDate", "endDate") WHERE "deleted" = false',
     );
   });
 
@@ -734,9 +770,9 @@ describe('MigrationGenerator unique constraints', () => {
       [
         {
           table_name: 'Product',
-          index_name: 'Product_start_end_unique_0',
+          index_name: 'Product_start_end_unique',
           index_def:
-            'CREATE UNIQUE INDEX "Product_start_end_unique_0" ON public."Product" USING btree ("startDate", "endDate")',
+            'CREATE UNIQUE INDEX "Product_start_end_unique" ON public."Product" USING btree ("startDate", "endDate")',
         },
       ],
       models,

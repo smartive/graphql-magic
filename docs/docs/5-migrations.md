@@ -35,7 +35,15 @@ If an entity defines [constraints](./2-models.md#constraints), the migration gen
 - **New tables**: add each constraint in the `up` migration.
 - **Existing tables**: add new constraints, and for existing constraints, if the definition changed, drop and re-add the constraint.
 
-Constraint names follow the pattern `{table}_{constraintName}_{kind}_{index}`.
+Constraint names follow the pattern `{table}_{constraintName}_{kind}`. The name is independent of the
+constraint's position in the model's `constraints` list, so reordering or inserting constraints never
+renames the others. Because there is no positional suffix, the `{constraintName}` must be unique per table
+and kind; the generator throws if two constraints on the same table would produce the same name.
+
+> **Upgrading from the positional scheme:** earlier versions suffixed the name with the constraint's index
+> (`{table}_{constraintName}_{kind}_{index}`). To migrate an existing database to the suffix-free names in
+> one step, run `npx gqm generate-constraint-rename-migration` and apply the generated migration; on an
+> already-migrated database it produces an empty migration.
 
 **Check constraints** (`kind: 'check'`): Expression changes trigger a migration.
 
