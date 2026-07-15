@@ -117,6 +117,83 @@ describe('staticEval array methods', () => {
     expect(evalExpression('[1, 2, 3, 4].slice(1, 3)')).toEqual([2, 3]);
     expect(evalExpression('[1, 2].concat([3, 4])')).toEqual([1, 2, 3, 4]);
   });
+
+  it('reduces, sorts, flattens and indexes', () => {
+    expect(evalExpression('[1, 2, 3, 4].reduce((a, b) => a + b, 0)')).toBe(10);
+    expect(evalExpression("['b', 'a', 'c'].sort()")).toEqual(['a', 'b', 'c']);
+    expect(evalExpression('[[1], [2, 3]].flat()')).toEqual([1, 2, 3]);
+    expect(evalExpression("['a', 'b', 'c'].at(-1)")).toBe('c');
+    expect(evalExpression("['a', 'b', 'c'].indexOf('b')")).toBe(1);
+    expect(evalExpression('[1, 2, 3].every((n) => n > 0)')).toBe(true);
+    expect(evalExpression('[1, 2, 3].findIndex((n) => n === 2)')).toBe(1);
+  });
+});
+
+describe('staticEval string methods', () => {
+  it('splits, trims and changes case', () => {
+    expect(evalExpression("'a_b_c'.split('_')")).toEqual(['a', 'b', 'c']);
+    expect(evalExpression("'  padded  '.trim()")).toBe('padded');
+    expect(evalExpression("'a-b-c'.replaceAll('-', '_')")).toBe('a_b_c');
+  });
+
+  it('tests, pads and slices', () => {
+    expect(evalExpression("'fileId'.startsWith('file')")).toBe(true);
+    expect(evalExpression("'fileId'.endsWith('Id')")).toBe(true);
+    expect(evalExpression("'7'.padStart(3, '0')")).toBe('007');
+    expect(evalExpression("'hello'.includes('ell')")).toBe(true);
+    expect(evalExpression("'hello'.at(-1)")).toBe('o');
+  });
+});
+
+describe('staticEval number methods', () => {
+  it('formats numbers', () => {
+    expect(evalExpression('(3.14159).toFixed(2)')).toBe('3.14');
+    expect(evalExpression('(255).toString(16)')).toBe('ff');
+  });
+});
+
+describe('staticEval global namespaces', () => {
+  it('evaluates Math (deterministic subset)', () => {
+    expect(evalExpression('Math.max(1, 5, 3)')).toBe(5);
+    expect(evalExpression('Math.min(1, 5, 3)')).toBe(1);
+    expect(evalExpression('Math.round(2.6)')).toBe(3);
+    expect(evalExpression('Math.abs(-4)')).toBe(4);
+    expect(evalExpression('Math.floor(Math.PI)')).toBe(3);
+  });
+
+  it('rejects Math.random (non-deterministic)', () => {
+    expect(() => evalExpression('Math.random()')).toThrow(/Cannot handle method random/);
+  });
+
+  it('evaluates JSON round-trips', () => {
+    expect(evalExpression("JSON.stringify({ a: 1, b: [2, 3] })")).toBe('{"a":1,"b":[2,3]}');
+    expect(evalExpression('JSON.parse(\'{"a":1}\')')).toEqual({ a: 1 });
+  });
+
+  it('evaluates Object.fromEntries and Object.entries', () => {
+    expect(evalExpression("Object.fromEntries([['a', 1], ['b', 2]])")).toEqual({ a: 1, b: 2 });
+    expect(evalExpression("Object.fromEntries(Object.entries({ a: 1 }).map(([k, v]) => [k, v * 2]))")).toEqual({ a: 2 });
+  });
+
+  it('destructures array parameters in arrow functions', () => {
+    expect(evalExpression('[[1, 2], [3, 4]].map(([a, b]) => a + b)')).toEqual([3, 7]);
+    expect(evalExpression('[[1, 2, 3]].map(([first, ...rest]) => rest)')).toEqual([[2, 3]]);
+    expect(evalExpression('[[1]].map(([a, b = 9]) => a + b)')).toEqual([10]);
+  });
+
+  it('evaluates Number and Array statics', () => {
+    expect(evalExpression("Number.isInteger(4)")).toBe(true);
+    expect(evalExpression("Number.parseInt('42px', 10)")).toBe(42);
+    expect(evalExpression('Array.isArray([])')).toBe(true);
+    expect(evalExpression("Array.from('ab')")).toEqual(['a', 'b']);
+  });
+
+  it('evaluates numeric global functions', () => {
+    expect(evalExpression("parseInt('0xFF', 16)")).toBe(255);
+    expect(evalExpression("parseFloat('3.5kg')")).toBe(3.5);
+    expect(evalExpression('isNaN(NaN)')).toBe(true);
+    expect(evalExpression('isFinite(Infinity)')).toBe(false);
+  });
 });
 
 describe('staticEval additional operators', () => {

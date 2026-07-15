@@ -37,12 +37,162 @@ const KNOWN_IDENTIFIERS: Record<string, unknown> = {
   Date,
   RegExp,
   Error,
+  // Deterministic globals — no I/O, time, or randomness.
+  Math,
+  JSON,
+  BigInt,
+  Infinity,
+  NaN,
+  parseInt,
+  parseFloat,
+  isNaN,
+  isFinite,
+  encodeURIComponent,
+  decodeURIComponent,
+  encodeURI,
+  decodeURI,
   upperFirst,
   lowerFirst,
   camelCase,
   kebabCase,
   snakeCase,
   startCase,
+};
+
+/**
+ * Methods the evaluator may invoke, per receiver type. All are pure and deterministic — no I/O,
+ * time, randomness (`Math.random` is intentionally absent) or mutation that escapes the expression.
+ */
+const ARRAY_METHODS = new Set<string>([
+  'map',
+  'flatMap',
+  'filter',
+  'reduce',
+  'reduceRight',
+  'find',
+  'findIndex',
+  'findLast',
+  'findLastIndex',
+  'some',
+  'every',
+  'includes',
+  'indexOf',
+  'lastIndexOf',
+  'at',
+  'join',
+  'slice',
+  'concat',
+  'flat',
+  'reverse',
+  'sort',
+  'keys',
+  'values',
+  'entries',
+]);
+
+const STRING_METHODS = new Set<string>([
+  'slice',
+  'substring',
+  'toUpperCase',
+  'toLowerCase',
+  'trim',
+  'trimStart',
+  'trimEnd',
+  'split',
+  'replace',
+  'replaceAll',
+  'padStart',
+  'padEnd',
+  'repeat',
+  'concat',
+  'includes',
+  'indexOf',
+  'lastIndexOf',
+  'startsWith',
+  'endsWith',
+  'at',
+  'charAt',
+  'charCodeAt',
+  'codePointAt',
+  'normalize',
+  'localeCompare',
+  'toString',
+]);
+
+const NUMBER_METHODS = new Set<string>(['toFixed', 'toPrecision', 'toExponential', 'toString', 'valueOf']);
+
+/** Static methods on the built-in namespaces/constructors, keyed by the value itself. */
+const STATIC_METHODS = new Map<unknown, Set<string>>([
+  [
+    Object,
+    new Set([
+      'keys',
+      'values',
+      'entries',
+      'fromEntries',
+      'assign',
+      'freeze',
+      'getOwnPropertyNames',
+      'hasOwn',
+      'hasOwnProperty',
+      'create',
+    ]),
+  ],
+  [Array, new Set(['isArray', 'from', 'of'])],
+  [Number, new Set(['isInteger', 'isFinite', 'isNaN', 'isSafeInteger', 'parseInt', 'parseFloat'])],
+  [String, new Set(['fromCharCode', 'fromCodePoint', 'raw'])],
+  [
+    Math,
+    new Set([
+      'abs',
+      'sign',
+      'ceil',
+      'floor',
+      'round',
+      'trunc',
+      'min',
+      'max',
+      'pow',
+      'sqrt',
+      'cbrt',
+      'hypot',
+      'exp',
+      'expm1',
+      'log',
+      'log2',
+      'log10',
+      'log1p',
+      'sin',
+      'cos',
+      'tan',
+      'asin',
+      'acos',
+      'atan',
+      'atan2',
+      'sinh',
+      'cosh',
+      'tanh',
+      'fround',
+      'clz32',
+      'imul',
+    ]),
+  ],
+  [JSON, new Set(['stringify', 'parse'])],
+]);
+
+/** True when `name` is a pure, allowlisted method for `target`'s type. */
+const isAllowedMethod = (target: unknown, name: string): boolean => {
+  if (Array.isArray(target)) {
+    return ARRAY_METHODS.has(name);
+  }
+  if (typeof target === 'string') {
+    return STRING_METHODS.has(name);
+  }
+  if (typeof target === 'number') {
+    return NUMBER_METHODS.has(name);
+  }
+
+  return STATIC_METHODS.get(target)?.has(name) ?? false;
 };
 
 export const staticEval = (node: Node | undefined, context: Dictionary<unknown>) =>
@@ -215,43 +365,13 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
     if (node.hasQuestionDotToken() && target == null) {
       return undefined;
     }
-    const property = target[node.getName()];
+    const name = node.getName();
+    const property = (target as Dictionary<unknown>)[name];
     if (typeof property === 'function') {
-      if (Array.isArray(target)) {
-        switch (node.getName()) {
-          case 'map':
-          case 'flatMap':
-          case 'includes':
-          case 'some':
-          case 'find':
-          case 'filter':
-          case 'join':
-          case 'slice':
-          case 'concat':
-            return target[node.getName()].bind(target);
-        }
-      } else if (typeof target === 'string') {
-        const name = node.getName() as keyof string;
-        switch (name) {
-          case 'slice':
-          case 'toUpperCase':
-          case 'toLowerCase':
-            return target[name].bind(target);
-        }
-      } else if (typeof target === 'function') {
-        const name = node.getName();
-        if (target === Object) {
-          switch (name) {
-            case 'keys':
-            case 'values':
-            case 'entries':
-            case 'assign':
-            case 'hasOwnProperty':
-              return target[name].bind(target);
-          }
-        }
+      if (isAllowedMethod(target, name)) {
+        return (property as (...args: unknown[]) => unknown).bind(target);
       }
-      throw new Error(`Cannot handle method ${node.getName()} on type ${typeof target}`);
+      throw new Error(`Cannot handle method ${name} on type ${typeof target}`);
     }
 
     return property;
@@ -302,6 +422,26 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
 
                 parameters[variableName] = propertyValue;
               }
+            }
+          } else if (Node.isArrayBindingPattern(nameNode)) {
+            const value = (argument ?? []) as unknown[];
+            let index = 0;
+            for (const element of nameNode.getElements()) {
+              // A hole (`[, b]`) skips a position.
+              if (element.isKind(SyntaxKind.OmittedExpression)) {
+                index++;
+                continue;
+              }
+              if (element.getDotDotDotToken()) {
+                parameters[element.getName()] = value.slice(index);
+                break;
+              }
+              let elementValue = value[index];
+              if (elementValue === undefined && element.hasInitializer()) {
+                elementValue = staticEval(element.getInitializer(), { ...context, ...parameters });
+              }
+              parameters[element.getName()] = elementValue;
+              index++;
             }
           } else {
             parameters[parameter.getName()] = argument;
