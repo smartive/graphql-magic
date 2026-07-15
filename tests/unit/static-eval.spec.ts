@@ -103,6 +103,22 @@ describe('staticEval optional chaining', () => {
   });
 });
 
+describe('staticEval array methods', () => {
+  it('joins an array into a string', () => {
+    expect(evalExpression("['a', 'b', 'c'].join('_')")).toBe('a_b_c');
+    expect(evalExpression("['a', 'b'].join()")).toBe('a,b');
+  });
+
+  it('joins a mapped array (the derived-name pattern)', () => {
+    expect(evalExpression("['providerId', 'fileId'].map((f) => f).join('_')")).toBe('providerId_fileId');
+  });
+
+  it('slices and concatenates arrays', () => {
+    expect(evalExpression('[1, 2, 3, 4].slice(1, 3)')).toEqual([2, 3]);
+    expect(evalExpression('[1, 2].concat([3, 4])')).toEqual([1, 2, 3, 4]);
+  });
+});
+
 describe('staticEval additional operators', () => {
   it('evaluates the `in` operator', () => {
     expect(evalExpression("'a' in { a: 1 }")).toBe(true);

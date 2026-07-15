@@ -225,6 +225,9 @@ const VISITOR: Visitor<unknown, Dictionary<unknown>> = {
           case 'some':
           case 'find':
           case 'filter':
+          case 'join':
+          case 'slice':
+          case 'concat':
             return target[node.getName()].bind(target);
         }
       } else if (typeof target === 'string') {
