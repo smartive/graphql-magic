@@ -201,7 +201,11 @@ export const value = (val: Value = null): ConstValueNode =>
               kind: Kind.STRING,
               value: val,
             }
-          : val instanceof Symbol
+          : // Symbols are primitives, so `instanceof Symbol` is never true — this branch was
+            // unreachable, leaving no way to emit an enum default. Enum defaults given as plain
+            // strings fall into the STRING branch above and print as `Enum = "VALUE"`, which
+            // graphql 16 tolerated but graphql 17 rejects as an invalid default value.
+            typeof val === 'symbol'
             ? {
                 kind: Kind.ENUM,
                 value: val.description!,
