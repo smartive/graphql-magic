@@ -10,7 +10,7 @@ import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
 import { AliasGenerator, fetchDisplay, getTechnicalDisplay } from './utils';
 
-const withTransaction = async <T extends MutationContext>(ctx: T, fn: (ctx: T) => Promise<any>) =>
+const withTransaction = async <T extends MutationContext, R>(ctx: T, fn: (ctx: T) => Promise<R>): Promise<R> =>
   await ctx.knex.transaction(async (knex) => {
     const innerCtx = { ...ctx, knex };
     // The outermost mutation scope owns `mutationState`: it initializes the bag
