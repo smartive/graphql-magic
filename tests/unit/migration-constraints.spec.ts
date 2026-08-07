@@ -796,6 +796,133 @@ describe('MigrationGenerator unique constraints', () => {
   });
 });
 
+describe('MigrationGenerator field-level unique', () => {
+  type UniqueConstraintRow = { table_name: string; constraint_name: string; column_name: string };
+
+  const productColumns: MockColumn[] = [
+    { name: 'id', data_type: 'uuid', is_nullable: false },
+    { name: 'sku', data_type: 'character varying', is_nullable: true, max_length: 255 },
+    { name: 'ownerId', data_type: 'uuid', is_nullable: true },
+  ];
+  // The relation target needs its own table to exist, otherwise every case reports a needed migration
+  // for the missing Owner columns and the uniqueness assertions can't be isolated.
+  const ownerColumns: MockColumn[] = [{ name: 'id', data_type: 'uuid', is_nullable: false }];
+
+  const createFieldUniqueModels = (fields: { name: string; unique?: boolean }[], relationUnique = false) =>
+    new Models([
+      {
+        kind: 'entity',
+        name: 'Product',
+        fields: [
+          ...fields.map((f) => ({ name: f.name, type: 'String' as const, maxLength: 255, unique: f.unique })),
+          { kind: 'relation' as const, name: 'owner', type: 'Owner', unique: relationUnique },
+        ],
+      },
+      { kind: 'entity', name: 'Owner', fields: [] },
+    ]);
+
+  // Same order-independent routing as the unique-index harness above; field-level uniqueness comes
+  // from the pg_constraint query over `contype = 'u'`.
+  const createFieldUniqueGenerator = (constraintRows: UniqueConstraintRow[], models: Models) => {
+    const raw = jest.fn((sql: string) => {
+      if (typeof sql === 'string' && sql.includes(`contype = 'u'`)) {
+        return Promise.resolve({ rows: constraintRows });
+      }
+
+      return Promise.resolve({ rows: [] });
+    });
+    const knexLike = Object.assign(
+      jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue([]) }),
+      }),
+      { raw },
+    );
+    const generator = new MigrationGenerator({} as never, models);
+    (generator as unknown as { schema: unknown }).schema = {
+      knex: knexLike,
+      tables: jest.fn().mockResolvedValue(['Product', 'Owner']),
+      columnInfo: jest.fn(async (table: string) => (table === 'Product' ? productColumns : ownerColumns)),
+    };
+
+    return generator;
+  };
+
+  it('adds the constraint when unique: true is declared on an existing column', async () => {
+    const models = createFieldUniqueModels([{ name: 'sku', unique: true }]);
+    const generator = createFieldUniqueGenerator([], models);
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain(`table.unique(['sku']);`);
+    expect(migration).toContain(`table.dropUnique(['sku']);`);
+  });
+
+  it('detects no change when the constraint already exists', async () => {
+    const models = createFieldUniqueModels([{ name: 'sku', unique: true }]);
+    const generator = createFieldUniqueGenerator(
+      [{ table_name: '"Product"', constraint_name: 'product_sku_unique', column_name: 'sku' }],
+      models,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(false);
+  });
+
+  it('drops the constraint when unique: true is removed from the model', async () => {
+    const models = createFieldUniqueModels([{ name: 'sku' }]);
+    const generator = createFieldUniqueGenerator(
+      [{ table_name: 'Product', constraint_name: 'product_sku_unique', column_name: 'sku' }],
+      models,
+    );
+
+    const migration = await generator.generate();
+
+    expect(generator.needsMigration).toBe(true);
+    // The reflected name is passed explicitly — a constraint gqm did not create need not follow
+    // knex's `{table}_{column}_unique` convention.
+    expect(migration).toContain(`table.dropUnique(['sku'], 'product_sku_unique');`);
+    expect(migration).toContain(`table.unique(['sku'], { indexName: 'product_sku_unique' });`);
+  });
+
+  it('uses the foreign key column for a relation field', async () => {
+    const models = createFieldUniqueModels([{ name: 'sku' }], true);
+    const generator = createFieldUniqueGenerator([], models);
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`table.unique(['ownerId']);`);
+  });
+
+  it('leaves a unique constraint on a column with no matching field alone', async () => {
+    const models = createFieldUniqueModels([{ name: 'sku' }]);
+    const generator = createFieldUniqueGenerator(
+      [{ table_name: 'Product', constraint_name: 'product_legacy_unique', column_name: 'legacyCode' }],
+      models,
+    );
+
+    await generator.generate();
+
+    expect(generator.needsMigration).toBe(false);
+  });
+
+  it('does not emit a separate constraint for a column that does not exist yet', async () => {
+    // `createFields` runs `column()` for new columns, which already writes `.unique()` inline; a second
+    // `table.unique([...])` in the same migration would fail on a constraint that was just created.
+    const models = createFieldUniqueModels([{ name: 'sku', unique: true }, { name: 'gtin', unique: true }]);
+    const generator = createFieldUniqueGenerator(
+      [{ table_name: 'Product', constraint_name: 'product_sku_unique', column_name: 'sku' }],
+      models,
+    );
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`.unique();`);
+    expect(migration).not.toContain(`table.unique(['gtin']);`);
+  });
+});
+
 describe('MigrationGenerator canonicalizeCheckExpressionWithPostgres', () => {
   afterEach(() => {
     jest.restoreAllMocks();
