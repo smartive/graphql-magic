@@ -21,6 +21,7 @@ import {
   validateExcludeConstraint,
   validateUniqueConstraint,
 } from '../models/utils';
+import { getColumnName } from '../resolvers/utils';
 import { Value } from '../values';
 import { ParsedFunction } from './types';
 import {
@@ -34,6 +35,16 @@ const imported = CodeBlockWriterImport as typeof CodeBlockWriterImport | { defau
 const CodeBlockWriter = typeof imported === 'function' ? imported : imported.default;
 
 type Callbacks = (() => void)[];
+
+/** Escape a value interpolated into a single-quoted string literal in the generated migration. */
+const jsString = (value: string) => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+/**
+ * The constraint name knex derives for `table.unique([column])` (`_indexCommand`: joined, then
+ * lower-cased). Emitting it explicitly keeps a constraint and its rollback pointing at one object,
+ * while staying byte-identical to what `column()`'s inline `.unique()` produces at table-create time.
+ */
+const defaultUniqueConstraintName = (table: string, column: string) => `${table}_${column}_unique`.toLowerCase();
 
 export class MigrationGenerator {
   private writer = new CodeBlockWriter({
@@ -52,6 +63,8 @@ export class MigrationGenerator {
   private existingTriggers: Record<string, Map<string, { normalized: string; raw: string }>> = {};
   /** table name -> index name -> raw `CREATE UNIQUE INDEX …` definition (gm-managed composite uniques only) */
   private existingUniqueIndexes: Record<string, Map<string, string>> = {};
+  /** table name -> column name -> constraint name (single-column unique *constraints*, i.e. field-level `unique: true`) */
+  private existingUniqueConstraints: Record<string, Map<string, string>> = {};
   private uuidUsed?: boolean;
   private nowUsed?: boolean;
   public needsMigration = false;
@@ -195,6 +208,33 @@ export class MigrationGenerator {
         this.existingUniqueIndexes[tableName] = new Map();
       }
       this.existingUniqueIndexes[tableName].set(row.index_name, row.index_def);
+    }
+
+    // The other half of the picture: single-column unique *constraints*, which is what knex's
+    // `.unique()` emits and therefore what a field-level `unique: true` produces. Deliberately
+    // disjoint from `existingUniqueIndexes` above (which skips constraint-backed indexes), so the
+    // two uniqueness mechanisms never contend for the same database object and a column may carry
+    // one of each. Keyed by column rather than by name because knex derives the constraint name
+    // itself and Postgres folds the unquoted identifier to lower case (`Portfolio.providerRef` ->
+    // `portfolio_providerref_unique`), so the name is not reconstructible from the model.
+    // Multi-column constraints are excluded: those are hand-written and not gm-managed.
+    const uniqueConstraintResult = await schema.knex.raw(
+      `SELECT c.conrelid::regclass::text as table_name, c.conname as constraint_name, a.attname as column_name
+       FROM pg_constraint c
+       JOIN pg_namespace n ON c.connamespace = n.oid
+       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = c.conkey[1]
+       WHERE n.nspname = 'public' AND c.contype = 'u' AND array_length(c.conkey, 1) = 1`,
+    );
+    const uniqueConstraintRows: { table_name: string; constraint_name: string; column_name: string }[] =
+      'rows' in uniqueConstraintResult && Array.isArray((uniqueConstraintResult as { rows: unknown }).rows)
+        ? (uniqueConstraintResult as { rows: { table_name: string; constraint_name: string; column_name: string }[] }).rows
+        : [];
+    for (const row of uniqueConstraintRows) {
+      const tableName = row.table_name.split('.').pop()?.replace(/^"|"$/g, '') ?? row.table_name;
+      if (!this.existingUniqueConstraints[tableName]) {
+        this.existingUniqueConstraints[tableName] = new Map();
+      }
+      this.existingUniqueConstraints[tableName].set(row.column_name, row.constraint_name);
     }
 
     const up: Callbacks = [];
@@ -390,6 +430,8 @@ export class MigrationGenerator {
             (field) => (!field.generateAs || field.generateAs.type === 'expression') && this.hasChanged(model, field),
           );
           this.updateFields(model, existingFields, up, down);
+
+          this.updateFieldUniques(model, up, down);
 
           if (model.constraints?.length) {
             this.validateConstraintNames(model);
@@ -955,15 +997,134 @@ export class MigrationGenerator {
     }
   }
 
+  /**
+   * Diff the field-level `unique: true` flag against the database, for columns that already exist.
+   *
+   * Before this existed the flag was write-once: `column()` emitted knex's `.unique()` while creating a
+   * column, and nothing ever looked at it again. Adding or removing `unique: true` on an existing column
+   * therefore produced no migration at all, and `check-needs-migration` reported a clean database that
+   * did not in fact match the models — the flag read as documentation while the real uniqueness lived
+   * only in whatever raw SQL a migration happened to contain.
+   *
+   * This is the counterpart of the `kind: 'unique'` constraint path, and the split between the two is
+   * what stops them fighting over the same object: a model `constraints` entry maps to a unique *index*
+   * (the only form that can be partial, hence `where`), while `unique: true` maps to a single-column
+   * unique *constraint*, which is what `.unique()` produces. Reflection keeps the two sets disjoint, so
+   * a column may legitimately carry one of each — a total constraint and a partial index.
+   *
+   * Columns that do not exist yet are skipped: `createFields` runs `column()` for those, which already
+   * emits `.unique()` inline.
+   */
+  private updateFieldUniques(model: EntityModel, up: Callbacks, down: Callbacks) {
+    const table = model.name;
+    const existing = this.existingUniqueConstraints[table];
+    const singleColumnIndexes = this.singleColumnUniqueIndexes(table);
+    const toAdd: { column: string; constraintName: string }[] = [];
+    const toDrop: { column: string; constraintName: string }[] = [];
+
+    for (const field of model.fields.filter(and(not(isInherited), isStoredInDatabase))) {
+      // Mirror `column()`'s precedence: `primary` wins over `unique`, and the implicit `id` field
+      // carries both. The primary key already enforces uniqueness and has no separate `contype = 'u'`
+      // row, so treating it as a missing constraint would make every table want a migration forever.
+      if (field.primary) {
+        continue;
+      }
+
+      const column = getColumnName(field);
+      if (!this.getColumn(table, column)) {
+        continue;
+      }
+
+      const constraintName = existing?.get(column);
+      if (!field.unique) {
+        if (constraintName) {
+          toDrop.push({ column, constraintName });
+        }
+        continue;
+      }
+
+      if (constraintName) {
+        continue;
+      }
+
+      // A plain `CREATE UNIQUE INDEX` over the same single column enforces exactly what `unique: true`
+      // asks for, so treat it as satisfied. Without this the generator would emit an ADD CONSTRAINT that
+      // Postgres rejects once the index already owns the name, leaving check-needs-migration permanently
+      // dirty. Partial indexes do not count: they only constrain the rows matching their predicate.
+      const coveringIndex = singleColumnIndexes.get(column.toLowerCase());
+      if (coveringIndex?.where === null) {
+        continue;
+      }
+
+      const constraint = defaultUniqueConstraintName(table, column);
+      if (coveringIndex?.name === constraint) {
+        throw new Error(
+          `Cannot add a unique constraint for ${table}.${column}: the name "${constraint}" is already taken by a partial unique index, which does not satisfy \`unique: true\` (it only constrains rows matching its predicate). Rename that index, or express the intended uniqueness as a \`kind: 'unique'\` entry in the model's \`constraints\` instead of the field flag.`,
+        );
+      }
+
+      toAdd.push({ column, constraintName: constraint });
+    }
+
+    if (!toAdd.length && !toDrop.length) {
+      return;
+    }
+
+    // Both directions name the constraint explicitly. Relying on knex to re-derive its default in the
+    // rollback would work only for constraints knex itself created under that default -- the same
+    // reasoning that makes the drop path pass a reflected name.
+    up.push(() => {
+      this.alterTable(table, () => {
+        for (const { column, constraintName } of toAdd) {
+          this.writer.writeLine(`table.unique(['${jsString(column)}'], { indexName: '${jsString(constraintName)}' });`);
+        }
+        for (const { column, constraintName } of toDrop) {
+          this.writer.writeLine(`table.dropUnique(['${jsString(column)}'], '${jsString(constraintName)}');`);
+        }
+      });
+    });
+
+    down.push(() => {
+      this.alterTable(table, () => {
+        for (const { column, constraintName } of toAdd) {
+          this.writer.writeLine(`table.dropUnique(['${jsString(column)}'], '${jsString(constraintName)}');`);
+        }
+        for (const { column, constraintName } of toDrop) {
+          this.writer.writeLine(`table.unique(['${jsString(column)}'], { indexName: '${jsString(constraintName)}' });`);
+        }
+      });
+    });
+  }
+
+  /**
+   * Single-column unique indexes on a table that are *not* backed by a constraint, keyed by lower-cased
+   * column. These are the objects `existingUniqueConstraints` cannot see, and they can both satisfy and
+   * collide with a field-level `unique: true`.
+   */
+  private singleColumnUniqueIndexes(table: string) {
+    const byColumn = new Map<string, { name: string; where: string | null }>();
+    for (const [name, def] of this.existingUniqueIndexes[table] ?? new Map<string, string>()) {
+      const { columns, where } = this.parseUniqueIndex(def);
+      if (columns.length === 1) {
+        byColumn.set(columns[0], { name, where });
+      }
+    }
+
+    return byColumn;
+  }
+
   private updateFields(model: EntityModel, fields: EntityField[], up: Callbacks, down: Callbacks) {
     if (!fields.length) {
       return;
     }
 
+    // `setUnique: false`: uniqueness is diffed separately by `updateFieldUniques`. Emitting `.unique()`
+    // from an ALTER would re-add a constraint that already exists whenever a `unique: true` column is
+    // altered for an unrelated reason (a widened maxLength, a nullability flip).
     up.push(() => {
       this.alterTable(model.name, () => {
         for (const field of fields) {
-          this.column(field, { alter: true });
+          this.column(field, { alter: true, setUnique: false });
         }
       });
     });
@@ -973,7 +1134,7 @@ export class MigrationGenerator {
         for (const field of fields) {
           this.column(
             field,
-            { alter: true },
+            { alter: true, setUnique: false },
             summonByName(this.columns[model.name], field.kind === 'relation' ? `${field.name}Id` : field.name),
           );
         }
