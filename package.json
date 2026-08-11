@@ -71,7 +71,7 @@
     "@types/lodash": "4.17.25",
     "@types/luxon": "3.7.4",
     "@types/node": "26.2.0",
-    "@types/pg": "8.20.4",
+    "@types/pg": "8.21.0",
     "@typescript-eslint/parser": "8.66.0",
     "conventional-changelog-conventionalcommits": "10.2.1",
     "create-ts-index": "1.14.0",
