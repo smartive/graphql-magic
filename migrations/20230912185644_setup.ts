@@ -65,6 +65,8 @@ export const up = async (knex: Knex) => {
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
+    table.string('deleteRootType');
+    table.uuid('deleteRootId');
     table.uuid('anotherId');
     table.integer('xyz');
     table.specificType('time', 'time without time zone');
@@ -104,6 +106,8 @@ export const up = async (knex: Knex) => {
     table.uuid('createdById').notNullable();
     table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));
     table.boolean('deleted').notNullable();
+    table.string('deleteRootType');
+    table.uuid('deleteRootId');
     table.string('content', undefined);
   });
 
