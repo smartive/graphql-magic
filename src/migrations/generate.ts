@@ -597,8 +597,6 @@ export class MigrationGenerator {
                           writer.writeLine(`createdById: row.updatedById || row.createdById,`);
                           if (model.deletable) {
                             writer.writeLine(`deleted: row.deleted,`);
-                            writer.writeLine(`deleteRootType: row.deleteRootType,`);
-                            writer.writeLine(`deleteRootId: row.deleteRootId,`);
                           }
 
                           for (const { name, kind } of model.fields.filter(and(isUpdatableField, isStoredInDatabase))) {
@@ -1194,10 +1192,10 @@ export class MigrationGenerator {
           `table.uuid('createdById')${this.revisionAuthorIsNonNull(model) ? '.notNullable()' : '.nullable()'};`,
         );
         writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
+        // `deleted` is per-revision state that `createRevision` maintains. `deleteRootType`/`deleteRootId`
+        // are not: they track which cascade root deleted a row, and only the entity is ever written or read.
         if (model.deletable) {
           writer.writeLine(`table.boolean('deleted').notNullable();`);
-          writer.writeLine(`table.string('deleteRootType');`);
-          writer.writeLine(`table.uuid('deleteRootId');`);
         }
       }
 
@@ -1229,6 +1227,30 @@ export class MigrationGenerator {
       down.push(alterAuthor(!authorIsNonNull));
     }
 
+    // Only the entity carries the cascade root, so any revision table that still has these columns got
+    // them from an older generator; they have never been written or read since.
+    const staleDeleteRootColumns = (['deleteRootType', 'deleteRootId'] as const).filter((column) =>
+      this.getColumn(revisionTable, column),
+    );
+    if (staleDeleteRootColumns.length) {
+      up.push(() => {
+        this.alterTable(revisionTable, () => {
+          for (const column of staleDeleteRootColumns) {
+            this.dropColumn(column);
+          }
+        });
+      });
+      down.push(() => {
+        this.alterTable(revisionTable, () => {
+          for (const column of staleDeleteRootColumns) {
+            this.writer.writeLine(
+              column === 'deleteRootType' ? `table.string('deleteRootType');` : `table.uuid('deleteRootId');`,
+            );
+          }
+        });
+      });
+    }
+
     if (!model.deletable) {
       return;
     }
@@ -1252,28 +1274,6 @@ export class MigrationGenerator {
       down.push(() => {
         this.alterTable(revisionTable, () => {
           this.dropColumn('deleted');
-        });
-      });
-    }
-
-    const missingDeleteRootColumns = (['deleteRootType', 'deleteRootId'] as const).filter(
-      (column) => !this.getColumn(revisionTable, column),
-    );
-    if (missingDeleteRootColumns.length) {
-      up.push(() => {
-        this.alterTable(revisionTable, () => {
-          for (const column of missingDeleteRootColumns) {
-            this.writer.writeLine(
-              column === 'deleteRootType' ? `table.string('deleteRootType');` : `table.uuid('deleteRootId');`,
-            );
-          }
-        });
-      });
-      down.push(() => {
-        this.alterTable(revisionTable, () => {
-          for (const column of missingDeleteRootColumns) {
-            this.dropColumn(column);
-          }
         });
       });
     }

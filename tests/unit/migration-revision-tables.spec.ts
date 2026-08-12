@@ -138,6 +138,18 @@ describe('createRevisionTable', () => {
     expect(migration).toContain(`table.uuid('createdById').nullable();`);
     expect(migration).not.toContain(`table.uuid('createdById').notNullable();`);
   });
+
+  it('keeps `deleted` but not the cascade root, which only ever lives on the entity', async () => {
+    const generator = createGenerator(createModels({ authorNonNull: true, deletable: true }), { User: [] });
+
+    const migration = await generator.generate();
+    const revisionTable = migration.slice(migration.indexOf(`createTable('ProductRevision'`));
+
+    expect(revisionTable).toContain(`table.boolean('deleted').notNullable();`);
+    expect(revisionTable).not.toContain('deleteRoot');
+    // The entity keeps them — this is only about the revision table.
+    expect(migration).toContain(`table.string('deleteRootType', undefined)`);
+  });
 });
 
 describe('syncRevisionPreamble', () => {
@@ -145,7 +157,7 @@ describe('syncRevisionPreamble', () => {
     const generator = createGenerator(createModels({ authorNonNull: false, deletable: true }), {
       User: userColumns,
       Product: productColumns({ authorNonNull: false, deletable: true }),
-      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: true }),
+      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: false }),
     });
 
     const migration = await generator.generate();
@@ -159,7 +171,7 @@ describe('syncRevisionPreamble', () => {
     const generator = createGenerator(createModels({ authorNonNull: true, deletable: true }), {
       User: userColumns,
       Product: productColumns({ authorNonNull: true, deletable: true }),
-      ProductRevision: revisionColumns({ createdByIdNullable: true, deleteRoot: true }),
+      ProductRevision: revisionColumns({ createdByIdNullable: true, deleteRoot: false }),
     });
 
     const migration = await generator.generate();
@@ -168,23 +180,23 @@ describe('syncRevisionPreamble', () => {
     expect(migration).toContain(`table.uuid('createdById').notNullable().alter();`);
   });
 
-  it('adds deleteRootType/deleteRootId to a revision table that predates the deleteRoot feature', async () => {
+  it('drops deleteRootType/deleteRootId left behind by an older generator', async () => {
     const generator = createGenerator(createModels({ authorNonNull: true, deletable: true }), {
       User: userColumns,
       Product: productColumns({ authorNonNull: true, deletable: true }),
-      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: false }),
+      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: true }),
     });
 
     const migration = await generator.generate();
 
     expect(generator.needsMigration).toBe(true);
-    expect(migration).toContain(`table.string('deleteRootType');`);
-    expect(migration).toContain(`table.uuid('deleteRootId');`);
     expect(migration).toContain(`table.dropColumn('deleteRootType');`);
     expect(migration).toContain(`table.dropColumn('deleteRootId');`);
+    expect(migration).toContain(`table.string('deleteRootType');`);
+    expect(migration).toContain(`table.uuid('deleteRootId');`);
   });
 
-  it('leaves deleteRoot columns alone for a model that is not deletable', async () => {
+  it('drops them for a model that is not deletable either', async () => {
     const generator = createGenerator(createModels({ authorNonNull: true, deletable: false }), {
       User: userColumns,
       Product: productColumns({ authorNonNull: true, deletable: false }),
@@ -193,14 +205,17 @@ describe('syncRevisionPreamble', () => {
         uuid('productId'),
         uuid('createdById'),
         { name: 'createdAt', data_type: 'timestamp with time zone', is_nullable: false },
+        { name: 'deleteRootType', data_type: 'character varying', is_nullable: true },
+        uuid('deleteRootId', true),
         { name: 'title', data_type: 'character varying', is_nullable: true },
       ],
     });
 
     const migration = await generator.generate();
 
-    expect(generator.needsMigration).toBe(false);
-    expect(migration).not.toContain('deleteRoot');
+    expect(generator.needsMigration).toBe(true);
+    expect(migration).toContain(`table.dropColumn('deleteRootType');`);
+    expect(migration).toContain(`table.dropColumn('deleteRootId');`);
   });
 
   it('backfills `deleted` from the entity table instead of defaulting it', async () => {
@@ -230,7 +245,7 @@ describe('syncRevisionPreamble', () => {
     const generator = createGenerator(createModels({ authorNonNull: true, deletable: true }), {
       User: userColumns,
       Product: productColumns({ authorNonNull: true, deletable: true }),
-      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: true }),
+      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: false }),
     });
 
     await generator.generate();
