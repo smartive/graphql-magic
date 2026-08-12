@@ -649,6 +649,7 @@ export class MigrationGenerator {
                 this.getColumn(revisionTable, field.kind === 'relation' ? field.foreignKey || `${name}Id` : name),
             );
             this.createRevisionFields(model, revisionFieldsToRemove, down, up);
+            this.syncRevisionPreamble(model, up, down);
           }
         }
       }
@@ -1173,6 +1174,14 @@ export class MigrationGenerator {
     }
   }
 
+  /**
+   * A revision's `createdById` is whoever performed the mutation — the creator on the first revision, the
+   * updater on every later one — so it is non-null only when both entity columns are.
+   */
+  private revisionAuthorIsNonNull(model: EntityModel) {
+    return ['createdBy', 'updatedBy'].every((name) => model.fieldsByName[name]?.nonNull !== false);
+  }
+
   private createRevisionTable(model: EntityModel) {
     const writer = this.writer;
 
@@ -1181,7 +1190,9 @@ export class MigrationGenerator {
       writer.writeLine(`table.uuid('id').notNullable().primary();`);
       if (!model.parent) {
         writer.writeLine(`table.uuid('${typeToField(model.name)}Id').notNullable();`);
-        writer.writeLine(`table.uuid('createdById').notNullable();`);
+        writer.writeLine(
+          `table.uuid('createdById')${this.revisionAuthorIsNonNull(model) ? '.notNullable()' : '.nullable()'};`,
+        );
         writer.writeLine(`table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now(0));`);
         if (model.deletable) {
           writer.writeLine(`table.boolean('deleted').notNullable();`);
@@ -1194,6 +1205,78 @@ export class MigrationGenerator {
         this.column(field, { setUnique: false, setDefault: false, setNonNull: false, foreign: false });
       }
     });
+  }
+
+  /**
+   * Reconcile the fixed preamble of an *existing* revision table. `createRevisionFields` only ever diffs
+   * model fields, so preamble drift is otherwise invisible and no migration is ever generated for it.
+   */
+  private syncRevisionPreamble(model: EntityModel, up: Callbacks, down: Callbacks) {
+    if (model.parent) {
+      return;
+    }
+
+    const revisionTable = `${model.name}Revision`;
+    const alterAuthor = (nonNull: boolean) => () =>
+      this.alterTable(revisionTable, () => {
+        this.writer.writeLine(`table.uuid('createdById')${nonNull ? '.notNullable()' : '.nullable()'}.alter();`);
+      });
+
+    const authorIsNonNull = this.revisionAuthorIsNonNull(model);
+    const authorColumn = this.getColumn(revisionTable, 'createdById');
+    if (authorColumn?.is_nullable === authorIsNonNull) {
+      up.push(alterAuthor(authorIsNonNull));
+      down.push(alterAuthor(!authorIsNonNull));
+    }
+
+    if (!model.deletable) {
+      return;
+    }
+
+    // `deleted` mirrors the entity's state at revision time, so it is backfilled from the entity table
+    // rather than defaulted — every existing revision would otherwise claim the row was never deleted.
+    if (!this.getColumn(revisionTable, 'deleted')) {
+      up.push(() => {
+        this.alterTable(revisionTable, () => {
+          this.writer.writeLine(`table.boolean('deleted');`);
+        });
+        this.writer
+          .writeLine(
+            `await knex.raw('UPDATE "${revisionTable}" SET "deleted" = coalesce((SELECT "deleted" FROM "${model.name}" WHERE "${model.name}"."id" = "${revisionTable}"."${typeToField(model.name)}Id"), false)');`,
+          )
+          .blankLine();
+        this.alterTable(revisionTable, () => {
+          this.writer.writeLine(`table.boolean('deleted').notNullable().alter();`);
+        });
+      });
+      down.push(() => {
+        this.alterTable(revisionTable, () => {
+          this.dropColumn('deleted');
+        });
+      });
+    }
+
+    const missingDeleteRootColumns = (['deleteRootType', 'deleteRootId'] as const).filter(
+      (column) => !this.getColumn(revisionTable, column),
+    );
+    if (missingDeleteRootColumns.length) {
+      up.push(() => {
+        this.alterTable(revisionTable, () => {
+          for (const column of missingDeleteRootColumns) {
+            this.writer.writeLine(
+              column === 'deleteRootType' ? `table.string('deleteRootType');` : `table.uuid('deleteRootId');`,
+            );
+          }
+        });
+      });
+      down.push(() => {
+        this.alterTable(revisionTable, () => {
+          for (const column of missingDeleteRootColumns) {
+            this.dropColumn(column);
+          }
+        });
+      });
+    }
   }
 
   private createRevisionFields(model: EntityModel, missingRevisionFields: EntityField[], up: Callbacks, down: Callbacks) {
