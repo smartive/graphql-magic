@@ -2163,6 +2163,10 @@ export class MigrationGenerator {
             col(`table.uuid('${name}')`);
             break;
           case 'Upload':
+            // Emitting nothing here left the diff unsatisfiable: an updatable Upload counts as a
+            // stored field, so the revision diff asks for the column, the writer produces an empty
+            // `up`, and check-needs-migration stays dirty forever.
+            col(`table.binary('${name}')`);
             break;
         }
         break;

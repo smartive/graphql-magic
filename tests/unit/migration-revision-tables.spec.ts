@@ -140,6 +140,50 @@ describe('createRevisionTable', () => {
   });
 });
 
+describe('Upload columns', () => {
+  const withUpload = (updatable: boolean): Models =>
+    new Models([
+      USER,
+      {
+        kind: 'entity',
+        name: 'Product',
+        creatable: true,
+        updatable: true,
+        deletable: true,
+        fields: [
+          { name: 'title', type: 'String', creatable: true, updatable: true },
+          { name: 'image', type: 'Upload', creatable: true, updatable },
+        ],
+      },
+    ]);
+
+  it('creates a binary column for an Upload field', async () => {
+    const generator = createGenerator(withUpload(false), { User: [] });
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`table.binary('image')`);
+  });
+
+  it('adds the column an updatable Upload asks its revision table for', async () => {
+    // Regression: the field counts as stored, so the revision diff listed it as missing while the
+    // writer emitted nothing — an `up` that could never satisfy its own `down`.
+    const generator = createGenerator(withUpload(true), {
+      User: userColumns,
+      Product: [
+        ...productColumns({ authorNonNull: true, deletable: true }),
+        { name: 'image', data_type: 'bytea', is_nullable: true },
+      ],
+      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: true }),
+    });
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`table.binary('image')`);
+    expect(migration).toContain(`dropColumn('image')`);
+  });
+});
+
 describe('syncRevisionPreamble', () => {
   it('relaxes a NOT NULL createdById that contradicts the model', async () => {
     const generator = createGenerator(createModels({ authorNonNull: false, deletable: true }), {
