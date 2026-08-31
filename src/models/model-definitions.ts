@@ -176,6 +176,22 @@ export type ModelDefinition = {
             restoreArgs?: readonly Field[];
           };
       displayField?: string;
+
+      /**
+       * Set this when the display field holds sensitive data, e.g. a person's name or email address.
+       * Technical error messages then identify the entity by id alone (`User <uuid>`) instead of
+       * quoting the display value (`User "Jane Doe (jane@example.com)" (<uuid>)`), so that personal
+       * data cannot leak into errors returned to clients or into server logs.
+       *
+       * The display value is still used wherever it is shown on purpose — the client display query
+       * and the delete dry-run payload an admin confirms against. This flag governs technical error
+       * messages only.
+       *
+       * Like `displayField`, this is not inherited by child models: set it on every model that
+       * declares a sensitive `displayField`.
+       */
+      sensitiveDisplay?: boolean;
+
       defaultOrderBy?: readonly OrderBy[];
       fields: readonly EntityFieldDefinition[];
 

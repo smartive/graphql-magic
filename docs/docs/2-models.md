@@ -156,6 +156,39 @@ query {
 
 The name of the field that ought to be used as display value, e.g. a `Post`'s `title`.
 
+### `sensitiveDisplay`
+
+Set this when the display field holds sensitive data, e.g. a person's name or email address:
+
+```js
+{
+    name: 'User',
+    kind: 'entity',
+    displayField: 'fullName',
+    sensitiveDisplay: true,
+    // ...
+}
+```
+
+Technical error messages then identify the entity by id alone instead of quoting the display value:
+
+```
+User 0b7e… is not deleted.          // with sensitiveDisplay
+User "Jane Doe" (0b7e…) is not deleted.   // without
+```
+
+Those messages are returned to the client and written to server logs — for a person entity that means
+a name (and, where the display field is built from one, an email address) ends up in both. Every
+message built from a model's display value is covered, not just the one above: the already-deleted,
+cannot-be-deleted-because-it-has, depends-on, cannot-restore-directly and not-found messages all use
+the same helper.
+
+The display value is still used wherever it is shown on purpose — the client display query and the
+delete dry-run payload an admin confirms against. This flag governs technical error messages only.
+
+Like `displayField`, it is not inherited by child models: set it on every model that declares a
+sensitive `displayField`.
+
 ### `defaultOrderBy`
 
 An array of orders with the same structure as the `orderBy` parameters in GraphQL queries. The implicit default order by is `[{ createdAt: 'DESC }]`.

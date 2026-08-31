@@ -274,8 +274,13 @@ export const getColumnExpression = (
   return getColumn(node, fieldName);
 };
 
+/**
+ * Identifies an entity in a technical error message. The display value is quoted to keep the message
+ * readable, unless the model marks its display as sensitive (`sensitiveDisplay`), in which case the
+ * id alone identifies the entity — these messages reach clients and server logs.
+ */
 export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
-  model.displayField && entity[model.displayField]
+  model.displayField && !model.sensitiveDisplay && entity[model.displayField]
     ? `${model.name} "${entity[model.displayField]}" (${entity.id})`
     : entity.id
       ? `${model.name} ${entity.id}`
