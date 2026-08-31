@@ -375,6 +375,7 @@ export class EntityModel extends Model {
       };
   aggregatable?: boolean;
   displayField?: string;
+  sensitiveDisplay?: boolean;
   defaultOrderBy?: OrderBy[];
   fields!: EntityField[];
 
