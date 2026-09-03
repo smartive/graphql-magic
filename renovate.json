@@ -1,4 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>smartive/renovate-config:best-practices-lib"]
+  "extends": [
+    "github>smartive/renovate-config:best-practices-lib"
+  ],
+  "packageRules": [
+    {
+      "description": "Hold the changelog preset on 9.x. Release runs through cycjimmy/semantic-release-action, whose semantic-release@25 pulls @semantic-release/release-notes-generator@14 -> conventional-changelog-writer@8. Preset 10 plants a deliberate tripwire in writerOpts.mainTemplate that makes a handlebars writer (<=8) throw \"Missing helper\", so a 10.x bump breaks the release with no test failure to warn us. Lift this once release-notes-generator ships conventional-changelog-writer@9+.",
+      "matchPackageNames": [
+        "conventional-changelog-conventionalcommits"
+      ],
+      "allowedVersions": "<10"
+    }
+  ]
 }
