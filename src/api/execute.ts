@@ -1,5 +1,5 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { IFieldResolver, IResolvers } from '@graphql-tools/utils';
+import { IResolvers } from '@graphql-tools/utils';
 import {
   DocumentNode,
   GraphQLResolveInfo,
@@ -17,9 +17,14 @@ import { Context, generate, get, getResolvers } from '..';
 import { Models } from '../models/models';
 import { noIntrospection } from '../utils/rules';
 
-export type ResolverWrapper = (
-  resolver: IFieldResolver<unknown, unknown, unknown, unknown>,
-) => IFieldResolver<unknown, unknown, unknown, unknown>;
+// Deliberately expressed with graphql's own `GraphQLResolveInfo` rather than `@graphql-tools/utils`'
+// `IFieldResolver`: the latter augments the resolve info with members (`getAbortSignal`,
+// `getAsyncHelpers`) that graphql 17 has natively but graphql 16 does not, which would make this
+// type unimplementable on graphql 16 by consumers whose resolvers come from graphql-codegen.
+// See tests/types/resolver-wrapper.ts.
+export type FieldResolver = (source: unknown, args: unknown, context: unknown, info: GraphQLResolveInfo) => unknown;
+
+export type ResolverWrapper = (resolver: FieldResolver) => FieldResolver;
 
 export type ExecutorInput = {
   models: Models;

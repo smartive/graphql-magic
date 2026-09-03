@@ -5,7 +5,8 @@
     "tests/**/*.ts"
   ],
   "ignore": [
-    "**/generated/**"
+    "**/generated/**",
+    "tests/types/**"
   ],
   "ignoreDependencies": [
     "conventional-changelog-conventionalcommits",
