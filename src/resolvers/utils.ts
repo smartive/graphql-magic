@@ -14,7 +14,7 @@ import { Kind } from 'graphql';
 import { Knex } from 'knex';
 import isEqual from 'lodash/isEqual';
 import { Entity, EntityField, EntityModel, ManyToManyRelation } from '..';
-import { UserInputError } from '../errors';
+import { ForbiddenError, UserInputError } from '../errors';
 import { get, it } from '../models/utils';
 import { Value } from '../values';
 import { FieldResolverNode, ResolverNode } from './node';
@@ -275,16 +275,44 @@ export const getColumnExpression = (
 };
 
 /**
- * Identifies an entity in a technical error message. The display value is quoted to keep the message
- * readable, unless the model marks its display as sensitive (`sensitiveDisplay`), in which case the
- * id alone identifies the entity — these messages reach clients and server logs.
+ * Identifies an entity in a technical error message, quoting the display to keep it readable.
+ * This is what the caller is shown, so it names the entity as helpfully as it can.
  */
 export const getTechnicalDisplay = (model: EntityModel, entity: Entity) =>
-  model.displayField && !model.sensitiveDisplay && entity[model.displayField]
+  model.displayField && entity[model.displayField]
     ? `${model.name} "${entity[model.displayField]}" (${entity.id})`
     : entity.id
       ? `${model.name} ${entity.id}`
       : model.name;
+
+/**
+ * The same identification with a `sensitiveDisplay` model's display left out, for writing to a log.
+ * The id still identifies the record; only the personal data is missing.
+ */
+export const getLogSafeTechnicalDisplay = (model: EntityModel, entity: Entity) =>
+  model.sensitiveDisplay ? (entity.id ? `${model.name} ${entity.id}` : model.name) : getTechnicalDisplay(model, entity);
+
+/** Renders one entity inside a technical message — either the full or the log-safe form. */
+export type DisplayRenderer = (model: EntityModel, entity: Entity) => string;
+
+/**
+ * Build a technical message from one template, twice: as shown to the caller and as logged.
+ * Writing the prose once is the point — the two variants cannot drift apart.
+ */
+export const technicalMessage = (build: (display: DisplayRenderer) => string) => ({
+  message: build(getTechnicalDisplay),
+  logMessage: build(getLogSafeTechnicalDisplay),
+});
+
+/**
+ * A ForbiddenError carrying both variants, so a throw site states its prose once.
+ * Its `logMessage` is what a caller should log in place of `message`.
+ */
+export const forbidden = (build: (display: DisplayRenderer) => string) => {
+  const { message, logMessage } = technicalMessage(build);
+
+  return new ForbiddenError(message, logMessage);
+};
 
 export const fetchDisplay = async (knex: Knex, model: EntityModel, entity: Entity) => {
   if (model.isManyToManyRelation) {
