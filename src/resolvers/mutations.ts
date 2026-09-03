@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto';
 import { GraphQLResolveInfo } from 'graphql';
 import { Context } from '../context';
-import { ForbiddenError, GraphQLError } from '../errors';
+import { GraphQLError } from '../errors';
 import { EntityField, EntityModel } from '../models/models';
 import { Entity, MutationContext, Trigger } from '../models/mutation-hook';
 import { and, get, isDynamicField, isPrimitive, isUpdatableField, it, not, typeToField } from '../models/utils';
 import { applyPermissions, checkCanWrite, getEntityToMutate } from '../permissions/check';
 import { anyDateToLuxon } from '../utils';
 import { resolve } from './resolver';
-import { AliasGenerator, fetchDisplay, getTechnicalDisplay } from './utils';
+import { AliasGenerator, fetchDisplay, forbidden } from './utils';
 
 const withTransaction = async <T extends MutationContext, R>(ctx: T, fn: (ctx: T) => Promise<R>): Promise<R> =>
   await ctx.knex.transaction(async (knex) => {
@@ -251,7 +251,7 @@ export const deleteEntity = async (
     const entity = await getEntityToMutate(ctx, rootModel, { id }, 'DELETE');
 
     if (entity.deleted) {
-      throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is already deleted.`);
+      throw forbidden((display) => `${display(model, entity)} is already deleted.`);
     }
 
     const toDelete: Record<string, Record<string, string>> = {};
@@ -405,16 +405,18 @@ export const deleteEntity = async (
                   restricted[descendantModel.name][descendant.id].fields.push(name);
                 }
               } else {
-                throw new ForbiddenError(
-                  `${getTechnicalDisplay(model, entity)} cannot be deleted because it has ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
+                throw forbidden(
+                  (display) =>
+                    `${display(model, entity)} cannot be deleted because it has ${display(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''}.`,
                 );
               }
               break;
             case 'cascade':
             default: {
               if (!descendantModel.deletable) {
-                throw new ForbiddenError(
-                  `${getTechnicalDisplay(model, entity)} depends on ${getTechnicalDisplay(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
+                throw forbidden(
+                  (display) =>
+                    `${display(model, entity)} depends on ${display(descendantModel, descendants[0])}${descendants.length > 1 ? ` (among others)` : ''} which cannot be deleted.`,
                 );
               }
               applyPermissions(ctx, descendantModel.name, descendantModel.name, query, 'DELETE');
@@ -423,8 +425,9 @@ export const deleteEntity = async (
                 (descendant) => !deletableDescendants.some((d) => d.id === descendant.id),
               );
               if (notDeletableDescendants.length) {
-                throw new ForbiddenError(
-                  `${getTechnicalDisplay(model, entity)} depends on ${descendantModel.labelPlural} which you have no permissions to delete.`,
+                throw forbidden(
+                  (display) =>
+                    `${display(model, entity)} depends on ${descendantModel.labelPlural} which you have no permissions to delete.`,
                 );
               }
               for (const descendant of descendants) {
@@ -466,13 +469,14 @@ export const restoreEntity = async (
     const entity = await getEntityToMutate(ctx, rootModel, { id }, 'RESTORE');
 
     if (!entity.deleted) {
-      throw new ForbiddenError(`${getTechnicalDisplay(model, entity)} is not deleted.`);
+      throw forbidden((display) => `${display(model, entity)} is not deleted.`);
     }
 
     if (entity.deleteRootId) {
       if (!(entity.deleteRootType === rootModel.name && entity.deleteRootId === entity.id)) {
-        throw new ForbiddenError(
-          `Can't restore ${getTechnicalDisplay(model, entity)} directly. To restore it, restore ${entity.deleteRootType} ${entity.deleteRootId}.`,
+        throw forbidden(
+          (display) =>
+            `Can't restore ${display(model, entity)} directly. To restore it, restore ${entity.deleteRootType} ${entity.deleteRootId}.`,
         );
       }
     }
@@ -533,8 +537,9 @@ export const restoreEntity = async (
           }
           const parent = await ctx.knex(relation.targetModel.name).where({ id: parentId }).first();
           if (parent?.deleted) {
-            throw new ForbiddenError(
-              `Can't restore ${getTechnicalDisplay(model, entity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
+            throw forbidden(
+              (display) =>
+                `Can't restore ${display(model, entity)} because it depends on deleted ${relation.targetModel.name} ${parentId}.`,
             );
           }
         }
@@ -582,8 +587,9 @@ export const restoreEntity = async (
           (descendant) => !restorableDescendants.some((d) => d.id === descendant.id),
         );
         if (notRestorableDescendants.length) {
-          throw new ForbiddenError(
-            `${getTechnicalDisplay(currentModel, currentEntity)} depends on ${descendantModel.labelPlural} which you have no permissions to restore.`,
+          throw forbidden(
+            (display) =>
+              `${display(currentModel, currentEntity)} depends on ${descendantModel.labelPlural} which you have no permissions to restore.`,
           );
         }
         for (const descendant of descendantsToRestore) {

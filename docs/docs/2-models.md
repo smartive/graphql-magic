@@ -170,23 +170,34 @@ Set this when the display field holds sensitive data, e.g. a person's name or em
 }
 ```
 
-Technical error messages then identify the entity by id alone instead of quoting the display value:
+The flag does **not** change the error a caller receives. Whoever triggered a failed delete or restore
+still needs to know which record is meant, so the message keeps quoting the display value.
+
+What it changes is the *log-safe* variant of that message. Errors thrown by graphql-magic carry a
+`logMessage` alongside `message`, and for a `sensitiveDisplay` model the display is left out of it:
 
 ```
-User 0b7e… is not deleted.          // with sensitiveDisplay
-User "Jane Doe" (0b7e…) is not deleted.   // without
+message:     User "Jane Doe (jane@example.com)" (0b7e…) is not deleted.
+logMessage:  User 0b7e… is not deleted.
 ```
 
-Those messages are returned to the client and written to server logs — for a person entity that means
-a name (and, where the display field is built from one, an email address) ends up in both. Every
-message built from a model's display value is covered, not just the one above: the already-deleted,
-cannot-be-deleted-because-it-has, depends-on, cannot-restore-directly and not-found messages all use
-the same helper.
+A consumer that writes errors to a log should prefer `logMessage` when it is set:
 
-The display value is still used wherever it is shown on purpose — the client display query and the
-delete dry-run payload an admin confirms against. This flag governs technical error messages only.
+```js
+catch (error) {
+  console.error(error instanceof GraphQLError && error.logMessage ? error.logMessage : error);
+  throw error;
+}
+```
 
-Like `displayField`, it is not inherited by child models: set it on every model that declares a
+Both variants are built from one template, so they cannot drift apart, and every message that names an
+entity is covered — already-deleted, cannot-be-deleted-because-it-has, depends-on, cannot-restore-directly
+and is-not-deleted. A message naming several entities has each of them redacted.
+
+The display value is still used wherever it is shown on purpose — the client display query and the delete
+dry-run payload an admin confirms against.
+
+Like `displayField`, this is not inherited by child models: set it on every model that declares a
 sensitive `displayField`.
 
 ### `defaultOrderBy`
