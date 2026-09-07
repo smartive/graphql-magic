@@ -282,3 +282,47 @@ describe('syncRevisionPreamble', () => {
     expect(generator.needsMigration).toBe(false);
   });
 });
+
+describe('custom fields', () => {
+  /** A custom field is resolver-backed, so it has no column anywhere — not in `up`, not in `down`. */
+  const withCustom = (options: { deleted?: true } = {}): Models =>
+    new Models([
+      USER,
+      {
+        kind: 'entity',
+        name: 'Product',
+        creatable: true,
+        updatable: true,
+        deletable: true,
+        ...options,
+        fields: [
+          { name: 'title', type: 'String', creatable: true, updatable: true },
+          { kind: 'custom', name: 'displayTitle', type: 'String' },
+        ],
+      },
+    ]);
+
+  it('creates a new table without a column for the custom field', async () => {
+    // Regression: the loop enumerated every field, so `column()`'s own guard threw and no
+    // migration could be generated at all for a model carrying a custom field.
+    const generator = createGenerator(withCustom(), { User: [] });
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`table.string('title'`);
+    expect(migration).not.toContain('displayTitle');
+  });
+
+  it('recreates a deleted model in `down` without a column for the custom field', async () => {
+    const generator = createGenerator(withCustom({ deleted: true }), {
+      User: userColumns,
+      Product: [...productColumns({ authorNonNull: true, deletable: true })],
+      ProductRevision: revisionColumns({ createdByIdNullable: false, deleteRoot: true }),
+    });
+
+    const migration = await generator.generate();
+
+    expect(migration).toContain(`dropTable('Product')`);
+    expect(migration).not.toContain('displayTitle');
+  });
+});

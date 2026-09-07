@@ -270,7 +270,7 @@ export class MigrationGenerator {
 
         down.push(() => {
           this.createTable(model.name, () => {
-            for (const field of model.fields) {
+            for (const field of model.fields.filter(isStoredInDatabase)) {
               this.column(field);
             }
           });
@@ -332,9 +332,7 @@ export class MigrationGenerator {
                   foreignKey: 'id',
                 });
               }
-              for (const field of model.fields
-                .filter(not(isInherited))
-                .filter((f) => !(f.generateAs?.type === 'expression'))) {
+              for (const field of model.fields.filter(and(not(isInherited), isStoredInDatabase))) {
                 this.column(field);
               }
             });
