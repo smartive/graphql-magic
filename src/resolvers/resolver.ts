@@ -109,14 +109,18 @@ const buildQuery = async (
     if (alias !== node.rootTableAlias && mandatoryFilterAliases.has(alias)) {
       continue;
     }
+    // A joined table's parent may be another table of THIS query, not only of the parent node's, so
+    // the stacks verified so far here are consulted first. `tables` is parent-before-child.
+    const parentAlias = alias.split('__').slice(0, -1).join('__');
     const verifiedPermissionStack = applyPermissions(
       node.ctx,
       table,
       node.ctx.aliases.getShort(alias),
       query,
       'READ',
-      parentVerifiedPermissionStacks?.[alias.split('__').slice(0, -1).join('__')],
+      verifiedPermissionStacks[parentAlias] ?? parentVerifiedPermissionStacks?.[parentAlias],
       includesDeletedRows,
+      joins.find((join) => join.table2Alias === alias),
     );
 
     if (typeof verifiedPermissionStack !== 'boolean') {

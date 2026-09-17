@@ -39,6 +39,7 @@ export const applyPermissions = (
   action: PermissionAction,
   verifiedPermissionStack?: PermissionStack,
   includesDeletedRows?: boolean,
+  edge?: JoinEdge,
 ): boolean | PermissionStack => {
   const permissionStack = getPermissionStack(ctx, type, action);
 
@@ -52,22 +53,74 @@ export const applyPermissions = (
     return permissionStack;
   }
 
+  // Chains that continue a chain the parent was already checked against, THROUGH THE EDGE THIS
+  // alias was joined by. Without the edge test a chain reached by a different foreign key would be
+  // treated as a continuation, and the real ones dropped.
+  const continues = (chain: PermissionLink[]) =>
+    !!edge &&
+    matchesEdge(get(chain, chain.length - 1), edge) &&
+    !!verifiedPermissionStack?.some((prefixChain) => hash(prefixChain) === hash(chain.slice(0, -1)));
+
+  const extensions = permissionStack.filter(continues);
+  const everyParentChainContinues =
+    !!edge &&
+    !!verifiedPermissionStack &&
+    verifiedPermissionStack.every((prefixChain) =>
+      permissionStack.some(
+        (chain) => matchesEdge(get(chain, chain.length - 1), edge) && hash(prefixChain) === hash(chain.slice(0, -1)),
+      ),
+    );
+
+  if (everyParentChainContinues && extensions.length) {
+    if (extensions.every((chain) => !('where' in get(chain, chain.length - 1)) && !('me' in get(chain, chain.length - 1)))) {
+      // Every continuation is unconditional, so reaching the parent already proves this entity.
+      return extensions;
+    }
+
+    // These rows are children of parents that passed their own check, reached by this edge, and
+    // every chain that could have passed it continues into one of these — so a chain that does not
+    // continue cannot be the reason any of these rows is visible.
+    applyPermissionStack(ctx, extensions, tableAlias, query, action, includesDeletedRows);
+
+    return extensions;
+  }
+
+  // Unchanged fallback, including the original "parent already proves this" shortcut.
   if (
     verifiedPermissionStack?.every((prefixChain) =>
       permissionStack.some(
         (chain) =>
           hash(prefixChain) === hash(chain.slice(0, -1)) &&
-          // TODO: this is stricter than it could be if we add these checks to the query
           !('where' in get(chain, chain.length - 1)) &&
           !('me' in get(chain, chain.length - 1)),
       ),
     )
   ) {
-    // The user has access to a parent entity with one or more from a set of rules, all of which are inherited by this entity
-    // No need for additional checks
     return permissionStack;
   }
 
+  applyPermissionStack(ctx, permissionStack, tableAlias, query, action, includesDeletedRows);
+
+  return permissionStack;
+};
+
+export type JoinEdge = { column1: string; column2: string };
+
+// A permission link joins either parent.<fk> = child.id (reverse) or parent.id = child.<fk>, which
+// is exactly the shape the query's own join records.
+const matchesEdge = (link: PermissionLink, edge: JoinEdge) =>
+  link.reverse
+    ? edge.column1 === (link.foreignKey ?? 'id') && edge.column2 === 'id'
+    : edge.column1 === 'id' && edge.column2 === (link.foreignKey ?? 'id');
+
+const applyPermissionStack = (
+  ctx: Pick<FullContext, 'models' | 'permissions' | 'user' | 'knex'>,
+  permissionStack: PermissionStack,
+  tableAlias: string,
+  query: Knex.QueryBuilder,
+  action: PermissionAction,
+  includesDeletedRows?: boolean,
+) => {
   ors(
     query,
     permissionStack.map(
@@ -85,8 +138,6 @@ export const applyPermissions = (
           ),
     ),
   );
-
-  return permissionStack;
 };
 
 /**
