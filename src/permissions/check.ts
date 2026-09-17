@@ -261,7 +261,11 @@ const permissionLinkQuery = (
     applyWhere(ctx.models.getModel(type, 'entity'), subQuery, alias, where, aliases);
   }
 
-  for (const { type, foreignKey, reverse, where } of links) {
+  // `links[0]` is already the FROM table, so joining it again produces `X as a0 right join X as a1
+  // on a0.id = a1.id` — the same row twice. Its predicates go on the FROM alias instead.
+  applyNotDeleted(subQuery, alias, tableAliasForDeleteRoot);
+
+  for (const { type, foreignKey, reverse, where } of links.slice(1)) {
     const model = ctx.models.getModel(type, 'entity');
     const subAlias = aliases.getShort();
     if (reverse) {
@@ -270,21 +274,7 @@ const permissionLinkQuery = (
       subQuery.rightJoin(`${type} as ${subAlias}`, `${alias}.id`, `${subAlias}.${foreignKey || 'id'}`);
     }
 
-    if (tableAliasForDeleteRoot) {
-      subQuery.where((query) =>
-        query
-          .where({ [`${subAlias}.deleted`]: false })
-          .orWhere((query) =>
-            query
-              .whereNotNull(`${subAlias}.deleteRootType`)
-              .whereNotNull(`${subAlias}.deleteRootId`)
-              .whereRaw(`??."deleteRootType" = ??."deleteRootType"`, [subAlias, tableAliasForDeleteRoot])
-              .whereRaw(`??."deleteRootId" = ??."deleteRootId"`, [subAlias, tableAliasForDeleteRoot]),
-          ),
-      );
-    } else {
-      subQuery.where({ [`${subAlias}.deleted`]: false });
-    }
+    applyNotDeleted(subQuery, subAlias, tableAliasForDeleteRoot);
 
     if (where) {
       applyWhere(model, subQuery, subAlias, where, aliases);
@@ -293,6 +283,26 @@ const permissionLinkQuery = (
   }
 
   subQuery.whereRaw(`"${alias}".id = ?`, id);
+};
+
+const applyNotDeleted = (subQuery: Knex.QueryBuilder, alias: string, tableAliasForDeleteRoot?: string) => {
+  if (!tableAliasForDeleteRoot) {
+    subQuery.where({ [`${alias}.deleted`]: false });
+
+    return;
+  }
+
+  subQuery.where((query) =>
+    query
+      .where({ [`${alias}.deleted`]: false })
+      .orWhere((query) =>
+        query
+          .whereNotNull(`${alias}.deleteRootType`)
+          .whereNotNull(`${alias}.deleteRootId`)
+          .whereRaw(`??."deleteRootType" = ??."deleteRootType"`, [alias, tableAliasForDeleteRoot])
+          .whereRaw(`??."deleteRootId" = ??."deleteRootId"`, [alias, tableAliasForDeleteRoot]),
+      ),
+  );
 };
 
 const applyWhere = (model: EntityModel, query: Knex.QueryBuilder, alias: string, where: any, aliases: AliasGenerator) => {
