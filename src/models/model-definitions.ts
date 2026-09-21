@@ -66,6 +66,19 @@ export type EntityFieldDefinition = FieldDefinitionBase &
       | {
           default?: Value;
           nonNull?: boolean;
+          /**
+           * Only meaningful alongside `nonNull: true`. Drops the field to nullable on the plural
+           * `XWhere` so the mandatory filter can be satisfied compositionally — by constraining the
+           * field in *every* branch of a top-level `OR` — instead of only at the top level.
+           *
+           * The guarantee is unchanged: a query that constrains neither the top level nor every OR
+           * branch is rejected at runtime (`applyFilters`). What changes is where the constraint may
+           * be written, so a query whose branches genuinely want different value sets no longer has
+           * to also state their union at the top level, where it silently intersects every branch.
+           *
+           * `XWhereLookup` keeps the field non-null: singular lookups have no `OR` to satisfy it.
+           */
+          satisfiableByOr?: boolean;
         };
     reverseFilterable?: boolean;
     searchable?: boolean;

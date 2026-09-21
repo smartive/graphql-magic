@@ -34,6 +34,63 @@ const isMandatoryFilterField = (filterable: unknown): boolean =>
   typeof filterable === 'object' && filterable !== null && (filterable as { nonNull?: boolean }).nonNull === true;
 
 /**
+ * True when the field is `filterable: { nonNull: true, satisfiableByOr: true }`. The schema leaves
+ * it nullable on the plural `XWhere`, so the constraint the non-null used to guarantee is enforced
+ * here instead — see `constrainsField` / `assertMandatoryFiltersSatisfied`.
+ */
+const isOrSatisfiableFilterField = (filterable: unknown): boolean =>
+  isMandatoryFilterField(filterable) && (filterable as { satisfiableByOr?: boolean }).satisfiableByOr === true;
+
+/**
+ * True when `where` constrains `fieldName` on every row it can match.
+ *
+ * - top level: a direct key constrains everything below it.
+ * - `AND`: a conjunction, so ONE branch constraining the field is enough.
+ * - `OR`: a disjunction, so EVERY branch must constrain it — one unconstrained branch is a hole
+ *   through which any value can come back. An empty `OR` matches nothing and cannot satisfy it.
+ * - `NOT`: a negated constraint is not a positive one, so it never counts.
+ */
+const constrainsField = (where: Where | undefined, fieldName: string): boolean => {
+  if (!where || typeof where !== 'object' || Array.isArray(where)) {
+    return false;
+  }
+
+  if (where[fieldName] !== undefined) {
+    return true;
+  }
+
+  const and = where.AND;
+  if (Array.isArray(and) && and.some((sub) => constrainsField(sub as Where, fieldName))) {
+    return true;
+  }
+
+  const or = where.OR;
+
+  return Array.isArray(or) && or.length > 0 && or.every((sub) => constrainsField(sub as Where, fieldName));
+};
+
+/**
+ * Enforces, for every `satisfiableByOr` mandatory filter on `model`, the guarantee the schema's
+ * non-null carries for ordinary mandatory filters: the caller states which values it wants. Fields
+ * without the flag are still non-null in the schema, so they are already guaranteed and not checked
+ * again here.
+ */
+export const assertMandatoryFiltersSatisfied = (model: EntityModel, where: Where | undefined) => {
+  const unsatisfied = [
+    ...model.fields.filter(({ kind, filterable }) => kind !== 'relation' && isOrSatisfiableFilterField(filterable)),
+    ...model.relations.filter(({ field }) => isOrSatisfiableFilterField(field.filterable)).map(({ field }) => field),
+  ].filter(({ name }) => !constrainsField(where, name));
+
+  if (unsatisfied.length > 0) {
+    throw new UserInputError(
+      `${model.name}: mandatory filter${unsatisfied.length > 1 ? 's' : ''} ${unsatisfied
+        .map(({ name }) => `"${name}"`)
+        .join(', ')} must be constrained at the top level of "where", or in every branch of a top-level "OR".`,
+    );
+  }
+};
+
+/**
  * True when every key the user supplied at this WHERE position is a
  * `filterable: { nonNull: true }` field on `model`, recursing into
  * relation traversals (which must themselves be nonNull-filterable to
@@ -179,6 +236,8 @@ export const applyFilters = async (node: FieldResolverNode, query: Knex.QueryBui
       [getColumn(node, 'type')]: node.model.name,
     });
   }
+
+  assertMandatoryFiltersSatisfied(node.model, where);
 
   const ops: QueryBuilderOps = [];
   applyDeletedFilter(node, deleted, ops);

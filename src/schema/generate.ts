@@ -16,6 +16,18 @@ import { Field, document, enm, iface, input, object, scalar, union } from './uti
 const isMandatoryFilterable = (field: Pick<EntityField, 'filterable'>): boolean =>
   typeof field.filterable === 'object' && field.filterable !== null && field.filterable.nonNull === true;
 
+/**
+ * `filterable: { nonNull: true, satisfiableByOr: true }` — the mandatory filter may be satisfied by
+ * constraining the field in every branch of a top-level `OR` rather than at the top level, so the
+ * field is generated nullable on the plural `XWhere`. `applyFilters` enforces the constraint at
+ * runtime, so the guarantee is unchanged; only where it may be written is.
+ */
+const isOrSatisfiableFilterable = (field: Pick<EntityField, 'filterable'>): boolean =>
+  isMandatoryFilterable(field) &&
+  typeof field.filterable === 'object' &&
+  field.filterable !== null &&
+  field.filterable.satisfiableByOr === true;
+
 const mandatoryFilterableRelationFields = (model: EntityModel) =>
   model.relations.filter(({ field }) => isMandatoryFilterable(field));
 
@@ -56,7 +68,7 @@ const buildWhereFields = (
       type: field.type,
       list: true,
       default: typeof field.filterable === 'object' ? field.filterable.default : undefined,
-      nonNull: isSubWhere ? false : isMandatoryFilterable(field),
+      nonNull: isSubWhere || isOrSatisfiableFilterable(field) ? false : isMandatoryFilterable(field),
     })),
   ...model.fields
     .filter(({ comparable }) => comparable)
@@ -74,7 +86,8 @@ const buildWhereFields = (
       // SubWhere is boolean composition: the mandatory cascade is enforced once at the outer
       // XWhere; repeating the same filter in every OR/AND branch would be pure noise. Mirrors
       // the scalar/enum SubWhere behavior on line above.
-      nonNull: isSubWhere || name === exemptedFieldName ? false : isMandatoryFilterable(field),
+      nonNull:
+        isSubWhere || name === exemptedFieldName || isOrSatisfiableFilterable(field) ? false : isMandatoryFilterable(field),
     })),
   ...model.reverseRelations
     .filter(({ field: { reverseFilterable } }) => reverseFilterable)

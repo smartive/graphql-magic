@@ -169,6 +169,64 @@ query {
 }
 ```
 
+#### `nonNull` — mandatory filters
+
+`filterable: { nonNull: true }` makes the filter **mandatory**: the field is generated non-null on
+the entity's `where` input, so every query has to state which values it wants rather than silently
+taking all of them. This is the usual choice for lifecycle and publication columns, where "I forgot
+to filter" and "I want every row" should not look the same.
+
+```ts
+{ name: 'status', kind: 'enum', type: 'PublicationStatus', filterable: { nonNull: true } }
+```
+
+#### `satisfiableByOr` — satisfying a mandatory filter inside `OR`
+
+A mandatory filter can normally only be satisfied at the **top level** of `where`. That is a problem
+when the branches of an `OR` genuinely want different value sets, because the top-level value is
+`AND`ed with every branch:
+
+```graphql
+# `status` is required at the top level, and it silently narrows BOTH branches —
+# the second branch cannot actually match "this post whatever its status".
+posts(
+  where: {
+    status: [PUBLISHED, DRAFT]
+    OR: [{ status: [PUBLISHED], hidden: [false] }, { id: [$id] }]
+  }
+) { title }
+```
+
+Adding `satisfiableByOr: true` generates the field as nullable on the plural `where` input, so the
+constraint can be written where it belongs — in the branches:
+
+```ts
+{
+  name: 'status',
+  kind: 'enum',
+  type: 'PublicationStatus',
+  filterable: { nonNull: true, satisfiableByOr: true },
+}
+```
+
+```graphql
+posts(
+  where: {
+    OR: [{ status: [PUBLISHED], hidden: [false] }, { id: [$id], status: [PUBLISHED, DRAFT] }]
+  }
+) { title }
+```
+
+The guarantee is unchanged, only relocated: a query that constrains **neither** the top level **nor
+every branch of a top-level `OR`** is rejected at runtime with a `UserInputError`. `AND` counts as a
+conjunction (one branch constraining the field is enough), an empty `OR` never satisfies it, and a
+constraint appearing only under `NOT` does not count. `XWhereLookup` keeps the field non-null, since
+a singular lookup has no `OR` to satisfy it.
+
+Because the check moves from schema validation to runtime, a query missing the constraint fails when
+it executes rather than when documents are validated against the schema. Leave the flag off unless a
+model actually needs the compositional form — without it, behaviour is exactly as before.
+
 ### `reverseFilterable`
 
 Only relevant on relation fields. On `true` makes the reverse relation filterable.
