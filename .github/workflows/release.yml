@@ -29,7 +29,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: semantic release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@1989a0fefc4aea321e07f717680ed8e345925dc1 # v7.1.2
         with:
           semantic_version: 25
         env:
