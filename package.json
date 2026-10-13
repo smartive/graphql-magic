@@ -70,7 +70,7 @@
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.26",
     "@types/luxon": "3.7.6",
-    "@types/node": "26.6.4",
+    "@types/node": "26.6.5",
     "@types/pg": "8.23.1",
     "@typescript-eslint/parser": "8.71.1",
     "conventional-changelog-conventionalcommits": "9.3.1",
