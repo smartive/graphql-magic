@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>smartive/renovate-config:best-practices-lib"
+    "gitlab>smartive/renovate-config:library"
   ],
   "packageRules": [
     {
